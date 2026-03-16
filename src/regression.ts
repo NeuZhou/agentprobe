@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { SuiteResult, TestResult } from './types';
+import type { SuiteResult } from './types';
 import { calculateCost } from './cost';
 
 const BASELINES_DIR = '.agentprobe/baselines';
@@ -39,13 +39,13 @@ export function saveBaseline(result: SuiteResult, dir?: string): string {
   const baseline: Baseline = {
     saved_at: new Date().toISOString(),
     suite: result.name,
-    tests: result.results.map(r => ({
+    tests: result.results.map((r) => ({
       name: r.name,
       passed: r.passed,
       steps: r.trace?.steps.length ?? 0,
       duration_ms: r.duration_ms,
       cost_usd: r.trace ? calculateCost(r.trace).total_cost : 0,
-      assertions_passed: r.assertions.filter(a => a.passed).length,
+      assertions_passed: r.assertions.filter((a) => a.passed).length,
       assertions_total: r.assertions.length,
     })),
   };
@@ -74,7 +74,7 @@ export function detectRegressions(result: SuiteResult, baseline: Baseline): Regr
   const regressions: Regression[] = [];
 
   for (const current of result.results) {
-    const base = baseline.tests.find(b => b.name === current.name);
+    const base = baseline.tests.find((b) => b.name === current.name);
     if (!base) continue;
 
     // Pass → Fail regression

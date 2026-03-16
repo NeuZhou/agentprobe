@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { AgentTrace, AssertionResult } from './types';
+// TraceAdapter type used for plugin interface documentation
 import type { SuiteResult } from './types';
-import type { TraceAdapter } from './adapters';
 
 export interface AssertionHandler {
   (trace: AgentTrace, value: any): AssertionResult;
@@ -33,7 +33,9 @@ const pluginAdapters: Record<string, AdapterHandler> = {};
  * Load and register a plugin.
  */
 export function loadPlugin(pluginPath: string, baseDir?: string): AgentProbePlugin {
-  const resolved = path.isAbsolute(pluginPath) ? pluginPath : path.join(baseDir ?? process.cwd(), pluginPath);
+  const resolved = path.isAbsolute(pluginPath)
+    ? pluginPath
+    : path.join(baseDir ?? process.cwd(), pluginPath);
   if (!fs.existsSync(resolved)) throw new Error(`Plugin not found: ${resolved}`);
 
   const mod = require(resolved);
@@ -70,13 +72,17 @@ export function registerPlugin(plugin: AgentProbePlugin): void {
  * Load all plugins from config.
  */
 export function loadPlugins(pluginPaths: string[], baseDir?: string): AgentProbePlugin[] {
-  return pluginPaths.map(p => loadPlugin(p, baseDir));
+  return pluginPaths.map((p) => loadPlugin(p, baseDir));
 }
 
 /**
  * Run a plugin assertion.
  */
-export function runPluginAssertion(name: string, trace: AgentTrace, value: any): AssertionResult | null {
+export function runPluginAssertion(
+  name: string,
+  trace: AgentTrace,
+  value: any,
+): AssertionResult | null {
   const handler = pluginAssertions[name];
   if (!handler) return null;
   return handler(trace, value);

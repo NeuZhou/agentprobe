@@ -23,7 +23,9 @@ export function convertLangChain(input: any): AgentTrace {
         data: {
           model: run.serialized?.kwargs?.model_name ?? run.name ?? 'unknown',
           content: output?.text ?? output?.message?.content ?? JSON.stringify(output),
-          tokens: tokens ? { input: tokens.prompt_tokens, output: tokens.completion_tokens } : undefined,
+          tokens: tokens
+            ? { input: tokens.prompt_tokens, output: tokens.completion_tokens }
+            : undefined,
         },
       });
     } else if (run.type === 'tool' || run.run_type === 'tool') {

@@ -28,7 +28,9 @@ export function convertOpenAI(input: any): AgentTrace {
               model,
               tool_name: tc.function?.name,
               tool_args: safeParse(tc.function?.arguments),
-              tokens: usage ? { input: usage.prompt_tokens, output: usage.completion_tokens } : undefined,
+              tokens: usage
+                ? { input: usage.prompt_tokens, output: usage.completion_tokens }
+                : undefined,
             },
           });
         }
@@ -42,7 +44,9 @@ export function convertOpenAI(input: any): AgentTrace {
           data: {
             model,
             content: msg.content,
-            tokens: usage ? { input: usage.prompt_tokens, output: usage.completion_tokens } : undefined,
+            tokens: usage
+              ? { input: usage.prompt_tokens, output: usage.completion_tokens }
+              : undefined,
           },
         });
       }
@@ -60,5 +64,9 @@ export function convertOpenAI(input: any): AgentTrace {
 function safeParse(s: any): Record<string, any> | undefined {
   if (!s) return undefined;
   if (typeof s === 'object') return s;
-  try { return JSON.parse(s); } catch { return { raw: s }; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return { raw: s };
+  }
 }

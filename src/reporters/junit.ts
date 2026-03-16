@@ -17,15 +17,15 @@ export function reportJUnit(result: SuiteResult): string {
   const lines: string[] = [];
   lines.push('<?xml version="1.0" encoding="UTF-8"?>');
 
-  const failures = result.results.filter(r => !r.passed && !r.skipped).length;
-  const skipped = result.results.filter(r => r.skipped).length;
+  const failures = result.results.filter((r) => !r.passed && !r.skipped).length;
+  const skipped = result.results.filter((r) => r.skipped).length;
   const time = (result.duration_ms / 1000).toFixed(3);
 
   lines.push(
-    `<testsuites tests="${result.total}" failures="${failures}" skipped="${skipped}" time="${time}" name="${escapeXml(result.name)}">`
+    `<testsuites tests="${result.total}" failures="${failures}" skipped="${skipped}" time="${time}" name="${escapeXml(result.name)}">`,
   );
   lines.push(
-    `  <testsuite name="${escapeXml(result.name)}" tests="${result.total}" failures="${failures}" skipped="${skipped}" time="${time}">`
+    `  <testsuite name="${escapeXml(result.name)}" tests="${result.total}" failures="${failures}" skipped="${skipped}" time="${time}">`,
   );
 
   for (const test of result.results) {
@@ -40,11 +40,19 @@ export function reportJUnit(result: SuiteResult): string {
     } else if (!test.passed) {
       lines.push(`    <testcase classname="${className}" name="${testName}" time="${testTime}">`);
 
-      const failedAssertions = test.assertions.filter(a => !a.passed);
-      const message = failedAssertions.map(a => a.message ?? `${a.name}: expected ${JSON.stringify(a.expected)}, got ${JSON.stringify(a.actual)}`).join('\n');
+      const failedAssertions = test.assertions.filter((a) => !a.passed);
+      const message = failedAssertions
+        .map(
+          (a) =>
+            a.message ??
+            `${a.name}: expected ${JSON.stringify(a.expected)}, got ${JSON.stringify(a.actual)}`,
+        )
+        .join('\n');
       const errorMsg = test.error ? `\nError: ${test.error}` : '';
 
-      lines.push(`      <failure message="${escapeXml(failedAssertions[0]?.message ?? test.error ?? 'Test failed')}">`);
+      lines.push(
+        `      <failure message="${escapeXml(failedAssertions[0]?.message ?? test.error ?? 'Test failed')}">`,
+      );
       lines.push(escapeXml(message + errorMsg));
       lines.push(`      </failure>`);
       lines.push(`    </testcase>`);

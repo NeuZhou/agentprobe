@@ -46,7 +46,7 @@ export function detectOpenClaw(input: any): boolean {
     (m: any) =>
       m.role === 'assistant' &&
       Array.isArray(m.tool_calls) &&
-      m.tool_calls.some((tc: any) => tc?.function?.name)
+      m.tool_calls.some((tc: any) => tc?.function?.name),
   );
 }
 

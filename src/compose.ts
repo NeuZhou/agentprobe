@@ -27,13 +27,15 @@ export function evaluateAnyOf(trace: AgentTrace, conditions: Expectations[]): As
     groups.push(evaluate(trace, cond));
   }
 
-  const anyGroupPassed = groups.some(group => group.every(r => r.passed));
+  const anyGroupPassed = groups.some((group) => group.every((r) => r.passed));
 
   if (anyGroupPassed) {
-    return [{
-      name: `any_of: at least one condition passed`,
-      passed: true,
-    }];
+    return [
+      {
+        name: `any_of: at least one condition passed`,
+        passed: true,
+      },
+    ];
   }
 
   // All failed — report all for debugging
@@ -58,9 +60,9 @@ export function evaluateNoneOf(trace: AgentTrace, conditions: Expectations[]): A
   const results: AssertionResult[] = [];
   for (let i = 0; i < conditions.length; i++) {
     const sub = evaluate(trace, conditions[i]);
-    const groupPassed = sub.every(r => r.passed);
+    const groupPassed = sub.every((r) => r.passed);
     results.push({
-      name: `none_of[${i}]: ${sub.map(r => r.name).join(', ')}`,
+      name: `none_of[${i}]: ${sub.map((r) => r.name).join(', ')}`,
       passed: !groupPassed,
       message: groupPassed ? `none_of[${i}] matched but should not have` : undefined,
     });

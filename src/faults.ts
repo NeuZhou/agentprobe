@@ -56,7 +56,7 @@ export class FaultInjector {
         throw new FaultInjectionError(
           fault.message || `Injected error for tool "${toolName}"`,
           toolName,
-          fault
+          fault,
         );
 
       case 'timeout': {
@@ -65,7 +65,7 @@ export class FaultInjector {
         throw new FaultInjectionError(
           fault.message || `Timeout after ${delay}ms for tool "${toolName}"`,
           toolName,
-          fault
+          fault,
         );
       }
 
@@ -91,9 +91,14 @@ export class FaultInjector {
   summary(): string[] {
     return Object.entries(this.faults).map(([tool, cfg]) => {
       const prob = cfg.probability != null ? ` (${(cfg.probability * 100).toFixed(0)}%)` : '';
-      const detail = cfg.type === 'error' ? `: "${cfg.message || 'generic error'}"` :
-                     cfg.type === 'timeout' ? `: ${cfg.delay_ms ?? 30000}ms` :
-                     cfg.type === 'slow' ? `: +${cfg.delay_ms ?? 5000}ms` : '';
+      const detail =
+        cfg.type === 'error'
+          ? `: "${cfg.message || 'generic error'}"`
+          : cfg.type === 'timeout'
+            ? `: ${cfg.delay_ms ?? 30000}ms`
+            : cfg.type === 'slow'
+              ? `: +${cfg.delay_ms ?? 5000}ms`
+              : '';
       return `${tool} → ${cfg.type}${detail}${prob}`;
     });
   }
@@ -112,7 +117,7 @@ export class FaultInjectionError extends Error {
 }
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function corruptResult(result: any): any {

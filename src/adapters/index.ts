@@ -20,22 +20,28 @@ const adapters: TraceAdapter[] = [
 ];
 
 function detectOpenAI(input: any): boolean {
-  if (Array.isArray(input)) return input.some(i => i?.object === 'chat.completion' || i?.choices);
+  if (Array.isArray(input)) return input.some((i) => i?.object === 'chat.completion' || i?.choices);
   return input?.object === 'chat.completion' || !!input?.choices;
 }
 
 function detectLangChain(input: any): boolean {
-  if (Array.isArray(input)) return input.some(i => i?.type === 'llm' || i?.type === 'chain' || i?.type === 'tool' || i?.serialized);
+  if (Array.isArray(input))
+    return input.some(
+      (i) => i?.type === 'llm' || i?.type === 'chain' || i?.type === 'tool' || i?.serialized,
+    );
   return input?.type === 'llm' || input?.type === 'chain' || !!input?.serialized;
 }
 
 function detectAnthropic(input: any): boolean {
-  if (Array.isArray(input)) return input.some(i => i?.type === 'message' && i?.role === 'assistant' && Array.isArray(i?.content));
+  if (Array.isArray(input))
+    return input.some(
+      (i) => i?.type === 'message' && i?.role === 'assistant' && Array.isArray(i?.content),
+    );
   return input?.type === 'message' && input?.role === 'assistant' && Array.isArray(input?.content);
 }
 
 function detectGeneric(input: any): boolean {
-  if (Array.isArray(input)) return input.some(i => i?.event || i?.level || i?.msg);
+  if (Array.isArray(input)) return input.some((i) => i?.event || i?.level || i?.msg);
   return !!input?.event || !!input?.level || !!input?.msg;
 }
 
@@ -48,15 +54,20 @@ export function autoConvert(input: any): AgentTrace {
       return adapter.convert(input);
     }
   }
-  throw new Error('Unable to detect trace format. Supported: openai, langchain, anthropic, generic (JSONL)');
+  throw new Error(
+    'Unable to detect trace format. Supported: openai, langchain, anthropic, generic (JSONL)',
+  );
 }
 
 /**
  * Convert using a specific adapter by name.
  */
 export function convertWith(name: string, input: any): AgentTrace {
-  const adapter = adapters.find(a => a.name === name);
-  if (!adapter) throw new Error(`Unknown adapter: ${name}. Available: ${adapters.map(a => a.name).join(', ')}`);
+  const adapter = adapters.find((a) => a.name === name);
+  if (!adapter)
+    throw new Error(
+      `Unknown adapter: ${name}. Available: ${adapters.map((a) => a.name).join(', ')}`,
+    );
   return adapter.convert(input);
 }
 

@@ -2,7 +2,7 @@
  * Trace Viewer — Visual trace inspection in terminal.
  */
 
-import type { AgentTrace, TraceStep } from './types';
+import type { AgentTrace } from './types';
 
 const ICONS: Record<string, string> = {
   llm_call: '🧠',
@@ -22,18 +22,19 @@ export function formatTraceView(trace: AgentTrace): string {
 
   // Calculate totals
   const totalDuration = trace.steps.reduce((s, st) => s + (st.duration_ms ?? 0), 0);
-  const durationStr = totalDuration >= 1000
-    ? `${(totalDuration / 1000).toFixed(1)}s`
-    : `${totalDuration}ms`;
+  const durationStr =
+    totalDuration >= 1000 ? `${(totalDuration / 1000).toFixed(1)}s` : `${totalDuration}ms`;
   const tokensIn = trace.steps.reduce((s, st) => s + (st.data.tokens?.input ?? 0), 0);
   const tokensOut = trace.steps.reduce((s, st) => s + (st.data.tokens?.output ?? 0), 0);
-  const toolsCalled = [...new Set(
-    trace.steps.filter(s => s.type === 'tool_call').map(s => s.data.tool_name!)
-  )];
+  const toolsCalled = [
+    ...new Set(trace.steps.filter((s) => s.type === 'tool_call').map((s) => s.data.tool_name!)),
+  ];
 
   // Header
   lines.push(`┌${hr}┐`);
-  lines.push(`│ Trace: ${trace.id.slice(0, 24).padEnd(24)}│ ${durationStr.padStart(5)} │ ${String(trace.steps.length).padStart(2)} steps │`);
+  lines.push(
+    `│ Trace: ${trace.id.slice(0, 24).padEnd(24)}│ ${durationStr.padStart(5)} │ ${String(trace.steps.length).padStart(2)} steps │`,
+  );
   lines.push(`├${hr}┤`);
 
   // Steps

@@ -1,5 +1,5 @@
 import type { SuiteResult, TestResult } from '../types';
-import { calculateCost, formatCostReport } from '../cost';
+import { calculateCost } from '../cost';
 
 /**
  * Generate a self-contained HTML test report.
@@ -10,8 +10,8 @@ export function reportHTML(result: SuiteResult): string {
 
   // Cost data
   const costData = result.results
-    .filter(r => r.trace)
-    .map(r => {
+    .filter((r) => r.trace)
+    .map((r) => {
       const cost = calculateCost(r.trace!);
       return { name: r.name, ...cost };
     });
@@ -100,14 +100,20 @@ document.querySelectorAll('.test-header').forEach(h=>{
 function renderTestRow(test: TestResult): string {
   const icon = test.passed ? '✅' : '❌';
   const cls = test.passed ? 'pass' : 'fail';
-  const tags = (test.tags ?? []).map(t => `<span class="tag">${esc(t)}</span>`).join('');
+  const tags = (test.tags ?? []).map((t) => `<span class="tag">${esc(t)}</span>`).join('');
 
-  const assertions = test.assertions.map(a => {
-    const ac = a.passed ? 'a-pass' : 'a-fail';
-    const ai = a.passed ? '✓' : '✗';
-    const msg = a.message ?? (a.passed ? 'OK' : `expected ${JSON.stringify(a.expected)}, got ${JSON.stringify(a.actual)}`);
-    return `<div class="assertion ${ac}">${ai} ${esc(a.name)}: ${esc(msg)}</div>`;
-  }).join('\n');
+  const assertions = test.assertions
+    .map((a) => {
+      const ac = a.passed ? 'a-pass' : 'a-fail';
+      const ai = a.passed ? '✓' : '✗';
+      const msg =
+        a.message ??
+        (a.passed
+          ? 'OK'
+          : `expected ${JSON.stringify(a.expected)}, got ${JSON.stringify(a.actual)}`);
+      return `<div class="assertion ${ac}">${ai} ${esc(a.name)}: ${esc(msg)}</div>`;
+    })
+    .join('\n');
 
   const timeline = test.trace ? renderTimeline(test) : '';
 
@@ -129,26 +135,39 @@ function renderTestRow(test: TestResult): string {
 function renderTimeline(test: TestResult): string {
   if (!test.trace?.steps.length) return '';
   const icons: Record<string, string> = {
-    llm_call: '🧠', tool_call: '🔧', tool_result: '📦', thought: '💭', output: '💬',
+    llm_call: '🧠',
+    tool_call: '🔧',
+    tool_result: '📦',
+    thought: '💭',
+    output: '💬',
   };
-  const steps = test.trace.steps.map(s => {
-    const icon = icons[s.type] ?? '❓';
-    const detail = s.data.tool_name
-      ? `${s.data.tool_name}(${JSON.stringify(s.data.tool_args ?? {}).slice(0, 80)})`
-      : (s.data.content?.slice(0, 120) ?? s.data.model ?? '');
-    const dur = s.duration_ms ? `${s.duration_ms}ms` : '';
-    return `<div class="step"><span class="step-icon">${icon}</span><span class="step-content">${esc(s.type)}: ${esc(detail)}</span><span class="step-dur">${dur}</span></div>`;
-  }).join('\n');
+  const steps = test.trace.steps
+    .map((s) => {
+      const icon = icons[s.type] ?? '❓';
+      const detail = s.data.tool_name
+        ? `${s.data.tool_name}(${JSON.stringify(s.data.tool_args ?? {}).slice(0, 80)})`
+        : (s.data.content?.slice(0, 120) ?? s.data.model ?? '');
+      const dur = s.duration_ms ? `${s.duration_ms}ms` : '';
+      return `<div class="step"><span class="step-icon">${icon}</span><span class="step-content">${esc(s.type)}: ${esc(detail)}</span><span class="step-dur">${dur}</span></div>`;
+    })
+    .join('\n');
   return `<div class="timeline"><strong>Trace Timeline</strong>${steps}</div>`;
 }
 
 function renderCostSection(costData: any[]): string {
-  const rows = costData.map(c => {
-    const models = c.breakdowns.map((b: any) =>
-      `<tr><td>${esc(c.name)}</td><td>${esc(b.model)}</td><td>${b.input_tokens}</td><td>${b.output_tokens}</td><td>$${b.total_cost.toFixed(4)}</td></tr>`
-    ).join('');
-    return models || `<tr><td>${esc(c.name)}</td><td>-</td><td>0</td><td>0</td><td>$0.0000</td></tr>`;
-  }).join('\n');
+  const rows = costData
+    .map((c) => {
+      const models = c.breakdowns
+        .map(
+          (b: any) =>
+            `<tr><td>${esc(c.name)}</td><td>${esc(b.model)}</td><td>${b.input_tokens}</td><td>${b.output_tokens}</td><td>$${b.total_cost.toFixed(4)}</td></tr>`,
+        )
+        .join('');
+      return (
+        models || `<tr><td>${esc(c.name)}</td><td>-</td><td>0</td><td>0</td><td>$0.0000</td></tr>`
+      );
+    })
+    .join('\n');
 
   return `<div class="cost-section">
   <h2>💰 Cost Breakdown</h2>
@@ -158,5 +177,9 @@ function renderCostSection(costData: any[]): string {
 }
 
 function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

@@ -21,8 +21,10 @@ export function parseEnvFile(filePath: string): Record<string, string> {
     let value = trimmed.slice(eqIdx + 1).trim();
 
     // Strip surrounding quotes
-    if ((value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
 

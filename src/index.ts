@@ -18,25 +18,43 @@ import YAML from 'yaml';
 import { loadConfig } from './config';
 import { loadPlugins } from './plugins';
 import { saveBaseline, loadBaseline, detectRegressions, formatRegressions } from './regression';
-import { calculateCost, formatCostReport } from './cost';
-import { autoConvert } from './adapters';
 import chalk from 'chalk';
 import { computeStats, formatStats } from './stats';
 import * as readline from 'readline';
 import { generateTests, formatGeneratedTests } from './codegen';
 import { generateBadge } from './badge';
+import { validateSuite, formatValidationErrors } from './validate';
+
+// Read version from package.json
+import * as _pkgPath from 'path';
+const _pkg = JSON.parse(
+  fs.readFileSync(_pkgPath.join(__dirname, '..', 'package.json'), 'utf-8'),
+);
+const VERSION: string = _pkg.version;
 
 const program = new Command();
 
 program
   .name('agentprobe')
-  .description('🔬 Playwright for AI Agents - Test, record, and replay agent behaviors')
-  .version('0.7.0');
+  .description(
+    '🔬 Playwright for AI Agents — Test, record, and replay agent behaviors\n\n' +
+      'Examples:\n' +
+      '  $ agentprobe run tests.yaml              Run test suite\n' +
+      '  $ agentprobe run tests.yaml -f json      Output as JSON\n' +
+      '  $ agentprobe record -s agent.js -o t.json Record a trace\n' +
+      '  $ agentprobe codegen trace.json           Generate tests from trace\n' +
+      '  $ agentprobe init                         Scaffold a new project',
+  )
+  .version(VERSION, '-V, --version', 'Show version number');
 
 // Load config and plugins at startup
 const config = loadConfig();
 if (config.plugins?.length) {
-  try { loadPlugins(config.plugins); } catch { /* ignore plugin load errors at startup */ }
+  try {
+    loadPlugins(config.plugins);
+  } catch {
+    /* ignore plugin load errors at startup */
+  }
 }
 
 program
@@ -52,84 +70,107 @@ program
   .option('--compare-baseline', 'Compare results against saved baseline')
   .option('--env-file <path>', 'Load environment variables from a .env file')
   .option('--badge <path>', 'Generate a shields.io-style badge SVG')
-  .action(async (suitePath: string, opts: {
-    format: string;
-    output?: string;
-    watch?: boolean;
-    updateSnapshots?: boolean;
-    tag?: string[];
-    coverage?: boolean;
-    tools?: string[];
-    compareBaseline?: boolean;
-    envFile?: string;
-    badge?: string;
-  }) => {
-    if (!fs.existsSync(suitePath)) {
-      console.error(chalk.red(`❌ File not found: ${suitePath}`));
-      const dir = path.dirname(suitePath) || '.';
-      if (fs.existsSync(dir)) {
-        const files = fs.readdirSync(dir).filter(f => f.endsWith('.yaml') || f.endsWith('.yml'));
-        if (files.length > 0) {
-          console.error(chalk.yellow(`\n💡 Did you mean one of these?`));
-          for (const f of files.slice(0, 5)) {
-            console.error(chalk.yellow(`   ${path.join(dir, f)}`));
+  .action(
+    async (
+      suitePath: string,
+      opts: {
+        format: string;
+        output?: string;
+        watch?: boolean;
+        updateSnapshots?: boolean;
+        tag?: string[];
+        coverage?: boolean;
+        tools?: string[];
+        compareBaseline?: boolean;
+        envFile?: string;
+        badge?: string;
+      },
+    ) => {
+      if (!fs.existsSync(suitePath)) {
+        console.error(chalk.red(`❌ File not found: ${suitePath}`));
+        const dir = path.dirname(suitePath) || '.';
+        if (fs.existsSync(dir)) {
+          const files = fs
+            .readdirSync(dir)
+            .filter((f) => f.endsWith('.yaml') || f.endsWith('.yml'));
+          if (files.length > 0) {
+            console.error(chalk.yellow(`\n💡 Did you mean one of these?`));
+            for (const f of files.slice(0, 5)) {
+              console.error(chalk.yellow(`   ${path.join(dir, f)}`));
+            }
           }
         }
+        process.exit(1);
       }
-      process.exit(1);
-    }
 
-    if (opts.watch) {
-      startWatch({
-        suitePath,
-        format: opts.format as ReportFormat,
-        updateSnapshots: opts.updateSnapshots,
-        tags: opts.tag,
-      });
-      return;
-    }
+      if (opts.watch) {
+        startWatch({
+          suitePath,
+          format: opts.format as ReportFormat,
+          updateSnapshots: opts.updateSnapshots,
+          tags: opts.tag,
+        });
+        return;
+      }
 
-    const result = await runSuite(suitePath, {
-      updateSnapshots: opts.updateSnapshots,
-      tags: opts.tag,
-      envFile: opts.envFile,
-    });
-    const output = report(result, opts.format as ReportFormat);
-    console.log(output);
-
-    if (opts.coverage) {
-      const cov = analyzeCoverage(result, opts.tools);
-      console.log(formatCoverage(cov));
-    }
-
-    // Compare against baseline
-    if (opts.compareBaseline) {
-      const baseline = loadBaseline(result.name);
-      if (baseline) {
-        const regressions = detectRegressions(result, baseline);
-        console.log(formatRegressions(regressions));
-        if (regressions.length > 0 && config.ci?.fail_on_regression) {
+      // Validate suite before running
+      try {
+        const rawYaml = fs.readFileSync(suitePath, 'utf-8');
+        const YAML = require('yaml');
+        const parsed = YAML.parse(rawYaml);
+        const validation = validateSuite(parsed);
+        if (!validation.valid) {
+          console.error(chalk.red('❌ Suite validation failed:\n'));
+          console.error(formatValidationErrors(validation.errors));
           process.exit(1);
         }
-      } else {
-        console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
+      } catch (e: any) {
+        console.error(chalk.red(`❌ Failed to parse ${suitePath}: ${e.message}`));
+        process.exit(1);
       }
-    }
 
-    // Generate badge
-    if (opts.badge) {
-      const badgeSvg = generateBadge(result.passed, result.total);
-      fs.writeFileSync(opts.badge, badgeSvg);
-      console.log(`🏷️  Badge saved to ${opts.badge}`);
-    }
+      const result = await runSuite(suitePath, {
+        updateSnapshots: opts.updateSnapshots,
+        tags: opts.tag,
+        envFile: opts.envFile,
+      });
+      const output = report(result, opts.format as ReportFormat);
+      console.log(output);
 
-    if (opts.output) {
-      fs.writeFileSync(opts.output, output);
-      console.log(`📝 Results written to ${opts.output}`);
-    }
+      if (opts.coverage) {
+        const cov = analyzeCoverage(result, opts.tools);
+        console.log(formatCoverage(cov));
+      }
 
-    process.exit(result.failed > 0 ? 1 : 0);
-  });
+      // Compare against baseline
+      if (opts.compareBaseline) {
+        const baseline = loadBaseline(result.name);
+        if (baseline) {
+          const regressions = detectRegressions(result, baseline);
+          console.log(formatRegressions(regressions));
+          if (regressions.length > 0 && config.ci?.fail_on_regression) {
+            process.exit(1);
+          }
+        } else {
+          console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
+        }
+      }
+
+      // Generate badge
+      if (opts.badge) {
+        const badgeSvg = generateBadge(result.passed, result.total);
+        fs.writeFileSync(opts.badge, badgeSvg);
+        console.log(`🏷️  Badge saved to ${opts.badge}`);
+      }
+
+      if (opts.output) {
+        fs.writeFileSync(opts.output, output);
+        console.log(`📝 Results written to ${opts.output}`);
+      }
+
+      process.exit(result.failed > 0 ? 1 : 0);
+    },
+  );
 
 program
   .command('record')
@@ -142,10 +183,14 @@ program
     if (opts.script) {
       try {
         recorder.patchOpenAI(require('openai'));
-      } catch { /* openai not installed */ }
+      } catch {
+        /* openai not installed */
+      }
       try {
         recorder.patchAnthropic(require('@anthropic-ai/sdk'));
-      } catch { /* anthropic not installed */ }
+      } catch {
+        /* anthropic not installed */
+      }
 
       await require(path.resolve(opts.script));
       recorder.save(opts.output);
@@ -182,19 +227,22 @@ program
     console.log('');
 
     for (const step of trace.steps) {
-      const icon = {
-        llm_call: '🧠',
-        tool_call: '🔧',
-        tool_result: '📦',
-        thought: '💭',
-        output: '💬',
-      }[step.type] ?? '❓';
+      const icon =
+        {
+          llm_call: '🧠',
+          tool_call: '🔧',
+          tool_result: '📦',
+          thought: '💭',
+          output: '💬',
+        }[step.type] ?? '❓';
 
       const detail = step.data.tool_name
         ? `${step.data.tool_name}(${JSON.stringify(step.data.tool_args ?? {}).slice(0, 80)})`
-        : step.data.content?.slice(0, 100) ?? step.data.model ?? '';
+        : (step.data.content?.slice(0, 100) ?? step.data.model ?? '');
 
-      console.log(`  ${icon} [${step.type}] ${detail}${step.duration_ms ? ` (${step.duration_ms}ms)` : ''}`);
+      console.log(
+        `  ${icon} [${step.type}] ${detail}${step.duration_ms ? ` (${step.duration_ms}ms)` : ''}`,
+      );
     }
   });
 
@@ -215,17 +263,23 @@ program
       // Interactive mode
       const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
       const ask = (q: string, def: string): Promise<string> =>
-        new Promise(resolve => rl.question(chalk.cyan(`? ${q} `) + chalk.gray(`(${def}) `), ans => resolve(ans.trim() || def)));
+        new Promise((resolve) =>
+          rl.question(chalk.cyan(`? ${q} `) + chalk.gray(`(${def}) `), (ans) =>
+            resolve(ans.trim() || def),
+          ),
+        );
       const askYN = (q: string, def: boolean): Promise<boolean> =>
-        new Promise(resolve => rl.question(chalk.cyan(`? ${q} `) + chalk.gray(`(${def ? 'Y/n' : 'y/N'}) `), ans => {
-          if (!ans.trim()) return resolve(def);
-          resolve(ans.trim().toLowerCase() === 'y');
-        }));
+        new Promise((resolve) =>
+          rl.question(chalk.cyan(`? ${q} `) + chalk.gray(`(${def ? 'Y/n' : 'y/N'}) `), (ans) => {
+            if (!ans.trim()) return resolve(def);
+            resolve(ans.trim().toLowerCase() === 'y');
+          }),
+        );
 
       console.log(chalk.bold('\n🔬 AgentProbe — Interactive Setup\n'));
 
       const agentType = await ask('What type of agent?', 'weather / research / coding / custom');
-      const provider = await ask('Which LLM provider?', 'openai / anthropic / both');
+      await ask('Which LLM provider?', 'openai / anthropic / both');
       const includeSecurity = await askYN('Include security tests?', true);
       const includePerf = await askYN('Include performance tests?', true);
       const ciProvider = await ask('Set up CI?', 'github / gitlab / none');
@@ -289,7 +343,10 @@ program
       max_steps: 20`);
       }
 
-      const yaml = `name: ${agentType.split('/')[0].trim().replace(/^\w/, c => c.toUpperCase())} Agent Tests
+      const yaml = `name: ${agentType
+        .split('/')[0]
+        .trim()
+        .replace(/^\w/, (c) => c.toUpperCase())} Agent Tests
 description: Generated by agentprobe init
 tests:
 ${tests.join('\n')}
@@ -374,13 +431,13 @@ program
 
     fs.writeFileSync(opts.output, yamlStr);
     console.log(`🛡️  Security test suite generated: ${opts.output}`);
-    console.log(`   ${tests.length} tests across ${[...new Set(tests.flatMap(t => t.tags))].filter(t => t !== 'security').length} categories`);
+    console.log(
+      `   ${tests.length} tests across ${[...new Set(tests.flatMap((t) => t.tags))].filter((t) => t !== 'security').length} categories`,
+    );
   });
 
 // Trace commands
-const trace = program
-  .command('trace')
-  .description('Trace inspection and comparison');
+const trace = program.command('trace').description('Trace inspection and comparison');
 
 trace
   .command('view <traceFile>')
@@ -398,8 +455,14 @@ trace
   .command('diff <oldTrace> <newTrace>')
   .description('Compare two traces to detect behavioral drift')
   .action((oldFile: string, newFile: string) => {
-    if (!fs.existsSync(oldFile)) { console.error(`❌ File not found: ${oldFile}`); process.exit(1); }
-    if (!fs.existsSync(newFile)) { console.error(`❌ File not found: ${newFile}`); process.exit(1); }
+    if (!fs.existsSync(oldFile)) {
+      console.error(`❌ File not found: ${oldFile}`);
+      process.exit(1);
+    }
+    if (!fs.existsSync(newFile)) {
+      console.error(`❌ File not found: ${newFile}`);
+      process.exit(1);
+    }
 
     const oldTrace = loadTrace(oldFile);
     const newTrace = loadTrace(newFile);
@@ -413,8 +476,11 @@ trace
   .option('-o, --output <path>', 'Output file', 'merged-trace.json')
   .action((traceFiles: string[], opts: { output: string }) => {
     const { mergeTraces } = require('./merge');
-    const traces = traceFiles.map((f: string, i: number) => {
-      if (!fs.existsSync(f)) { console.error(`❌ File not found: ${f}`); process.exit(1); }
+    const traces = traceFiles.map((f: string) => {
+      if (!fs.existsSync(f)) {
+        console.error(`❌ File not found: ${f}`);
+        process.exit(1);
+      }
       return { trace: loadTrace(f), name: path.basename(f, '.json') };
     });
     const merged = mergeTraces(traces);
@@ -468,7 +534,9 @@ baseline
 // Convert trace format
 program
   .command('convert <traceFile>')
-  .description('Convert a trace from external format (OpenAI/Anthropic/LangChain/JSONL) to AgentTrace')
+  .description(
+    'Convert a trace from external format (OpenAI/Anthropic/LangChain/JSONL) to AgentTrace',
+  )
   .option('-f, --from <format>', 'Source format (auto-detect if omitted)')
   .option('-o, --output <path>', 'Output file (stdout if omitted)')
   .action((traceFile: string, opts: { from?: string; output?: string }) => {
@@ -482,7 +550,10 @@ program
       input = JSON.parse(raw);
     } catch {
       // Try JSONL
-      input = raw.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
+      input = raw
+        .split('\n')
+        .filter((l) => l.trim())
+        .map((l) => JSON.parse(l));
     }
 
     const { autoConvert: ac, convertWith } = require('./adapters');
@@ -504,14 +575,18 @@ program
   .action((dir: string) => {
     if (!fs.existsSync(dir)) {
       console.error(chalk.red(`❌ Directory not found: ${dir}`));
-      console.error(chalk.yellow(`💡 Record traces first: agentprobe record --script your-agent.js`));
+      console.error(
+        chalk.yellow(`💡 Record traces first: agentprobe record --script your-agent.js`),
+      );
       process.exit(1);
     }
     const { glob } = require('glob');
     const files: string[] = glob.sync(path.join(dir, '**/*.json').replace(/\\/g, '/'));
     if (files.length === 0) {
       console.error(chalk.yellow(`No trace files found in ${dir}`));
-      console.error(chalk.yellow(`💡 Trace files should be .json files created by 'agentprobe record'`));
+      console.error(
+        chalk.yellow(`💡 Trace files should be .json files created by 'agentprobe record'`),
+      );
       process.exit(1);
     }
 
@@ -554,6 +629,46 @@ program
       console.log(chalk.green(`✨ Generated ${tests.length} tests → ${opts.output}`));
     } else {
       console.log(yaml);
+    }
+  });
+
+// ===== Validate command =====
+program
+  .command('validate <file>')
+  .description('Validate a test suite YAML or trace JSON without running it')
+  .action((file: string) => {
+    if (!fs.existsSync(file)) {
+      console.error(chalk.red(`❌ File not found: ${file}`));
+      process.exit(1);
+    }
+    try {
+      const raw = fs.readFileSync(file, 'utf-8');
+      if (file.endsWith('.json')) {
+        const { validateTrace } = require('./validate');
+        const data = JSON.parse(raw);
+        const result = validateTrace(data);
+        if (result.valid) {
+          console.log(chalk.green('✅ Trace is valid'));
+        } else {
+          console.error(chalk.red('❌ Trace validation failed:\n'));
+          console.error(formatValidationErrors(result.errors));
+          process.exit(1);
+        }
+      } else {
+        const YAML = require('yaml');
+        const data = YAML.parse(raw);
+        const result = validateSuite(data);
+        if (result.valid) {
+          console.log(chalk.green('✅ Suite is valid'));
+        } else {
+          console.error(chalk.red('❌ Suite validation failed:\n'));
+          console.error(formatValidationErrors(result.errors));
+          process.exit(1);
+        }
+      }
+    } catch (e: any) {
+      console.error(chalk.red(`❌ Failed to parse ${file}: ${e.message}`));
+      process.exit(1);
     }
   });
 

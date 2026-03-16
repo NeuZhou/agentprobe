@@ -14,9 +14,7 @@ export interface MergedTrace extends Omit<AgentTrace, 'steps'> {
  * Merge multiple agent traces into a single timeline, interleaved by timestamp.
  * Each step is annotated with its source agent.
  */
-export function mergeTraces(
-  traces: { trace: AgentTrace; name?: string }[],
-): MergedTrace {
+export function mergeTraces(traces: { trace: AgentTrace; name?: string }[]): MergedTrace {
   const allSteps: MergedStep[] = [];
   const agents: string[] = [];
 

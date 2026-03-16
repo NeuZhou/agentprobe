@@ -53,10 +53,12 @@ export function buildExecutionPlan(tests: DepTestCase[]): ExecutionPlan {
 
     for (const test of remaining) {
       const deps = test.depends_on
-        ? (Array.isArray(test.depends_on) ? test.depends_on : [test.depends_on])
+        ? Array.isArray(test.depends_on)
+          ? test.depends_on
+          : [test.depends_on]
         : [];
 
-      if (deps.every(d => resolved.has(d))) {
+      if (deps.every((d) => resolved.has(d))) {
         ready.push(test);
       } else {
         notReady.push(test);

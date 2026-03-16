@@ -44,7 +44,7 @@ export function loadConfig(startDir?: string): AgentProbeConfig {
  */
 function findConfigFile(startDir: string): string | null {
   let dir = startDir;
-  while (true) {
+  for (;;) {
     for (const name of CONFIG_FILES) {
       const fp = path.join(dir, name);
       if (fs.existsSync(fp)) return fp;

@@ -3,7 +3,7 @@
  * Like Playwright codegen: run an agent, auto-generate tests from the trace.
  */
 
-import type { AgentTrace, TraceStep } from './types';
+import type { AgentTrace } from './types';
 import YAML from 'yaml';
 
 interface GeneratedTest {
@@ -18,12 +18,15 @@ interface GeneratedTest {
  */
 function extractKeyPhrases(content: string): string[] {
   // Split into sentences, pick meaningful ones (>10 chars, <100 chars)
-  const sentences = content.split(/[.!?\n]/).map(s => s.trim()).filter(s => s.length > 10 && s.length < 100);
+  const sentences = content
+    .split(/[.!?\n]/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 10 && s.length < 100);
   // Take first 2 meaningful phrases
   const phrases: string[] = [];
   for (const s of sentences) {
     // Extract a key substring (first noun phrase or significant words)
-    const words = s.split(/\s+/).filter(w => w.length > 3);
+    const words = s.split(/\s+/).filter((w) => w.length > 3);
     if (words.length >= 2) {
       phrases.push(words.slice(0, 3).join(' '));
     }
@@ -37,8 +40,8 @@ function extractKeyPhrases(content: string): string[] {
  */
 export function generateTests(trace: AgentTrace, traceFile: string): GeneratedTest[] {
   const tests: GeneratedTest[] = [];
-  const toolCalls = trace.steps.filter(s => s.type === 'tool_call');
-  const outputs = trace.steps.filter(s => s.type === 'output');
+  const toolCalls = trace.steps.filter((s) => s.type === 'tool_call');
+  const outputs = trace.steps.filter((s) => s.type === 'output');
   const totalSteps = trace.steps.length;
   const totalTokens = trace.steps.reduce((sum, s) => {
     const t = s.data.tokens;
@@ -49,7 +52,7 @@ export function generateTests(trace: AgentTrace, traceFile: string): GeneratedTe
 
   // Test 1: Tool usage test (if tools were called)
   if (toolCalls.length > 0) {
-    const uniqueTools = [...new Set(toolCalls.map(t => t.data.tool_name!))];
+    const uniqueTools = [...new Set(toolCalls.map((t) => t.data.tool_name!))];
     const expect: Record<string, any> = {};
 
     if (uniqueTools.length === 1) {
@@ -73,7 +76,7 @@ export function generateTests(trace: AgentTrace, traceFile: string): GeneratedTe
 
   // Test 2: Output quality test (if there's output)
   if (outputs.length > 0) {
-    const allOutput = outputs.map(o => o.data.content ?? '').join('\n');
+    const allOutput = outputs.map((o) => o.data.content ?? '').join('\n');
     const phrases = extractKeyPhrases(allOutput);
     const expect: Record<string, any> = {};
 
@@ -96,7 +99,7 @@ export function generateTests(trace: AgentTrace, traceFile: string): GeneratedTe
 
   // Test 3: Tool sequence test (if multiple tool calls)
   if (toolCalls.length > 1) {
-    const sequence = toolCalls.map(t => t.data.tool_name!);
+    const sequence = toolCalls.map((t) => t.data.tool_name!);
     tests.push({
       name: 'Agent follows expected tool sequence',
       input: String(input),

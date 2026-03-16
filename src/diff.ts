@@ -27,20 +27,20 @@ function getTokens(trace: AgentTrace): { input: number; output: number } {
       input: acc.input + (s.data.tokens?.input ?? 0),
       output: acc.output + (s.data.tokens?.output ?? 0),
     }),
-    { input: 0, output: 0 }
+    { input: 0, output: 0 },
   );
 }
 
 function getTools(trace: AgentTrace): string[] {
-  return [...new Set(
-    trace.steps.filter(s => s.type === 'tool_call').map(s => s.data.tool_name!)
-  )];
+  return [
+    ...new Set(trace.steps.filter((s) => s.type === 'tool_call').map((s) => s.data.tool_name!)),
+  ];
 }
 
 function getOutput(trace: AgentTrace): string {
   return trace.steps
-    .filter(s => s.type === 'output')
-    .map(s => s.data.content ?? '')
+    .filter((s) => s.type === 'output')
+    .map((s) => s.data.content ?? '')
     .join('\n')
     .trim();
 }
@@ -53,12 +53,13 @@ export function diffTraces(oldTrace: AgentTrace, newTrace: AgentTrace): TraceDif
   const tokensNew = getTokens(newTrace);
   const totalOld = tokensOld.input + tokensOld.output;
   const totalNew = tokensNew.input + tokensNew.output;
-  const tokensDeltaPercent = totalOld > 0 ? Math.round(((totalNew - totalOld) / totalOld) * 100) : 0;
+  const tokensDeltaPercent =
+    totalOld > 0 ? Math.round(((totalNew - totalOld) / totalOld) * 100) : 0;
 
   const toolsOld = getTools(oldTrace);
   const toolsNew = getTools(newTrace);
-  const toolsAdded = toolsNew.filter(t => !toolsOld.includes(t));
-  const toolsRemoved = toolsOld.filter(t => !toolsNew.includes(t));
+  const toolsAdded = toolsNew.filter((t) => !toolsOld.includes(t));
+  const toolsRemoved = toolsOld.filter((t) => !toolsNew.includes(t));
 
   const outputOld = getOutput(oldTrace);
   const outputNew = getOutput(newTrace);
@@ -98,10 +99,12 @@ export function diffTraces(oldTrace: AgentTrace, newTrace: AgentTrace): TraceDif
 export function formatDiff(diff: TraceDiff): string {
   const lines: string[] = [];
 
-  const sign = (n: number) => n > 0 ? `+${n}` : String(n);
+  const sign = (n: number) => (n > 0 ? `+${n}` : String(n));
 
   lines.push(`  Steps:   ${diff.stepsOld} → ${diff.stepsNew} (${sign(diff.stepsDelta)})`);
-  lines.push(`  Tokens:  ${diff.tokensOld.input + diff.tokensOld.output} → ${diff.tokensNew.input + diff.tokensNew.output} (${sign(diff.tokensDeltaPercent)}%)`);
+  lines.push(
+    `  Tokens:  ${diff.tokensOld.input + diff.tokensOld.output} → ${diff.tokensNew.input + diff.tokensNew.output} (${sign(diff.tokensDeltaPercent)}%)`,
+  );
   lines.push(`  Tools:   [${diff.toolsOld.join(', ')}] → [${diff.toolsNew.join(', ')}]`);
 
   if (diff.toolsAdded.length > 0) {

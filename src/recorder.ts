@@ -1,13 +1,12 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
 import type { AgentTrace, TraceStep } from './types';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 
 export class Recorder {
   private trace: AgentTrace;
-  private startTime: number;
 
   constructor(metadata: Record<string, any> = {}) {
-    this.startTime = Date.now();
     this.trace = {
       id: crypto.randomUUID(),
       timestamp: new Date().toISOString(),
@@ -37,8 +36,9 @@ export class Recorder {
    */
   patchOpenAI(openaiModule: any): void {
     const recorder = this;
-    const origCreate = openaiModule.OpenAI?.Chat?.Completions?.prototype?.create
-      ?? openaiModule?.default?.Chat?.Completions?.prototype?.create;
+    const origCreate =
+      openaiModule.OpenAI?.Chat?.Completions?.prototype?.create ??
+      openaiModule?.default?.Chat?.Completions?.prototype?.create;
 
     if (!origCreate) {
       // Try patching instance-based
@@ -96,8 +96,9 @@ export class Recorder {
    */
   patchAnthropic(anthropicModule: any): void {
     const recorder = this;
-    const MessagesClass = anthropicModule?.Anthropic?.Messages?.prototype
-      ?? anthropicModule?.default?.Messages?.prototype;
+    const MessagesClass =
+      anthropicModule?.Anthropic?.Messages?.prototype ??
+      anthropicModule?.default?.Messages?.prototype;
 
     if (!MessagesClass?.create) return;
 
@@ -145,8 +146,6 @@ export class Recorder {
    */
   patchGemini(geminiModule: any): void {
     const recorder = this;
-    const GenerativeModel = geminiModule?.GenerativeModel?.prototype
-      ?? geminiModule?.GoogleGenerativeAI?.prototype;
 
     // Try to patch generateContent on the model
     const modelProto = geminiModule?.GenerativeModel?.prototype;
@@ -214,8 +213,7 @@ export class Recorder {
 
     // Azure OpenAI uses the same OpenAI SDK structure
     // Try patching the azure-specific client
-    const ClientProto = azureModule?.AzureOpenAI?.prototype
-      ?? azureModule?.OpenAIClient?.prototype;
+    const ClientProto = azureModule?.AzureOpenAI?.prototype ?? azureModule?.OpenAIClient?.prototype;
 
     if (!ClientProto) {
       // Fall back to standard OpenAI patching (Azure OpenAI v2 uses openai SDK)

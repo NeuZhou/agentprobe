@@ -41,7 +41,7 @@ export function startWatch(opts: WatchOptions): void {
     console.log(`\n👁️  Watching for changes...`);
   };
 
-  const onChange = (eventType: string, filename: string | null) => {
+  const onChange = (_eventType: string, filename: string | null) => {
     if (debounce) clearTimeout(debounce);
     debounce = setTimeout(() => {
       if (filename) console.log(`\n📝 Changed: ${filename}`);
@@ -55,7 +55,13 @@ export function startWatch(opts: WatchOptions): void {
   // Watch the suite directory for agent source changes
   try {
     fs.watch(suiteDir, { recursive: true }, (evt, filename) => {
-      if (filename && (filename.endsWith('.ts') || filename.endsWith('.js') || filename.endsWith('.yaml') || filename.endsWith('.yml'))) {
+      if (
+        filename &&
+        (filename.endsWith('.ts') ||
+          filename.endsWith('.js') ||
+          filename.endsWith('.yaml') ||
+          filename.endsWith('.yml'))
+      ) {
         onChange(evt, filename);
       }
     });
@@ -67,7 +73,9 @@ export function startWatch(opts: WatchOptions): void {
   for (const p of opts.extraWatchPaths ?? []) {
     try {
       fs.watch(p, { recursive: true }, onChange);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // Initial run

@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import type { SuiteResult, ReportFormat, TestResult } from './types';
+import type { SuiteResult, ReportFormat } from './types';
 import { reportHTML } from './reporters/html';
 import { reportJUnit } from './reporters/junit';
 
@@ -33,8 +33,9 @@ function reportConsole(result: SuiteResult): string {
     lines.push(`  ${icon} ${name} ${duration}${tags}`);
 
     if (!test.passed) {
-      for (const a of test.assertions.filter(a => !a.passed)) {
-        const msg = a.message ?? `expected ${JSON.stringify(a.expected)}, got ${JSON.stringify(a.actual)}`;
+      for (const a of test.assertions.filter((a) => !a.passed)) {
+        const msg =
+          a.message ?? `expected ${JSON.stringify(a.expected)}, got ${JSON.stringify(a.actual)}`;
         lines.push(chalk.red(`     ↳ ${a.name}: ${msg}`));
       }
       if (test.error) {
@@ -61,7 +62,7 @@ function reportConsole(result: SuiteResult): string {
   // Stats
   if (result.results.length > 0) {
     lines.push('');
-    const durations = result.results.map(r => ({ name: r.name, ms: r.duration_ms }));
+    const durations = result.results.map((r) => ({ name: r.name, ms: r.duration_ms }));
     durations.sort((a, b) => b.ms - a.ms);
     const slowest = durations[0];
     lines.push(chalk.dim(`  🐢 Slowest: ${slowest.name} (${slowest.ms}ms)`));
@@ -69,9 +70,15 @@ function reportConsole(result: SuiteResult): string {
     const totalAssertions = result.results.reduce((sum, r) => sum + r.assertions.length, 0);
     lines.push(chalk.dim(`  📋 Total assertions: ${totalAssertions}`));
 
-    const mostAssertions = result.results.reduce((max, r) =>
-      r.assertions.length > max.assertions.length ? r : max, result.results[0]);
-    lines.push(chalk.dim(`  🏆 Most assertions: ${mostAssertions.name} (${mostAssertions.assertions.length})`));
+    const mostAssertions = result.results.reduce(
+      (max, r) => (r.assertions.length > max.assertions.length ? r : max),
+      result.results[0],
+    );
+    lines.push(
+      chalk.dim(
+        `  🏆 Most assertions: ${mostAssertions.name} (${mostAssertions.assertions.length})`,
+      ),
+    );
   }
 
   lines.push('');
@@ -102,10 +109,12 @@ function reportMarkdown(result: SuiteResult): string {
   if (result.failed > 0) {
     lines.push('');
     lines.push('### Failures');
-    for (const test of result.results.filter(t => !t.passed)) {
+    for (const test of result.results.filter((t) => !t.passed)) {
       lines.push(`#### ❌ ${test.name}`);
-      for (const a of test.assertions.filter(a => !a.passed)) {
-        lines.push(`- ${a.name}: ${a.message ?? `expected \`${JSON.stringify(a.expected)}\`, got \`${JSON.stringify(a.actual)}\``}`);
+      for (const a of test.assertions.filter((a) => !a.passed)) {
+        lines.push(
+          `- ${a.name}: ${a.message ?? `expected \`${JSON.stringify(a.expected)}\`, got \`${JSON.stringify(a.actual)}\``}`,
+        );
       }
     }
   }

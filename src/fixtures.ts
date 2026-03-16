@@ -34,7 +34,11 @@ export function loadFixture(fixturePath: string): FixtureConfig {
 /**
  * Apply a fixture's tool mocks to a MockToolkit.
  */
-export function applyFixtureMocks(fixture: FixtureConfig, toolkit: MockToolkit, basePath: string): void {
+export function applyFixtureMocks(
+  fixture: FixtureConfig,
+  toolkit: MockToolkit,
+  basePath: string,
+): void {
   if (!fixture.tools) return;
 
   for (const tool of fixture.tools) {
@@ -43,7 +47,9 @@ export function applyFixtureMocks(fixture: FixtureConfig, toolkit: MockToolkit, 
     } else if (tool.mock_sequence) {
       toolkit.mockSequence(tool.name, tool.mock_sequence);
     } else if (tool.mock_file) {
-      const filePath = path.isAbsolute(tool.mock_file) ? tool.mock_file : path.join(basePath, tool.mock_file);
+      const filePath = path.isAbsolute(tool.mock_file)
+        ? tool.mock_file
+        : path.join(basePath, tool.mock_file);
       const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       toolkit.mock(tool.name, () => data);
     } else if (tool.mock !== undefined) {

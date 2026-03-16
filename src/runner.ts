@@ -1,9 +1,16 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import YAML from 'yaml';
 import chalk from 'chalk';
-import type { TestSuite, TestCase, TestResult, SuiteResult, AgentTrace, RunOptions, HookConfig } from './types';
+import type {
+  TestSuite,
+  TestCase,
+  TestResult,
+  SuiteResult,
+  AgentTrace,
+  RunOptions,
+  HookConfig,
+} from './types';
 import { parseYamlWithValidation } from './yaml-validator';
 import { evaluate } from './assertions';
 import { evaluateComposed } from './compose';
@@ -11,7 +18,7 @@ import { loadTrace } from './recorder';
 import { MockToolkit } from './mocks';
 import { loadFixture, applyFixtureMocks, applyFixtureEnv, restoreEnv } from './fixtures';
 import { matchSnapshot, SnapshotConfig } from './snapshots';
-import { withRetry, formatRetryInfo } from './retry';
+import { withRetry } from './retry';
 import { buildExecutionPlan, shouldSkip, type DepTestCase } from './deps';
 import { parseEnvFile, resolveEnvRecord, applyEnv, restoreProcessEnv } from './env';
 
@@ -48,7 +55,7 @@ function expandTests(tests: TestCase[]): TestCase[] {
  */
 function filterByTags(tests: TestCase[], tags?: string[]): TestCase[] {
   if (!tags || tags.length === 0) return tests;
-  return tests.filter(t => t.tags?.some(tag => tags.includes(tag)));
+  return tests.filter((t) => t.tags?.some((tag) => tags.includes(tag)));
 }
 
 /**
@@ -66,7 +73,9 @@ async function runSingleTest(
     // Apply fixture mocks if specified
     let envBackup: Record<string, string | undefined> = {};
     if (test.fixture) {
-      const fixturePath = path.isAbsolute(test.fixture) ? test.fixture : path.join(suiteDir, test.fixture);
+      const fixturePath = path.isAbsolute(test.fixture)
+        ? test.fixture
+        : path.join(suiteDir, test.fixture);
       const fixture = loadFixture(fixturePath);
       applyFixtureMocks(fixture, toolkit, path.dirname(fixturePath));
       envBackup = applyFixtureEnv(fixture);
@@ -94,7 +103,7 @@ async function runSingleTest(
       if (!fs.existsSync(tracePath)) {
         throw new Error(
           `Trace file not found: ${tracePath}\n` +
-          `💡 Record a trace first: agentprobe record --script your-agent.js -o ${test.trace}`
+            `💡 Record a trace first: agentprobe record --script your-agent.js -o ${test.trace}`,
         );
       }
       trace = loadTrace(tracePath);
@@ -113,11 +122,13 @@ async function runSingleTest(
 
     // Composed assertions (all_of, any_of, none_of)
     if (test.expect.all_of || test.expect.any_of || test.expect.none_of) {
-      assertions.push(...evaluateComposed(trace, {
-        all_of: test.expect.all_of,
-        any_of: test.expect.any_of,
-        none_of: test.expect.none_of,
-      }));
+      assertions.push(
+        ...evaluateComposed(trace, {
+          all_of: test.expect.all_of,
+          any_of: test.expect.any_of,
+          none_of: test.expect.none_of,
+        }),
+      );
     }
 
     // Snapshot testing
@@ -137,12 +148,16 @@ async function runSingleTest(
         assertions.push({
           name: 'snapshot',
           passed: true,
-          message: snapResult.created ? 'Snapshot created' : snapResult.updated ? 'Snapshot updated' : 'Snapshot matched',
+          message: snapResult.created
+            ? 'Snapshot created'
+            : snapResult.updated
+              ? 'Snapshot updated'
+              : 'Snapshot matched',
         });
       }
     }
 
-    const passed = assertions.every(a => a.passed);
+    const passed = assertions.every((a) => a.passed);
 
     // Restore env
     if (Object.keys(testEnvBackup).length > 0) restoreProcessEnv(testEnvBackup);
@@ -180,13 +195,15 @@ async function runParallel<T>(
   const workers: Promise<void>[] = [];
 
   for (let i = 0; i < Math.min(maxConcurrency, items.length); i++) {
-    workers.push((async () => {
-      while (index < items.length) {
-        const currentIndex = index++;
-        if (currentIndex >= items.length) break;
-        await fn(items[currentIndex]);
-      }
-    })());
+    workers.push(
+      (async () => {
+        while (index < items.length) {
+          const currentIndex = index++;
+          if (currentIndex >= items.length) break;
+          await fn(items[currentIndex]);
+        }
+      })(),
+    );
   }
 
   await Promise.all(workers);
@@ -195,7 +212,10 @@ async function runParallel<T>(
 export async function runSuite(suitePath: string, options?: RunOptions): Promise<SuiteResult> {
   const raw = fs.readFileSync(suitePath, 'utf-8');
 
-  const { parsed: suite, warnings } = parseYamlWithValidation(raw, suitePath) as { parsed: TestSuite; warnings: string[] };
+  const { parsed: suite, warnings } = parseYamlWithValidation(raw, suitePath) as {
+    parsed: TestSuite;
+    warnings: string[];
+  };
   for (const w of warnings) {
     console.error(chalk.yellow(w));
   }
@@ -203,8 +223,8 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
   if (!suite || !suite.tests) {
     throw new Error(
       `Invalid test suite: ${suitePath}\n` +
-      `Expected a YAML file with 'name' and 'tests' fields.\n` +
-      `💡 Run 'agentprobe init' to generate an example.`
+        `Expected a YAML file with 'name' and 'tests' fields.\n` +
+        `💡 Run 'agentprobe init' to generate an example.`,
     );
   }
 
@@ -214,7 +234,9 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
 
   // Load .env file if specified in options
   if (options?.envFile) {
-    const envFilePath = path.isAbsolute(options.envFile) ? options.envFile : path.resolve(options.envFile);
+    const envFilePath = path.isAbsolute(options.envFile)
+      ? options.envFile
+      : path.resolve(options.envFile);
     if (fs.existsSync(envFilePath)) {
       const envVars = parseEnvFile(envFilePath);
       for (const [key, value] of Object.entries(envVars)) {
@@ -340,8 +362,10 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
     // (We can only check at suite level - warn about tests with mocks where trace doesn't use those tools)
     for (const result of results) {
       if (result.trace) {
-        const calledTools = new Set(result.trace.steps.filter(s => s.type === 'tool_call').map(s => s.data.tool_name));
-        const testDef = tests.find(t => t.name === result.name);
+        const calledTools = new Set(
+          result.trace.steps.filter((s) => s.type === 'tool_call').map((s) => s.data.tool_name),
+        );
+        const testDef = tests.find((t) => t.name === result.name);
         if (testDef?.mocks) {
           for (const mockName of Object.keys(testDef.mocks)) {
             if (!calledTools.has(mockName)) {
@@ -355,14 +379,21 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
     // Check for uncovered tools (tools called but not asserted on)
     for (const result of results) {
       if (result.trace) {
-        const calledTools = new Set(result.trace.steps.filter(s => s.type === 'tool_call').map(s => s.data.tool_name));
-        const testDef = tests.find(t => t.name === result.name);
+        const calledTools = new Set(
+          result.trace.steps.filter((s) => s.type === 'tool_call').map((s) => s.data.tool_name),
+        );
+        const testDef = tests.find((t) => t.name === result.name);
         if (testDef?.expect?.tool_called) {
-          const asserted = new Set(Array.isArray(testDef.expect.tool_called)
-            ? testDef.expect.tool_called : [testDef.expect.tool_called]);
+          const asserted = new Set(
+            Array.isArray(testDef.expect.tool_called)
+              ? testDef.expect.tool_called
+              : [testDef.expect.tool_called],
+          );
           for (const tool of calledTools) {
             if (tool && !asserted.has(tool)) {
-              strictErrors.push(`Uncovered tool "${tool}" in test "${result.name}" (called but not asserted)`);
+              strictErrors.push(
+                `Uncovered tool "${tool}" in test "${result.name}" (called but not asserted)`,
+              );
             }
           }
         }
@@ -390,7 +421,7 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
     }
   }
 
-  const passed = results.filter(r => r.passed).length;
+  const passed = results.filter((r) => r.passed).length;
   return {
     name: suite.name,
     passed,
@@ -404,7 +435,11 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
 /**
  * Execute an agent and capture its trace.
  */
-async function executeAgent(test: TestCase, toolkit: MockToolkit, suiteDir: string): Promise<AgentTrace> {
+async function executeAgent(
+  test: TestCase,
+  toolkit: MockToolkit,
+  suiteDir: string,
+): Promise<AgentTrace> {
   const agent = test.agent!;
   const trace: AgentTrace = {
     id: `live-${Date.now()}`,

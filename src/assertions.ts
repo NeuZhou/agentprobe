@@ -4,13 +4,11 @@ import { calculateCost } from './cost';
 export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResult[] {
   const results: AssertionResult[] = [];
 
-  const toolCalls = trace.steps
-    .filter(s => s.type === 'tool_call')
-    .map(s => s.data.tool_name!);
+  const toolCalls = trace.steps.filter((s) => s.type === 'tool_call').map((s) => s.data.tool_name!);
 
   const outputs = trace.steps
-    .filter(s => s.type === 'output')
-    .map(s => s.data.content ?? '')
+    .filter((s) => s.type === 'output')
+    .map((s) => s.data.content ?? '')
     .join('\n');
 
   // tool_called
@@ -29,21 +27,27 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
 
   // tool_not_called
   if (expect.tool_not_called) {
-    const forbidden = Array.isArray(expect.tool_not_called) ? expect.tool_not_called : [expect.tool_not_called];
+    const forbidden = Array.isArray(expect.tool_not_called)
+      ? expect.tool_not_called
+      : [expect.tool_not_called];
     for (const tool of forbidden) {
       results.push({
         name: `tool_not_called: ${tool}`,
         passed: !toolCalls.includes(tool),
         expected: `not ${tool}`,
         actual: toolCalls,
-        message: toolCalls.includes(tool) ? `Tool "${tool}" was called but should not have been` : undefined,
+        message: toolCalls.includes(tool)
+          ? `Tool "${tool}" was called but should not have been`
+          : undefined,
       });
     }
   }
 
   // output_contains
   if (expect.output_contains) {
-    const needles = Array.isArray(expect.output_contains) ? expect.output_contains : [expect.output_contains];
+    const needles = Array.isArray(expect.output_contains)
+      ? expect.output_contains
+      : [expect.output_contains];
     for (const needle of needles) {
       results.push({
         name: `output_contains: "${needle}"`,
@@ -57,7 +61,9 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
 
   // output_not_contains
   if (expect.output_not_contains) {
-    const forbidden = Array.isArray(expect.output_not_contains) ? expect.output_not_contains : [expect.output_not_contains];
+    const forbidden = Array.isArray(expect.output_not_contains)
+      ? expect.output_not_contains
+      : [expect.output_not_contains];
     for (const needle of forbidden) {
       results.push({
         name: `output_not_contains: "${needle}"`,
@@ -145,7 +151,7 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
   // tool_args_match
   if (expect.tool_args_match) {
     for (const [toolName, expectedArgs] of Object.entries(expect.tool_args_match)) {
-      const step = trace.steps.find(s => s.type === 'tool_call' && s.data.tool_name === toolName);
+      const step = trace.steps.find((s) => s.type === 'tool_call' && s.data.tool_name === toolName);
       if (!step) {
         results.push({
           name: `tool_args_match: ${toolName}`,
@@ -155,7 +161,10 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
           message: `Tool "${toolName}" was not called`,
         });
       } else {
-        const match = deepPartialMatch(step.data.tool_args ?? {}, expectedArgs as Record<string, any>);
+        const match = deepPartialMatch(
+          step.data.tool_args ?? {},
+          expectedArgs as Record<string, any>,
+        );
         results.push({
           name: `tool_args_match: ${toolName}`,
           passed: match,
@@ -174,14 +183,23 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
       passed: cost.total_cost <= expect.max_cost_usd,
       expected: `<= $${expect.max_cost_usd}`,
       actual: `$${cost.total_cost.toFixed(4)}`,
-      message: cost.total_cost > expect.max_cost_usd ? `Cost $${cost.total_cost.toFixed(4)} exceeds max $${expect.max_cost_usd}` : undefined,
+      message:
+        cost.total_cost > expect.max_cost_usd
+          ? `Cost $${cost.total_cost.toFixed(4)} exceeds max $${expect.max_cost_usd}`
+          : undefined,
     });
   }
 
   // custom
   if (expect.custom) {
     try {
-      const fn = new Function('trace', 'steps', 'toolCalls', 'outputs', `return (${expect.custom})`);
+      const fn = new Function(
+        'trace',
+        'steps',
+        'toolCalls',
+        'outputs',
+        `return (${expect.custom})`,
+      );
       const result = fn(trace, trace.steps, toolCalls, outputs);
       results.push({
         name: `custom: ${expect.custom.slice(0, 60)}`,

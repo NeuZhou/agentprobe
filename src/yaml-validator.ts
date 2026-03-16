@@ -25,8 +25,8 @@ export function parseYamlWithValidation(content: string, filePath?: string): Yam
     const snippet = err.pos ? getSnippet(content, err.pos[0]) : '';
     throw new Error(
       `Invalid YAML${filePath ? ` in ${filePath}` : ''}${pos}: ${err.message}` +
-      (snippet ? `\n\n${snippet}` : '') +
-      `\n\n💡 Check indentation and special characters.`
+        (snippet ? `\n\n${snippet}` : '') +
+        `\n\n💡 Check indentation and special characters.`,
     );
   }
 
@@ -51,12 +51,11 @@ export function parseYamlWithValidation(content: string, filePath?: string): Yam
  * Detect duplicate keys by scanning the raw YAML content for repeated keys
  * within the same indentation level.
  */
-function detectDuplicatesInDoc(doc: YAML.Document, content: string, warnings: string[]): void {
+function detectDuplicatesInDoc(_doc: YAML.Document, content: string, warnings: string[]): void {
   const lines = content.split('\n');
   const keysByScope: Map<string, Map<string, number>> = new Map();
 
   let currentScope = '';
-  let currentIndent = 0;
   const scopeStack: Array<{ indent: number; scope: string }> = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -71,7 +70,7 @@ function detectDuplicatesInDoc(doc: YAML.Document, content: string, warnings: st
       scopeStack.pop();
     }
 
-    currentScope = scopeStack.map(s => s.scope).join('.');
+    currentScope = scopeStack.map((s) => s.scope).join('.');
 
     // Detect key: value pattern
     const keyMatch = trimmed.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s*:/);
@@ -87,8 +86,8 @@ function detectDuplicatesInDoc(doc: YAML.Document, content: string, warnings: st
       if (keys.has(key)) {
         warnings.push(
           `⚠ Duplicate key '${key}' at line ${i + 1}` +
-          ` (first seen at line ${keys.get(key)})` +
-          ` — YAML silently overwrites duplicates. Use array syntax instead.`
+            ` (first seen at line ${keys.get(key)})` +
+            ` — YAML silently overwrites duplicates. Use array syntax instead.`,
         );
       }
       keys.set(key, i + 1);
@@ -105,13 +104,15 @@ function detectDuplicatesInDoc(doc: YAML.Document, content: string, warnings: st
  */
 function autoMergeDuplicates(
   expect: Record<string, any>,
-  testName: string,
-  warnings: string[]
+  _testName: string,
+  _warnings: string[],
 ): void {
   // These keys support both string and array values
   const arrayableKeys = [
-    'tool_called', 'tool_not_called',
-    'output_contains', 'output_not_contains',
+    'tool_called',
+    'tool_not_called',
+    'output_contains',
+    'output_not_contains',
   ];
 
   for (const key of arrayableKeys) {

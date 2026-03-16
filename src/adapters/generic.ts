@@ -9,9 +9,16 @@ export function convertGeneric(input: any): AgentTrace {
   let entries: any[];
 
   if (typeof input === 'string') {
-    entries = input.split('\n')
-      .filter(l => l.trim())
-      .map(l => { try { return JSON.parse(l); } catch { return null; } })
+    entries = input
+      .split('\n')
+      .filter((l) => l.trim())
+      .map((l) => {
+        try {
+          return JSON.parse(l);
+        } catch {
+          return null;
+        }
+      })
       .filter(Boolean);
   } else if (Array.isArray(input)) {
     entries = input;
@@ -37,10 +44,14 @@ export function convertGeneric(input: any): AgentTrace {
         tool_args: entry.args ?? entry.tool_args ?? entry.input,
         tool_result: entry.result ?? entry.output ?? entry.response,
         content: entry.content ?? entry.text ?? entry.message ?? entry.msg,
-        tokens: entry.tokens ?? (entry.input_tokens != null ? {
-          input: entry.input_tokens,
-          output: entry.output_tokens,
-        } : undefined),
+        tokens:
+          entry.tokens ??
+          (entry.input_tokens != null
+            ? {
+                input: entry.input_tokens,
+                output: entry.output_tokens,
+              }
+            : undefined),
       },
     });
   }
@@ -55,7 +66,8 @@ export function convertGeneric(input: any): AgentTrace {
 
 function mapEventType(event: string): StepType {
   const e = event.toLowerCase();
-  if (e.includes('tool_call') || e.includes('function_call') || e.includes('tool_use')) return 'tool_call';
+  if (e.includes('tool_call') || e.includes('function_call') || e.includes('tool_use'))
+    return 'tool_call';
   if (e.includes('tool_result') || e.includes('function_result')) return 'tool_result';
   if (e.includes('llm') || e.includes('completion') || e.includes('chat')) return 'llm_call';
   if (e.includes('think') || e.includes('reason')) return 'thought';

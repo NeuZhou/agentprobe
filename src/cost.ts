@@ -4,22 +4,22 @@ import type { AgentTrace } from './types';
  * Model pricing per 1M tokens (USD).
  */
 export const PRICING: Record<string, { input: number; output: number }> = {
-  'gpt-4o': { input: 2.50, output: 10.00 },
-  'gpt-4o-mini': { input: 0.15, output: 0.60 },
-  'gpt-4-turbo': { input: 10.00, output: 30.00 },
-  'gpt-4': { input: 30.00, output: 60.00 },
-  'gpt-3.5-turbo': { input: 0.50, output: 1.50 },
-  'o1': { input: 15.00, output: 60.00 },
-  'o1-mini': { input: 3.00, output: 12.00 },
-  'o3-mini': { input: 1.10, output: 4.40 },
-  'claude-3.5-sonnet': { input: 3.00, output: 15.00 },
-  'claude-3-sonnet': { input: 3.00, output: 15.00 },
+  'gpt-4o': { input: 2.5, output: 10.0 },
+  'gpt-4o-mini': { input: 0.15, output: 0.6 },
+  'gpt-4-turbo': { input: 10.0, output: 30.0 },
+  'gpt-4': { input: 30.0, output: 60.0 },
+  'gpt-3.5-turbo': { input: 0.5, output: 1.5 },
+  o1: { input: 15.0, output: 60.0 },
+  'o1-mini': { input: 3.0, output: 12.0 },
+  'o3-mini': { input: 1.1, output: 4.4 },
+  'claude-3.5-sonnet': { input: 3.0, output: 15.0 },
+  'claude-3-sonnet': { input: 3.0, output: 15.0 },
   'claude-3-haiku': { input: 0.25, output: 1.25 },
-  'claude-3-opus': { input: 15.00, output: 75.00 },
-  'claude-3.5-haiku': { input: 0.80, output: 4.00 },
-  'gemini-1.5-pro': { input: 1.25, output: 5.00 },
-  'gemini-1.5-flash': { input: 0.075, output: 0.30 },
-  'gemini-2.0-flash': { input: 0.10, output: 0.40 },
+  'claude-3-opus': { input: 15.0, output: 75.0 },
+  'claude-3.5-haiku': { input: 0.8, output: 4.0 },
+  'gemini-1.5-pro': { input: 1.25, output: 5.0 },
+  'gemini-1.5-flash': { input: 0.075, output: 0.3 },
+  'gemini-2.0-flash': { input: 0.1, output: 0.4 },
 };
 
 export interface CostBreakdown {
@@ -98,7 +98,7 @@ function findPricing(model: string): { input: number; output: number } {
     if (normalized.includes(key) || key.includes(normalized)) return val;
   }
   // Default: gpt-4o-mini pricing as fallback
-  return { input: 0.15, output: 0.60 };
+  return { input: 0.15, output: 0.6 };
 }
 
 /**
@@ -107,8 +107,12 @@ function findPricing(model: string): { input: number; output: number } {
 export function formatCostReport(report: CostReport): string {
   const lines: string[] = ['', '  💰 Cost Breakdown'];
   for (const b of report.breakdowns) {
-    lines.push(`     ${b.model}: ${b.input_tokens} in + ${b.output_tokens} out = $${b.total_cost.toFixed(4)}`);
+    lines.push(
+      `     ${b.model}: ${b.input_tokens} in + ${b.output_tokens} out = $${b.total_cost.toFixed(4)}`,
+    );
   }
-  lines.push(`     Total: $${report.total_cost.toFixed(4)} (${report.total_input_tokens} in + ${report.total_output_tokens} out)`);
+  lines.push(
+    `     Total: $${report.total_cost.toFixed(4)} (${report.total_input_tokens} in + ${report.total_output_tokens} out)`,
+  );
   return lines.join('\n');
 }

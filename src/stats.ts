@@ -72,7 +72,9 @@ export function formatStats(stats: TraceStats): string {
 
   lines.push(chalk.bold(`\n📊 Trace Statistics (${stats.traceCount} traces)`));
   lines.push(`  Total steps:     ${stats.totalSteps}`);
-  lines.push(`  Total tokens:    ${stats.totalTokens.toLocaleString()}${stats.traceCount > 0 ? ` (avg ${Math.round(stats.totalTokens / stats.traceCount)}/trace)` : ''}`);
+  lines.push(
+    `  Total tokens:    ${stats.totalTokens.toLocaleString()}${stats.traceCount > 0 ? ` (avg ${Math.round(stats.totalTokens / stats.traceCount)}/trace)` : ''}`,
+  );
   lines.push(`  Total cost:      $${stats.totalCost.toFixed(4)}`);
   lines.push(`  Avg duration:    ${(stats.avgDuration / 1000).toFixed(1)}s`);
 
@@ -85,8 +87,8 @@ export function formatStats(stats: TraceStats): string {
   }
 
   if (stats.traces.length > 1) {
-    const mostExpensive = stats.traces.reduce((a, b) => a.cost > b.cost ? a : b);
-    const slowest = stats.traces.reduce((a, b) => a.duration > b.duration ? a : b);
+    const mostExpensive = stats.traces.reduce((a, b) => (a.cost > b.cost ? a : b));
+    const slowest = stats.traces.reduce((a, b) => (a.duration > b.duration ? a : b));
     lines.push(`  Most expensive:  ${mostExpensive.id} ($${mostExpensive.cost.toFixed(4)})`);
     lines.push(`  Slowest:         ${slowest.id} (${(slowest.duration / 1000).toFixed(1)}s)`);
   }

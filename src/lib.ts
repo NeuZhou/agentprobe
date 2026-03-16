@@ -1,5 +1,5 @@
 /**
- * AgentProbe — Programmatic API
+ * AgentProbe - Programmatic API
  *
  * Library entry point (separate from CLI).
  *
@@ -55,7 +55,16 @@ export { calculateCost, formatCostReport } from './cost';
 // Coverage
 export { analyzeCoverage, formatCoverage } from './coverage';
 
-// Types — re-export everything
+// Validation
+export {
+  validateSuite,
+  validateExpectations,
+  validateTrace,
+  formatValidationErrors,
+} from './validate';
+export type { ValidationError, ValidationResult } from './validate';
+
+// Types - re-export everything
 export type {
   AgentTrace,
   TraceStep,

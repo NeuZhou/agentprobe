@@ -8,8 +8,8 @@ import * as path from 'path';
 
 export interface JudgeConfig {
   criteria: string;
-  model?: string;      // default: gpt-4o-mini
-  threshold?: number;  // default: 0.7
+  model?: string; // default: gpt-4o-mini
+  threshold?: number; // default: 0.7
 }
 
 export interface RubricCriterion {
@@ -71,7 +71,9 @@ function setCache(key: string, value: any): void {
 async function callLLM(model: string, systemPrompt: string, userPrompt: string): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    throw new Error('OPENAI_API_KEY env var required for LLM-as-Judge. Set it or use a cached result.');
+    throw new Error(
+      'OPENAI_API_KEY env var required for LLM-as-Judge. Set it or use a cached result.',
+    );
   }
 
   const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
@@ -79,7 +81,7 @@ async function callLLM(model: string, systemPrompt: string, userPrompt: string):
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model,
@@ -137,11 +139,14 @@ ${output}`;
 /**
  * Rubric-based judge: evaluate output against multiple weighted criteria.
  */
-export async function judgeWithRubric(output: string, config: JudgeRubricConfig): Promise<RubricResult> {
+export async function judgeWithRubric(
+  output: string,
+  config: JudgeRubricConfig,
+): Promise<RubricResult> {
   const model = config.model || 'gpt-4o-mini';
   const threshold = config.threshold ?? 0.7;
 
-  const rubricStr = config.rubric.map(r => `${r.criterion} (weight: ${r.weight})`).join('\n');
+  const rubricStr = config.rubric.map((r) => `${r.criterion} (weight: ${r.weight})`).join('\n');
   const key = cacheKey(`rubric:${model}:${rubricStr}:${output}`);
   const cached = getCached<RubricResult>(key);
   if (cached) return { ...cached, cached: true };

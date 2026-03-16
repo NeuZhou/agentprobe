@@ -4,7 +4,6 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 import type { AgentTrace } from './types';
 
 export interface SnapshotConfig {
@@ -24,16 +23,14 @@ export interface BehaviorSnapshot {
  * Extract a behavior snapshot from a trace (structural, not exact content).
  */
 export function extractSnapshot(trace: AgentTrace): BehaviorSnapshot {
-  const toolCalls = trace.steps
-    .filter(s => s.type === 'tool_call')
-    .map(s => s.data.tool_name!);
+  const toolCalls = trace.steps.filter((s) => s.type === 'tool_call').map((s) => s.data.tool_name!);
 
   return {
     toolsCalled: [...new Set(toolCalls)].sort(),
     toolCallOrder: toolCalls,
-    hasOutput: trace.steps.some(s => s.type === 'output'),
+    hasOutput: trace.steps.some((s) => s.type === 'output'),
     stepCount: trace.steps.length,
-    stepTypes: trace.steps.map(s => s.type),
+    stepTypes: trace.steps.map((s) => s.type),
   };
 }
 

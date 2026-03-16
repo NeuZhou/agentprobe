@@ -31,17 +31,20 @@ export function analyzeCoverage(result: SuiteResult, declaredTools?: string[]): 
       callCounts[name] = (callCounts[name] ?? 0) + 1;
 
       if (!argCombinations[name]) argCombinations[name] = new Set();
-      const argKeys = Object.keys(step.data.tool_args ?? {}).sort().join(',');
+      const argKeys = Object.keys(step.data.tool_args ?? {})
+        .sort()
+        .join(',');
       argCombinations[name].add(argKeys);
     }
   }
 
   const calledTools = Object.keys(callCounts).sort();
-  const allTools = declaredTools ? [...new Set([...declaredTools, ...calledTools])].sort() : calledTools;
-  const uncalledTools = allTools.filter(t => !callCounts[t]);
-  const coveragePercent = allTools.length > 0
-    ? Math.round((calledTools.length / allTools.length) * 100)
-    : 100;
+  const allTools = declaredTools
+    ? [...new Set([...declaredTools, ...calledTools])].sort()
+    : calledTools;
+  const uncalledTools = allTools.filter((t) => !callCounts[t]);
+  const coveragePercent =
+    allTools.length > 0 ? Math.round((calledTools.length / allTools.length) * 100) : 100;
 
   return {
     totalTools: allTools.length,
@@ -61,7 +64,9 @@ export function formatCoverage(cov: CoverageResult): string {
   lines.push('');
   lines.push('📊 Tool Coverage Report');
   lines.push('═'.repeat(50));
-  lines.push(`  Coverage: ${cov.coveragePercent}% (${cov.calledTools.length}/${cov.totalTools} tools)`);
+  lines.push(
+    `  Coverage: ${cov.coveragePercent}% (${cov.calledTools.length}/${cov.totalTools} tools)`,
+  );
   lines.push('');
 
   if (cov.calledTools.length > 0) {
