@@ -318,3 +318,23 @@ export type { EnvironmentProfile, ProfilesConfig } from './profiles';
 // Enhanced Plugin System
 export { registerPlugin, unregisterPlugin, getRegisteredPlugins, getPlugin, clearAllPlugins, runPluginHook, watchPlugin, unwatchPlugin } from './plugins';
 export type { AgentProbePlugin, PluginHooks } from './plugins';
+
+// v2.6.0 — Benchmark Suite
+export { getStandardBenchmark, loadBenchmarkSuite, scoreBenchmark, formatBenchmarkReport, listBenchmarkSuiteNames } from './benchmark-suite';
+export type { BenchmarkTask, BenchmarkSuiteConfig, BenchmarkCategoryScore, BenchmarkReport } from './benchmark-suite';
+
+// v2.6.0 — Flaky Detector
+export { analyzeFlakiness, detectFlakyTests, formatFlakyReport } from './flaky-detector';
+export type { FlakyTestReport, FlakyDetectorConfig } from './flaky-detector';
+
+// v2.6.0 — Trace Similarity
+export { toolSequenceSimilarity, outputSimilarity, traceSimilarity, findSimilarTraces, formatSimilarityResults } from './similarity';
+export type { SimilarityResult } from './similarity';
+
+// v2.6.0 — Coverage Map
+export { buildCoverageMap, formatCoverageMap, coverageMapFromFile } from './coverage-map';
+export type { CoverageCategory, CoverageEntry, CoverageMap } from './coverage-map';
+
+// v2.6.0 — Notification Hub (enhanced webhooks)
+export { buildPagerDutyPayload, buildEmailBody, sendNotification, triggerNotifications } from './webhooks';
+export type { NotificationType, EmailNotificationConfig, PagerDutyNotificationConfig, HttpNotificationConfig, SlackNotificationConfig, NotificationConfig, NotificationHubConfig } from './webhooks';

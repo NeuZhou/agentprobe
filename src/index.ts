@@ -1905,4 +1905,104 @@ program
     console.log(formatLineage(lineage));
   });
 
+// === Benchmark Suite (v2.6.0) ===
+import { getStandardBenchmark, scoreBenchmark, formatBenchmarkReport, loadBenchmarkSuite } from './benchmark-suite';
+program
+  .command('benchmark-suite')
+  .description('Run the standard agent benchmark suite with category scoring')
+  .option('--suite <name>', 'Suite name (standard, or path to YAML)', 'standard')
+  .option('-o, --output <path>', 'Output results file')
+  .action(async (opts: { suite: string; output?: string }) => {
+    try {
+      const config = opts.suite === 'standard'
+        ? getStandardBenchmark()
+        : loadBenchmarkSuite(opts.suite);
+      console.log(chalk.bold(`\n📊 ${config.name}`));
+      if (config.description) console.log(chalk.gray(`   ${config.description}\n`));
+
+      // Convert tasks to suite YAML and run
+      const YAML = require('yaml');
+      const tmpPath = path.join(require('os').tmpdir(), `agentprobe-benchsuite-${Date.now()}.yaml`);
+      fs.writeFileSync(tmpPath, YAML.stringify({
+        name: config.name,
+        tests: config.tasks.map(t => ({ name: t.name, input: t.input, expect: t.expect })),
+      }));
+
+      const result = await runSuite(tmpPath);
+      const testResults = result.results;
+      const benchReport = scoreBenchmark(config, testResults);
+      console.log('\n' + formatBenchmarkReport(benchReport));
+
+      if (opts.output) {
+        fs.writeFileSync(opts.output, JSON.stringify(benchReport, null, 2));
+        console.log(chalk.green(`\n📁 Results → ${opts.output}`));
+      }
+
+      try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
+      process.exit(result.failed > 0 ? 1 : 0);
+    } catch (e: any) {
+      console.error(chalk.red(e.message));
+      process.exit(1);
+    }
+  });
+
+// === Flaky Test Detector (v2.6.0) ===
+import { detectFlakyTests, formatFlakyReport } from './flaky-detector';
+program
+  .command('flaky-detect <suite>')
+  .description('Detect flaky tests by running a suite multiple times')
+  .option('--runs <n>', 'Number of runs', '5')
+  .action(async (suite: string, opts: { runs: string }) => {
+    if (!fs.existsSync(suite)) {
+      console.error(chalk.red(`❌ Suite not found: ${suite}`));
+      process.exit(1);
+    }
+    const runs = parseInt(opts.runs, 10);
+    console.log(chalk.bold(`\n🔍 Running ${suite} × ${runs} to detect flaky tests...\n`));
+
+    const resultsByTest = new Map<string, any[]>();
+    for (let i = 0; i < runs; i++) {
+      console.log(chalk.gray(`  Run ${i + 1}/${runs}...`));
+      const result = await runSuite(suite);
+      for (const tr of result.results) {
+        if (!resultsByTest.has(tr.name)) resultsByTest.set(tr.name, []);
+        resultsByTest.get(tr.name)!.push(tr);
+      }
+    }
+
+    const reports = detectFlakyTests(resultsByTest);
+    console.log('\n' + formatFlakyReport(reports));
+  });
+
+// === Trace Similarity Search (v2.6.0) ===
+import { findSimilarTraces, formatSimilarityResults } from './similarity';
+program
+  .command('similar <traceFile>')
+  .description('Find similar traces in a corpus directory')
+  .requiredOption('--corpus <dir>', 'Directory of trace JSON files')
+  .option('--top <n>', 'Number of results', '5')
+  .action((traceFile: string, opts: { corpus: string; top: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const trace = JSON.parse(fs.readFileSync(traceFile, 'utf-8'));
+    const results = findSimilarTraces(trace, opts.corpus, { topN: parseInt(opts.top, 10) });
+    console.log('\n' + formatSimilarityResults(results));
+  });
+
+// === Test Coverage Map (v2.6.0) ===
+import { coverageMapFromFile, formatCoverageMap } from './coverage-map';
+program
+  .command('coverage-map <suiteFile>')
+  .description('Visualize test coverage across agent capability categories')
+  .action((suiteFile: string) => {
+    if (!fs.existsSync(suiteFile)) {
+      console.error(chalk.red(`❌ File not found: ${suiteFile}`));
+      process.exit(1);
+    }
+    const map = coverageMapFromFile(suiteFile);
+    console.log('\n' + formatCoverageMap(map));
+  });
+
 program.parse();
