@@ -32,7 +32,7 @@ import * as readline from 'readline';
 import { generateTests, formatGeneratedTests } from './codegen';
 import { generateBadge } from './badge';
 import { validateSuite, formatValidationErrors } from './validate';
-import { generateFromNL, formatGeneratedTestsYaml } from './nlgen';
+// generateFromNL moved to v2.9.0 imports below
 import { anonymizeTrace } from './anonymize';
 import { profile as profileTraces, formatProfile } from './profiler';
 import { generatePortal } from './portal';
@@ -54,6 +54,11 @@ import { convertTrace } from './converters';
 import type { TraceFormat } from './converters';
 import { validateSchedule, formatSchedule } from './scheduler';
 import type { ScheduleConfig } from './scheduler';
+import { loadGovernanceData, generateGovernanceDashboard, formatGovernance } from './governance';
+import { detectAnomalies, formatAnomalies } from './anomaly';
+import { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
+import { generateFromNLMulti, formatGeneratedTestsYaml } from './nlgen';
+import { applyTheme as _applyTheme, formatThemes } from './themes';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -106,6 +111,7 @@ program
   .option('--env-file <path>', 'Load environment variables from a .env file')
   .option('--badge <path>', 'Generate a shields.io-style badge SVG')
   .option('--profile <name>', 'Use an environment profile from .agentproberc.yml')
+  .option('--theme <name>', 'Theme for HTML reports: dark, corporate, minimal')
   .option('--trace-dir <dir>', 'Watch trace directory (with --watch)')
   .option('-r, --recursive', 'Find all .yaml/.yml files recursively in directories')
   .action(
@@ -126,6 +132,7 @@ program
         profile?: string;
         traceDir?: string;
         recursive?: boolean;
+        theme?: string;
       },
     ) => {
       // Resolve suite paths from args (support globs and --recursive)
@@ -262,7 +269,7 @@ program
           group: opts.group,
           envFile: opts.envFile,
         });
-        const output = report(result, opts.format as ReportFormat);
+        const output = report(result, opts.format as ReportFormat, opts.theme);
         console.log(output);
         totalFailed += result.failed;
 
@@ -936,8 +943,8 @@ program
   .description('Generate test YAML from a natural language description')
   .option('-o, --output <path>', 'Output YAML file (stdout if omitted)')
   .action((description: string, opts: { output?: string }) => {
-    const test = generateFromNL(description);
-    const yaml = formatGeneratedTestsYaml([test]);
+    const tests = generateFromNLMulti(description);
+    const yaml = formatGeneratedTestsYaml(tests);
 
     if (opts.output) {
       const dir = path.dirname(opts.output);
@@ -2183,6 +2190,82 @@ program
       process.exit(1);
     }
     console.log(formatSchedule(config));
+  });
+
+// ===== v2.9.0 - Governance Dashboard =====
+program
+  .command('governance')
+  .description('Generate agent fleet governance dashboard')
+  .option('--data <dir>', 'Directory containing agent report files', 'reports/')
+  .option('-o, --output <dir>', 'Output directory for HTML dashboard')
+  .action((opts: { data: string; output?: string }) => {
+    const data = loadGovernanceData(opts.data);
+    if (data.reports.length === 0) {
+      console.error(chalk.yellow(`No report files found in ${opts.data}`));
+      process.exit(1);
+    }
+
+    if (opts.output) {
+      if (!fs.existsSync(opts.output)) fs.mkdirSync(opts.output, { recursive: true });
+      const html = generateGovernanceDashboard(data);
+      const outPath = path.join(opts.output, 'index.html');
+      fs.writeFileSync(outPath, html);
+      console.log(chalk.green(`🏛️  Governance dashboard → ${outPath}`));
+    } else {
+      console.log(formatGovernance(data));
+    }
+  });
+
+// ===== v2.9.0 - Anomaly Detection =====
+program
+  .command('anomaly-detect')
+  .description('Detect anomalous agent behavior by comparing traces')
+  .requiredOption('--baseline <dir>', 'Directory with baseline (normal) traces')
+  .requiredOption('--current <dir>', 'Directory with current traces to analyze')
+  .action((opts: { baseline: string; current: string }) => {
+    if (!fs.existsSync(opts.baseline)) {
+      console.error(chalk.red(`❌ Baseline directory not found: ${opts.baseline}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(opts.current)) {
+      console.error(chalk.red(`❌ Current directory not found: ${opts.current}`));
+      process.exit(1);
+    }
+    const result = detectAnomalies(opts.baseline, opts.current);
+    console.log(formatAnomalies(result));
+    if (result.anomalies.some(a => a.severity === 'critical' || a.severity === 'high')) {
+      process.exit(1);
+    }
+  });
+
+// ===== v2.9.0 - Performance Profiler (enhanced) =====
+program
+  .command('perf-profile <dir>')
+  .description('Detailed performance breakdown with percentiles')
+  .action((dir: string) => {
+    if (!fs.existsSync(dir)) {
+      console.error(chalk.red(`❌ Directory not found: ${dir}`));
+      process.exit(1);
+    }
+    const { glob } = require('glob');
+    const files: string[] = glob.sync(path.join(dir, '**/*.json').replace(/\\/g, '/'));
+    const traces: AgentTrace[] = [];
+    for (const file of files) {
+      try { traces.push(loadTrace(file)); } catch { /* skip */ }
+    }
+    if (traces.length === 0) {
+      console.error(chalk.yellow(`No valid traces found in ${dir}`));
+      process.exit(1);
+    }
+    console.log(formatPerformanceProfile(profilePerformance(traces)));
+  });
+
+// ===== v2.9.0 - Themes =====
+program
+  .command('themes')
+  .description('List available report themes')
+  .action(() => {
+    console.log(formatThemes());
   });
 
 program.parse();

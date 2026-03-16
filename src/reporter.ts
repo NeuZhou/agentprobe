@@ -2,15 +2,19 @@ import chalk from 'chalk';
 import type { SuiteResult, ReportFormat } from './types';
 import { reportHTML } from './reporters/html';
 import { reportJUnit } from './reporters/junit';
+import { applyTheme } from './themes';
 
-export function report(result: SuiteResult, format: ReportFormat = 'console'): string {
+export function report(result: SuiteResult, format: ReportFormat = 'console', theme?: string): string {
   switch (format) {
     case 'json':
       return reportJSON(result);
     case 'markdown':
       return reportMarkdown(result);
-    case 'html':
-      return reportHTML(result);
+    case 'html': {
+      let html = reportHTML(result);
+      if (theme) html = applyTheme(html, theme);
+      return html;
+    }
     case 'junit':
       return reportJUnit(result);
     case 'console':

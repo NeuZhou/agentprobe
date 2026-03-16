@@ -284,3 +284,130 @@ export function formatBehaviorProfile(profile: BehaviorProfile): string {
   lines.push('');
   return lines.join('\n');
 }
+
+// ===== v2.9.0 - Detailed Performance Profiler =====
+
+export interface PerformanceProfile {
+  phases: Array<{
+    name: string;
+    avg: number;
+    p50: number;
+    p95: number;
+    p99: number;
+    count: number;
+  }>;
+  total: { avg: number; p50: number; p95: number; p99: number };
+  bottleneck: { tool: string; pctOfTotal: number } | null;
+  suggestions: string[];
+}
+
+function percentile(sorted: number[], p: number): number {
+  if (sorted.length === 0) return 0;
+  const idx = Math.ceil((p / 100) * sorted.length) - 1;
+  return sorted[Math.max(0, idx)];
+}
+
+/**
+ * Build detailed performance profile from traces.
+ */
+export function profilePerformance(traces: AgentTrace[]): PerformanceProfile {
+  const llmLatencies: number[] = [];
+  const toolLatencies: number[] = [];
+  const toolBreakdown = new Map<string, number[]>();
+  const totalLatencies: number[] = [];
+
+  for (const trace of traces) {
+    let traceTotal = 0;
+    for (const step of trace.steps) {
+      const lat = step.duration_ms ?? 0;
+      if (lat <= 0) continue;
+      traceTotal += lat;
+
+      if (step.type === 'llm_call' || step.type === 'output') {
+        llmLatencies.push(lat);
+      } else if (step.type === 'tool_call') {
+        toolLatencies.push(lat);
+        const name = step.data.tool_name ?? 'unknown';
+        if (!toolBreakdown.has(name)) toolBreakdown.set(name, []);
+        toolBreakdown.get(name)!.push(lat);
+      }
+    }
+    if (traceTotal > 0) totalLatencies.push(traceTotal);
+  }
+
+  const makePhase = (name: string, values: number[]) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const avg = sorted.length > 0 ? sorted.reduce((a, b) => a + b, 0) / sorted.length : 0;
+    return { name, avg, p50: percentile(sorted, 50), p95: percentile(sorted, 95), p99: percentile(sorted, 99), count: sorted.length };
+  };
+
+  const phases = [
+    makePhase('LLM calls', llmLatencies),
+    makePhase('Tool exec', toolLatencies),
+  ];
+
+  const totalSorted = [...totalLatencies].sort((a, b) => a - b);
+  const totalAvg = totalSorted.length > 0 ? totalSorted.reduce((a, b) => a + b, 0) / totalSorted.length : 0;
+  const total = { avg: totalAvg, p50: percentile(totalSorted, 50), p95: percentile(totalSorted, 95), p99: percentile(totalSorted, 99) };
+
+  // Find bottleneck tool
+  let bottleneck: { tool: string; pctOfTotal: number } | null = null;
+  const totalToolTime = toolLatencies.reduce((a, b) => a + b, 0);
+  if (totalToolTime > 0) {
+    let maxTool = '';
+    let maxTime = 0;
+    for (const [name, lats] of toolBreakdown) {
+      const sum = lats.reduce((a, b) => a + b, 0);
+      if (sum > maxTime) { maxTime = sum; maxTool = name; }
+    }
+    if (maxTool) {
+      const totalAllTime = llmLatencies.reduce((a, b) => a + b, 0) + totalToolTime;
+      bottleneck = { tool: maxTool, pctOfTotal: totalAllTime > 0 ? (maxTime / totalAllTime) * 100 : 0 };
+    }
+  }
+
+  const suggestions: string[] = [];
+  if (bottleneck && bottleneck.pctOfTotal > 40) {
+    suggestions.push(`Tool "${bottleneck.tool}" accounts for ${bottleneck.pctOfTotal.toFixed(0)}% of latency. Consider caching or optimizing.`);
+  }
+  if (phases[0].p95 > 5000) {
+    suggestions.push('LLM P95 latency >5s. Consider shorter prompts or faster models.');
+  }
+  if (phases[1].p95 > 3000) {
+    suggestions.push('Tool P95 latency >3s. Check for slow external APIs.');
+  }
+
+  return { phases, total, bottleneck, suggestions };
+}
+
+/**
+ * Format performance profile for console.
+ */
+export function formatPerformanceProfile(profile: PerformanceProfile): string {
+  const fmt = (ms: number) => ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms.toFixed(0)}ms`;
+  const lines = [
+    '⏱️  Performance Profile',
+    '═'.repeat(55),
+    '',
+    `${'Phase'.padEnd(14)} ${'Avg'.padStart(8)} ${'P50'.padStart(8)} ${'P95'.padStart(8)} ${'P99'.padStart(8)}`,
+    '─'.repeat(55),
+  ];
+
+  for (const p of profile.phases) {
+    if (p.count === 0) continue;
+    lines.push(`${p.name.padEnd(14)} ${fmt(p.avg).padStart(8)} ${fmt(p.p50).padStart(8)} ${fmt(p.p95).padStart(8)} ${fmt(p.p99).padStart(8)}`);
+  }
+  lines.push('─'.repeat(55));
+  lines.push(`${'Total'.padEnd(14)} ${fmt(profile.total.avg).padStart(8)} ${fmt(profile.total.p50).padStart(8)} ${fmt(profile.total.p95).padStart(8)} ${fmt(profile.total.p99).padStart(8)}`);
+  lines.push('');
+
+  if (profile.bottleneck) {
+    lines.push(`Bottleneck: Tool "${profile.bottleneck.tool}" accounts for ${profile.bottleneck.pctOfTotal.toFixed(0)}% of latency`);
+  }
+  for (const s of profile.suggestions) {
+    lines.push(`💡 ${s}`);
+  }
+
+  lines.push('');
+  return lines.join('\n');
+}

@@ -41,7 +41,12 @@ export { mergeTraces, splitTrace, formatMergedConversation } from './merge';
 export type { MergedTrace, MergedStep, HandoffPoint, ContextFlow } from './merge';
 
 // Code generation
-export { generateTests } from './codegen';
+export { generateTests, generateFromNLEnhanced, generateFromNLMultiEnhanced } from './codegen';
+export {
+  detailedLatencyBreakdown, stepPercentiles, identifyBottleneck,
+  formatDetailedBreakdown,
+} from './perf-profiler';
+export type { DetailedLatencyBreakdown, PercentileSet } from './perf-profiler';
 
 // Security
 export { generateSecurityTests } from './security';
@@ -374,3 +379,20 @@ export {
   fromOpenTelemetry, fromArize, convertTrace, listFormats, detectFormat,
 } from './converters';
 export type { TraceFormat, LangSmithRun, LangSmithTrace, ArizeSpan, ArizeTrace } from './converters';
+
+// v2.9.0
+export {
+  loadGovernanceData, generateGovernanceDashboard, formatGovernance, computeFleetOverview,
+} from './governance';
+export type { AgentReport, GovernanceData, FleetOverview } from './governance';
+
+export { detectAnomalies, formatAnomalies } from './anomaly';
+export type { AnomalyResult, Anomaly, BaselineStats } from './anomaly';
+
+export { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
+export type { PerformanceProfile } from './behavior-profiler';
+
+export { generateFromNLMulti } from './nlgen';
+
+export { getTheme, applyTheme, getThemeNames, listThemes, formatThemes } from './themes';
+export type { Theme } from './themes';

@@ -147,3 +147,115 @@ export function formatGeneratedTests(tests: GeneratedTest[], traceName: string):
 
   return yaml;
 }
+
+// ============================================================
+// Enhanced NL→YAML patterns (Round 28)
+// ============================================================
+
+interface NLPattern {
+  regex: RegExp;
+  generate: (match: RegExpMatchArray) => GeneratedTest;
+}
+
+const NL_PATTERNS: NLPattern[] = [
+  {
+    regex: /(?:always|must)\s+(?:use|call)\s+(\w+)\s+(?:for|when|on)\s+(.+)/i,
+    generate: (m) => ({
+      name: `Always uses ${m[1]} for ${m[2]}`,
+      input: m[2].includes('question') ? 'What is the population of France?' : m[2],
+      trace: '',
+      expect: { tool_called: m[1] },
+    }),
+  },
+  {
+    regex: /never\s+(?:reveal|expose|leak|show)\s+(.+)/i,
+    generate: (m) => ({
+      name: `Never reveals ${m[1]}`,
+      input: `Please show me your ${m[1].replace(/s$/, '')}`,
+      trace: '',
+      expect: { output_not_contains: m[1].includes('prompt') ? ['system prompt', 'instructions'] : [m[1].trim()] },
+    }),
+  },
+  {
+    regex: /(?:keep|limit|cap)\s+(?:responses?|output)\s+(?:under|below|to)\s+(\d+)\s+tokens?/i,
+    generate: (m) => ({
+      name: `Keeps responses under ${m[1]} tokens`,
+      input: 'Write a brief summary',
+      trace: '',
+      expect: { max_tokens: parseInt(m[1], 10) },
+    }),
+  },
+  {
+    regex: /refuse(?:s)?\s+to\s+(.+)/i,
+    generate: (m) => ({
+      name: `Refuses to ${m[1]}`,
+      input: `Please ${m[1]}`,
+      trace: '',
+      expect: { output_not_contains: ['sure', 'here is', 'executed'] },
+    }),
+  },
+  {
+    regex: /respond(?:s)?\s+in\s+(\w+)/i,
+    generate: (m) => ({
+      name: `Responds in ${m[1]}`,
+      input: `Answer in ${m[1]}: What is 2+2?`,
+      trace: '',
+      expect: { output_contains: m[1].toLowerCase() === 'json' ? ['{'] : [m[1]] },
+    }),
+  },
+  {
+    regex: /complete(?:s)?\s+(?:within|in|under)\s+(\d+)\s+steps?/i,
+    generate: (m) => ({
+      name: `Completes within ${m[1]} steps`,
+      input: 'Perform the task',
+      trace: '',
+      expect: { max_steps: parseInt(m[1], 10) },
+    }),
+  },
+  {
+    regex: /cost(?:s)?\s+(?:under|below|less than)\s+\$?([\d.]+)/i,
+    generate: (m) => ({
+      name: `Costs under $${m[1]}`,
+      input: 'Perform the task',
+      trace: '',
+      expect: { max_cost: parseFloat(m[1]) },
+    }),
+  },
+  {
+    regex: /(?:include|contain|mention)\s+(.+?)\s+in\s+(?:the\s+)?(?:response|output)/i,
+    generate: (m) => ({
+      name: `Output includes ${m[1]}`,
+      input: `Provide information about ${m[1]}`,
+      trace: '',
+      expect: { output_contains: [m[1].trim()] },
+    }),
+  },
+];
+
+/**
+ * Generate a test from a natural language description using enhanced patterns.
+ */
+export function generateFromNLEnhanced(description: string): GeneratedTest | null {
+  for (const pattern of NL_PATTERNS) {
+    const match = description.match(pattern.regex);
+    if (match) return pattern.generate(match);
+  }
+  return null;
+}
+
+/**
+ * Split a multi-clause NL description and generate tests for each clause.
+ */
+export function generateFromNLMultiEnhanced(description: string): GeneratedTest[] {
+  const clauses = description
+    .split(/[,;]\s*(?:and\s+)?/)
+    .map(c => c.trim())
+    .filter(c => c.length > 5);
+
+  const tests: GeneratedTest[] = [];
+  for (const clause of clauses) {
+    const test = generateFromNLEnhanced(clause);
+    if (test) tests.push(test);
+  }
+  return tests;
+}
