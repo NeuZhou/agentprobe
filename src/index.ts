@@ -2344,4 +2344,81 @@ program
     console.log(formatMigrateResult(result));
   });
 
+// ===== v3.3.0 - Cost Estimator =====
+import { estimateCostsFromFile, formatCostEstimate } from './cost-estimator';
+
+program
+  .command('estimate <testFile>')
+  .description('Estimate costs before running a test suite')
+  .option('-m, --models <models>', 'Comma-separated model list', 'gpt-4o,claude-3.5-sonnet,gemini-2.0-flash')
+  .option('--calls <n>', 'Average calls per test', '3')
+  .option('--margin <n>', 'Safety margin multiplier', '1.5')
+  .action((testFile: string, opts: any) => {
+    const estimate = estimateCostsFromFile(testFile, {
+      models: opts.models.split(','),
+      avgCallsPerTest: parseFloat(opts.calls),
+      safetyMargin: parseFloat(opts.margin),
+    });
+    console.log(formatCostEstimate(estimate));
+  });
+
+// ===== v3.3.0 - Plugin Registry =====
+import { listPlugins, getPluginEntry, formatPluginList, formatPluginDetail, getInstallCommand } from './plugin-registry';
+
+const plugins = program.command('plugins').description('Discover and manage AgentProbe plugins');
+
+plugins
+  .command('list')
+  .description('List available plugins')
+  .option('-c, --category <cat>', 'Filter by category')
+  .option('--official', 'Show only official plugins')
+  .option('-q, --query <query>', 'Search plugins')
+  .action((opts: any) => {
+    const result = listPlugins({
+      category: opts.category,
+      official: opts.official,
+      query: opts.query,
+    });
+    console.log(formatPluginList(result));
+  });
+
+plugins
+  .command('info <name>')
+  .description('Show plugin details')
+  .action((name: string) => {
+    const entry = getPluginEntry(name);
+    if (!entry) {
+      console.log(chalk.red(`Plugin not found: ${name}`));
+      process.exit(1);
+    }
+    console.log(formatPluginDetail(entry));
+  });
+
+plugins
+  .command('install <name>')
+  .description('Get install command for a plugin')
+  .option('--pm <manager>', 'Package manager (npm|yarn|pnpm)', 'npm')
+  .action((name: string, opts: any) => {
+    const cmd = getInstallCommand(name, opts.pm);
+    if (!cmd) {
+      console.log(chalk.red(`Plugin not found: ${name}`));
+      process.exit(1);
+    }
+    console.log(chalk.green(`Run: ${cmd}`));
+  });
+
+// ===== v3.3.0 - Test Impact Analysis (Prioritizer) =====
+import { analyzeTestDirectory, formatImpactAnalysis } from './test-impact';
+
+program
+  .command('prioritize <testDir>')
+  .description('Smart test ordering based on risk analysis')
+  .option('--changed <files>', 'Comma-separated list of changed files')
+  .action((testDir: string, opts: any) => {
+    const result = analyzeTestDirectory(testDir, {
+      changedFiles: opts.changed?.split(','),
+    });
+    console.log(formatImpactAnalysis(result));
+  });
+
 program.parse();

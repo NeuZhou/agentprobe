@@ -83,7 +83,7 @@ describe('CI/CD Integration', () => {
     expect(providers).toContain('gitlab');
     expect(providers).toContain('azure-pipelines');
     expect(providers).toContain('circleci');
-    expect(providers.length).toBe(4);
+    expect(providers.length).toBe(5);
   });
 
   it('generates GitHub Actions workflow content', () => {
@@ -129,7 +129,7 @@ describe('CI/CD Integration', () => {
   });
 
   it('throws on unsupported provider', () => {
-    expect(() => generateCIContent({ provider: 'jenkins' as any })).toThrow('Unsupported CI provider');
+    expect(() => generateCIContent({ provider: 'travis' as any })).toThrow('Unsupported CI provider');
   });
 });
 
