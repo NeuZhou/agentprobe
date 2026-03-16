@@ -1,5 +1,5 @@
 {
-  "name": "agentprobe",
+  "name": "@neuzhou/agentprobe",
   "version": "0.8.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
   "main": "dist/lib.js",
