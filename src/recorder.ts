@@ -269,6 +269,130 @@ export class Recorder {
   }
 }
 
+// ===== Trace Sampling for High-Volume Production =====
+
+export type SamplingStrategy = 'random' | 'reservoir' | 'priority';
+
+export interface PriorityRule {
+  /** Always capture error traces */
+  error?: 'always';
+  /** Capture traces costing more than this USD amount */
+  cost_gt?: number;
+  /** Capture traces longer than this duration string e.g. "10s" */
+  duration_gt?: string;
+  /** Capture traces with specific tool names */
+  tool_used?: string;
+}
+
+export interface TraceSamplingConfig {
+  /** Sampling rate 0.0-1.0 (e.g. 0.1 = 10%) */
+  rate: number;
+  /** Sampling strategy */
+  strategy: SamplingStrategy;
+  /** Priority rules that override the sampling rate (always captured) */
+  priority_rules?: PriorityRule[];
+  /** Random seed for reproducibility */
+  seed?: number;
+}
+
+/**
+ * Parse a duration string to milliseconds for priority rules.
+ */
+function parseDurationMs(s: string): number {
+  const match = s.match(/^(\d+(?:\.\d+)?)\s*(ms|s|m|h)$/i);
+  if (!match) return 0;
+  const val = parseFloat(match[1]);
+  switch (match[2].toLowerCase()) {
+    case 'ms': return val;
+    case 's': return val * 1000;
+    case 'm': return val * 60_000;
+    case 'h': return val * 3_600_000;
+    default: return 0;
+  }
+}
+
+/**
+ * Determine if a trace should be captured based on priority rules.
+ * Priority rules override the random sampling rate.
+ */
+export function matchesPriorityRule(trace: AgentTrace, rules: PriorityRule[]): boolean {
+  for (const rule of rules) {
+    // Error rule: capture if any step has an error-like indicator
+    if (rule.error === 'always') {
+      const hasError = trace.metadata?.error ||
+        trace.steps.some(s => s.data.content?.toLowerCase().includes('error') ||
+          s.type === 'tool_result' && s.data.tool_result?.error);
+      if (hasError) return true;
+    }
+
+    // Cost rule
+    if (rule.cost_gt != null) {
+      const cost = trace.metadata?.cost ?? 0;
+      if (cost > rule.cost_gt) return true;
+    }
+
+    // Duration rule
+    if (rule.duration_gt) {
+      const thresholdMs = parseDurationMs(rule.duration_gt);
+      const totalDuration = trace.steps.reduce((sum, s) => sum + (s.duration_ms ?? 0), 0);
+      if (totalDuration > thresholdMs) return true;
+    }
+
+    // Tool rule
+    if (rule.tool_used) {
+      const hasTool = trace.steps.some(s => s.type === 'tool_call' && s.data.tool_name === rule.tool_used);
+      if (hasTool) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Create a trace sampler that decides whether to keep each trace.
+ */
+export function createSampler(config: TraceSamplingConfig): (trace: AgentTrace) => boolean {
+  let counter = 0;
+  const rng = config.seed != null ? seededRng(config.seed) : Math.random;
+
+  return (trace: AgentTrace): boolean => {
+    // Priority rules always override
+    if (config.priority_rules?.length && matchesPriorityRule(trace, config.priority_rules)) {
+      return true;
+    }
+
+    counter++;
+
+    switch (config.strategy) {
+      case 'random':
+        return rng() < config.rate;
+
+      case 'reservoir':
+        // Reservoir sampling: always keep first N, then probabilistically replace
+        const capacity = Math.max(1, Math.ceil(counter * config.rate));
+        if (counter <= capacity) return true;
+        return rng() < capacity / counter;
+
+      case 'priority':
+        // Priority strategy: only capture based on rules (already checked above)
+        // Fall back to rate-based for non-priority traces
+        return rng() < config.rate;
+
+      default:
+        return rng() < config.rate;
+    }
+  };
+}
+
+function seededRng(seed: number): () => number {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export function loadTrace(path: string): AgentTrace {
   const raw = fs.readFileSync(path, 'utf-8');
   return JSON.parse(raw) as AgentTrace;

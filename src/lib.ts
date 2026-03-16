@@ -404,3 +404,36 @@ export { generateFromNLMulti } from './nlgen';
 
 export { getTheme, applyTheme, getThemeNames, listThemes, formatThemes } from './themes';
 export type { Theme } from './themes';
+
+// v3.2.0 - Load Testing
+export {
+  parseDuration, percentile, aggregateResults, classifyError,
+  formatLoadTestResult,
+} from './load-test';
+export type { LoadTestConfig, LoadTestResult, LoadTestError } from './load-test';
+
+// v3.2.0 - Trace Search Engine
+export {
+  tokenize, scoreStep, scoreTrace, extractPreview,
+  searchEngine, formatSearchEngineResult,
+} from './search-engine';
+export type { SearchEngineOptions, SearchHit, SearchEngineResult } from './search-engine';
+
+// v3.2.0 - Health Dashboard
+export {
+  collectDashboardMetrics, formatUptime, generateDashboardHTML,
+} from './health-dashboard';
+export type { DashboardConfig, DashboardMetrics, DashboardRun } from './health-dashboard';
+
+// v3.2.0 - Test Migration
+export {
+  convertPromptFoo, convertDeepEval, convertLangSmith,
+  migrate, formatMigrateResult,
+} from './migrate';
+export type { SourceFormat, MigrateOptions, MigrateResult, AgentProbeTest } from './migrate';
+
+// v3.2.0 - Smart Trace Sampling
+export {
+  matchesPriorityRule, createSampler,
+} from './recorder';
+export type { SamplingStrategy, PriorityRule, TraceSamplingConfig } from './recorder';

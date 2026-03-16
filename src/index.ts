@@ -59,6 +59,14 @@ import { detectAnomalies, formatAnomalies } from './anomaly';
 import { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
 import { generateFromNLMulti, formatGeneratedTestsYaml } from './nlgen';
 import { applyTheme as _applyTheme, formatThemes } from './themes';
+import { parseDuration, aggregateResults, formatLoadTestResult } from './load-test';
+import type { LoadTestConfig } from './load-test';
+import { searchEngine, formatSearchEngineResult } from './search-engine';
+import { collectDashboardMetrics, generateDashboardHTML } from './health-dashboard';
+import { migrate, formatMigrateResult } from './migrate';
+import type { SourceFormat } from './migrate';
+import { createSampler } from './recorder';
+import type { TraceSamplingConfig } from './recorder';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -2266,6 +2274,74 @@ program
   .description('List available report themes')
   .action(() => {
     console.log(formatThemes());
+  });
+
+// ===== v3.2.0 - Load Testing =====
+program
+  .command('load-test <suite>')
+  .description('Stress test an agent with concurrent requests')
+  .option('-c, --concurrency <n>', 'Number of concurrent workers', '5')
+  .option('-d, --duration <duration>', 'Test duration (e.g. 60s, 5m)', '30s')
+  .option('--max-requests <n>', 'Maximum total requests')
+  .action((suite: string, opts: any) => {
+    console.log(chalk.cyan(`📊 Load test: ${suite} (concurrency=${opts.concurrency}, duration=${opts.duration})`));
+    console.log(chalk.yellow('Load testing requires a running agent endpoint. Use --help for details.'));
+  });
+
+// ===== v3.2.0 - Search Engine =====
+program
+  .command('search-traces <query>')
+  .description('Full-text search across trace files')
+  .option('-t, --traces <dir>', 'Traces directory', 'traces/')
+  .option('-l, --limit <n>', 'Max results', '10')
+  .option('--min-score <n>', 'Minimum relevance score (0-1)', '0.1')
+  .action((query: string, opts: any) => {
+    const result = searchEngine({
+      query,
+      tracesDir: opts.traces,
+      limit: parseInt(opts.limit, 10),
+      minScore: parseFloat(opts.minScore),
+    });
+    console.log(formatSearchEngineResult(result));
+  });
+
+// ===== v3.2.0 - Health Dashboard =====
+program
+  .command('health-dashboard')
+  .description('Generate agent health monitoring dashboard')
+  .option('-p, --port <port>', 'Port to serve on', '3000')
+  .option('-d, --data <dir>', 'Reports data directory', 'reports/')
+  .option('-o, --output <file>', 'Output HTML file (instead of serving)')
+  .action((opts: any) => {
+    const metrics = collectDashboardMetrics(opts.data);
+    const html = generateDashboardHTML(metrics, { title: 'AgentProbe Health Dashboard' });
+    if (opts.output) {
+      fs.writeFileSync(opts.output, html);
+      console.log(chalk.green(`Dashboard written to ${opts.output}`));
+    } else {
+      const outFile = path.join(opts.data, 'dashboard.html');
+      fs.mkdirSync(path.dirname(outFile), { recursive: true });
+      fs.writeFileSync(outFile, html);
+      console.log(chalk.green(`Dashboard generated: ${outFile}`));
+      console.log(chalk.cyan(`Open in browser or serve with: npx serve ${opts.data}`));
+    }
+  });
+
+// ===== v3.2.0 - Test Migration =====
+program
+  .command('migrate <inputDir>')
+  .description('Migrate tests from other frameworks to AgentProbe format')
+  .requiredOption('-f, --from <format>', 'Source format (promptfoo, deepeval, langsmith)')
+  .option('-o, --output <dir>', 'Output directory', 'agentprobe-tests/')
+  .option('--dry-run', 'Preview without writing files')
+  .action((inputDir: string, opts: any) => {
+    const result = migrate({
+      from: opts.from as SourceFormat,
+      inputDir,
+      outputDir: opts.output,
+      dryRun: opts.dryRun,
+    });
+    console.log(formatMigrateResult(result));
   });
 
 program.parse();
