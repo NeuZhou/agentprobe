@@ -1,9 +1,11 @@
-# Getting Started with AgentProbe
+# Getting Started
 
-## Installation
+Get AgentProbe running in under 3 minutes.
+
+## Install
 
 ```bash
-npm install -D @neuzhou/agentprobe
+npm install @neuzhou/agentprobe
 ```
 
 Or globally:
@@ -12,138 +14,83 @@ Or globally:
 npm install -g @neuzhou/agentprobe
 ```
 
-## Quick Start
+## Write Your First Test
 
-### 1. Initialize a Project
+Create `tests/hello.test.yaml`:
+
+```yaml
+name: booking-agent
+adapter: openai
+model: gpt-4o
+
+tests:
+  - input: "Book a flight from NYC to London for next Friday"
+    expect:
+      tool_called: search_flights
+      response_contains: "flight"
+      no_hallucination: true
+      max_steps: 5
+```
+
+## Run It
+
+```bash
+npx agentprobe run tests/hello.test.yaml
+```
+
+That's it. **4 assertions, 1 YAML file, zero boilerplate.**
+
+## Using the TypeScript API
+
+```typescript
+import { AgentProbe } from '@neuzhou/agentprobe';
+
+const probe = new AgentProbe({ adapter: 'openai', model: 'gpt-4o' });
+const result = await probe.test({
+  input: 'What is the capital of France?',
+  expect: {
+    response_contains: 'Paris',
+    no_hallucination: true,
+    latency_ms: { max: 3000 },
+  },
+});
+console.log(result.passed ? '✅ Passed' : '❌ Failed');
+```
+
+## Environment Setup
+
+Set your API key for the adapter you're using:
+
+```bash
+# OpenAI
+export OPENAI_API_KEY=sk-...
+
+# Anthropic
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Azure OpenAI
+export AZURE_OPENAI_API_KEY=...
+export AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+```
+
+## Scaffold a New Project
 
 ```bash
 agentprobe init
 ```
 
-This creates a sample test file and example trace to get you started.
+This creates a starter project with example tests and configuration.
 
-### 2. Write Your First Test
-
-Create `tests/agent.test.yaml`:
-
-```yaml
-name: My Agent Tests
-tests:
-  - name: Agent calls search tool
-    trace: traces/search.json
-    expect:
-      tool_called: web_search
-      output_contains: "result"
-      max_steps: 10
-```
-
-### 3. Run Tests
+## Check Your Setup
 
 ```bash
-agentprobe run tests/agent.test.yaml
+agentprobe doctor
 ```
 
-## Core Concepts
+Verifies that your environment, dependencies, and API keys are properly configured.
 
-### Traces
+## What's Next
 
-A **trace** is a recording of an agent's execution — every LLM call, tool invocation, and output. AgentProbe tests run against traces, making them deterministic and fast.
-
-```json
-{
-  "agent": "my-agent",
-  "model": "gpt-4",
-  "steps": [
-    { "type": "llm_call", "input": "What's the weather?", "output": "I'll search for that." },
-    { "type": "tool_call", "tool": "web_search", "args": { "query": "weather" }, "result": "Sunny, 72°F" },
-    { "type": "llm_call", "input": null, "output": "The weather is sunny and 72°F." }
-  ],
-  "final_output": "The weather is sunny and 72°F.",
-  "total_tokens": 150,
-  "cost_usd": 0.003
-}
-```
-
-### Test Suites
-
-Tests are defined in YAML files containing a `name` and a list of `tests`:
-
-```yaml
-name: Suite Name
-tests:
-  - name: Test case
-    input: "user input"
-    trace: path/to/trace.json
-    expect:
-      tool_called: some_tool
-      output_contains: "expected text"
-```
-
-### Assertions
-
-Assertions verify specific properties of agent behavior. See [assertions.md](assertions.md) for the full list.
-
-### Adapters
-
-If your traces aren't in AgentProbe's native format, adapters convert them automatically. See [adapters.md](adapters.md).
-
-## Recording Traces
-
-### From OpenAI SDK
-
-```typescript
-import { Recorder } from '@neuzhou/agentprobe';
-
-const recorder = new Recorder();
-recorder.patchOpenAI(openai); // Patches the OpenAI client
-// ... run your agent ...
-const trace = recorder.stop();
-recorder.save('traces/my-trace.json');
-```
-
-### From Anthropic SDK
-
-```typescript
-recorder.patchAnthropic(anthropic);
-```
-
-### Streaming
-
-```typescript
-import { StreamingRecorder } from '@neuzhou/agentprobe/streaming';
-// Records from streaming (SSE) responses
-```
-
-## Running Tests
-
-### Basic
-
-```bash
-agentprobe run tests/agent.test.yaml
-```
-
-### Multiple Suites
-
-```bash
-agentprobe run tests/*.yaml
-agentprobe run tests/ --recursive
-```
-
-### With Options
-
-```bash
-agentprobe run tests/ -f json -o results.json    # JSON output
-agentprobe run tests/ -f junit -o results.xml     # JUnit for CI
-agentprobe run tests/ --tag security              # Filter by tag
-agentprobe run tests/ --coverage --tools search,fetch  # Tool coverage
-agentprobe run tests/ --badge badge.svg           # Generate badge
-```
-
-## What's Next?
-
-- [All Assertion Types](assertions.md)
-- [Adapter Reference](adapters.md)
-- [CLI Reference](cli-reference.md)
-- [Security Testing](security-testing.md)
-- [CI Integration](ci-integration.md)
-- [Configuration](configuration.md)
+- [Writing Tests](./writing-tests.md) — Learn the full YAML test format
+- [Adapters](./adapters.md) — Connect to your LLM provider
+- [CLI Reference](./cli-reference.md) — All available commands

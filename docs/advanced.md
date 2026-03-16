@@ -1,296 +1,230 @@
-# Advanced Features
+# Advanced
 
-## Fault Injection
+## Performance Profiling
 
-Chaos engineering for agents — simulate tool failures to test resilience.
-
-### Fault types
-
-| Type | Behavior |
-|------|----------|
-| `error` | Tool throws an error with a custom message |
-| `timeout` | Tool hangs for `delay_ms` then throws timeout error |
-| `slow` | Tool succeeds but after `delay_ms` delay |
-| `corrupt` | Tool returns but with garbled/truncated data |
-
-### Usage
-
-```yaml
-tests:
-  - name: Agent recovers from search failure
-    input: "What is the weather?"
-    faults:
-      web_search:
-        type: error
-        message: "503 Service Unavailable"
-        probability: 1.0    # always fail (default)
-    expect:
-      output_not_contains: "error"
-      output_contains: "unable"
-
-  - name: Agent handles slow API gracefully
-    input: "Look up stock prices"
-    faults:
-      get_stock_price:
-        type: slow
-        delay_ms: 10000
-    expect:
-      max_duration_ms: 15000
-
-  - name: Agent handles corrupted data
-    input: "Fetch user profile"
-    faults:
-      get_user:
-        type: corrupt
-        probability: 0.5    # fail 50% of the time
-    expect:
-      output_not_contains: "undefined"
-```
-
-### Probabilistic faults
-
-Set `probability` (0.0–1.0) to simulate flaky dependencies. Run the test multiple times with `retries`:
-
-```yaml
-tests:
-  - name: Agent handles intermittent failures
-    input: "Fetch data"
-    retries: 3
-    retry_delay_ms: 100
-    faults:
-      fetch_data:
-        type: error
-        probability: 0.5
-    expect:
-      output_not_contains: "crash"
-```
-
-## LLM-as-Judge
-
-See [Assertions Reference](assertions.md#judge) for full syntax. Key tips:
-
-- **Cache is automatic** — same input + criteria = cached result (saves API costs)
-- **Use `gpt-4o-mini`** — good enough for most evaluations, much cheaper
-- **Be specific in criteria** — "Is this helpful?" is vague; "Does the response include a specific temperature value and city name?" is testable
-- **Rubrics for complex eval** — use weighted criteria when a single score isn't enough
-
-```yaml
-# Good: specific criteria
-judge:
-  criteria: "Does the response contain a numerical temperature and name the city?"
-  threshold: 0.9
-
-# Better: rubric for multi-dimensional quality
-judge_rubric:
-  - criterion: "Contains specific numerical data"
-    weight: 0.4
-  - criterion: "Names the requested city"
-    weight: 0.3
-  - criterion: "Acknowledges data source or uncertainty"
-    weight: 0.3
-  threshold: 0.7
-```
-
-## Parameterized Tests
-
-Run one test definition across multiple inputs with `each:`:
-
-```yaml
-tests:
-  - name: "Weather in ${city}"
-    input: "What's the weather in ${city}?"
-    each:
-      - city: Tokyo
-      - city: London
-      - city: New York
-      - city: Sydney
-    expect:
-      tool_called: get_weather
-      output_contains: "${city}"
-```
-
-This expands to 4 separate tests. Variables are substituted in `name`, `input`, and string values in `expect`.
-
-### Multiple variables
-
-```yaml
-tests:
-  - name: "${model} answers ${topic} correctly"
-    input: "Explain ${topic}"
-    each:
-      - model: gpt-4o
-        topic: quantum computing
-      - model: gpt-4o
-        topic: machine learning
-      - model: claude-3
-        topic: quantum computing
-    expect:
-      output_contains: "${topic}"
-```
-
-## Fixtures
-
-Pre-configured test environments with tool mocks, env vars, and system prompts.
-
-### Define a fixture
-
-Create `fixtures/weather-agent.yaml`:
-
-```yaml
-name: weather-agent
-model: gpt-4o
-system_prompt: "You are a weather assistant."
-tools:
-  - name: get_weather
-    mock:
-      temp: 20
-      condition: sunny
-      humidity: 45
-  - name: get_forecast
-    mock_sequence:
-      - { day: "Monday", temp: 22 }
-      - { day: "Tuesday", temp: 18 }
-  - name: alert_service
-    mock_error: "Service unavailable"
-env:
-  WEATHER_API_KEY: "test-key-123"
-```
-
-### Use in tests
-
-```yaml
-tests:
-  - name: Agent uses mocked weather tool
-    input: "What's the weather?"
-    fixture: fixtures/weather-agent.yaml
-    expect:
-      tool_called: get_weather
-      output_contains: "sunny"
-```
-
-Fixtures provide:
-- **`mock`** — static return value
-- **`mock_file`** — load mock from a JSON file
-- **`mock_sequence`** — return different values on each call
-- **`mock_error`** — tool throws an error
-- **`env`** — set environment variables (restored after test)
-
-## Snapshots
-
-Behavioral snapshots capture the *structure* of agent behavior, not exact content:
-
-```yaml
-tests:
-  - name: Agent follows expected workflow
-    input: "Research quantum computing"
-    trace: traces/research-agent.json
-    expect:
-      snapshot: true
-```
-
-What's captured:
-- Set of tools called (unordered)
-- Tool call order (ordered)
-- Step count (±20% tolerance)
-- Whether output was produced
+Find latency bottlenecks and track costs across runs:
 
 ```bash
-# First run: creates __snapshots__/Agent_follows_expected_workflow.snap.json
-agentprobe run tests/
+agentprobe profile tests/ --runs 10
+```
 
-# Later: compares against snapshot
-agentprobe run tests/
+**Example output:**
 
-# Update after intentional changes
-agentprobe run tests/ --update-snapshots
+```
+┌──────────────────┬──────────┬──────────┬──────────┬─────────┐
+│ Test             │ P50 (ms) │ P95 (ms) │ P99 (ms) │ Cost $  │
+├──────────────────┼──────────┼──────────┼──────────┼─────────┤
+│ booking-flow     │ 1,240    │ 2,890    │ 4,100    │ $0.032  │
+│ search-query     │ 890      │ 1,450    │ 2,200    │ $0.018  │
+│ cancel-order     │ 2,100    │ 3,800    │ 5,500    │ $0.041  │
+└──────────────────┴──────────┴──────────┴──────────┴─────────┘
+```
+
+### Profiling Options
+
+```bash
+agentprobe profile tests/ --runs 10        # 10 iterations per test
+agentprobe profile tests/ -f json          # JSON output
+agentprobe profile tests/ --percentiles 50,90,95,99
+```
+
+## Benchmarks
+
+Compare performance across models or configurations:
+
+```typescript
+import { benchmark } from '@neuzhou/agentprobe/benchmarks';
+
+const results = await benchmark({
+  tests: 'tests/core/',
+  configurations: [
+    { adapter: 'openai', model: 'gpt-4o' },
+    { adapter: 'openai', model: 'gpt-4o-mini' },
+    { adapter: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  ],
+  runs: 5,
+});
+
+// results includes latency, cost, and pass rate per configuration
 ```
 
 ## Test Dependencies
 
-Control execution order when tests depend on each other:
+Define execution order for tests that depend on each other:
 
 ```yaml
 tests:
-  - name: Create user
-    id: create-user
+  - name: "create-user"
     input: "Create a new user account"
     expect:
       tool_called: create_user
+    exports:
+      user_id: "{{tool_result.create_user.id}}"
 
-  - name: Update user profile
-    id: update-profile
+  - name: "book-for-user"
     depends_on: create-user
-    input: "Update the user's profile"
+    input: "Book a flight for user {{user_id}}"
     expect:
-      tool_called: update_user
-
-  - name: Delete user
-    depends_on: [create-user, update-profile]
-    input: "Delete the user"
-    expect:
-      tool_called: delete_user
+      tool_called_with:
+        book_flight: { user_id: "{{user_id}}" }
 ```
 
-- If a dependency fails, dependent tests are **skipped** (not failed)
-- Use `id` to reference tests; otherwise the test name is used
-- Circular dependencies are detected and reported as errors
+## Natural Language Assertions
 
-## Plugins
+Write assertions in plain English, evaluated by an LLM:
 
-Extend AgentProbe with custom assertions, reporters, or adapters.
+```yaml
+tests:
+  - input: "What's the weather in Tokyo?"
+    expect:
+      natural_language:
+        - "Response mentions the temperature"
+        - "Response does not make up specific numbers without calling a tool"
+        - "Response is concise, under 3 sentences"
 
-### Custom assertion plugin
+  - input: "Explain quantum computing to a 5-year-old"
+    expect:
+      natural_language:
+        - "Uses simple analogies a child would understand"
+        - "Avoids technical jargon"
+        - "Is encouraging and fun in tone"
+```
+
+## LLM-as-Judge
+
+Use a stronger model to evaluate nuanced quality:
+
+```yaml
+tests:
+  - input: "Explain quantum computing to a 5-year-old"
+    expect:
+      llm_judge:
+        model: gpt-4o
+        criteria: "Response should be simple, use analogies, avoid jargon"
+        min_score: 0.8
+      response_tone: "friendly"
+```
+
+## Trace Recording & Replay
+
+Record agent interactions for replay and test generation:
+
+```bash
+# Record a trace
+agentprobe record -s agent.js -o trace.json
+
+# Generate tests from trace
+agentprobe codegen trace.json -o tests/generated/
+
+# Replay a trace
+agentprobe replay trace.json
+```
+
+## Test Run Diffing
+
+Compare two test runs to spot regressions:
+
+```bash
+agentprobe diff run1.json run2.json
+```
+
+Output highlights:
+- New failures
+- New passes
+- Latency changes
+- Cost changes
+
+## Git Integration
+
+Track test results alongside code changes:
+
+```bash
+# Compare current results against main branch
+agentprobe diff --git main
+
+# Show test history for a file
+agentprobe history tests/booking.test.yaml
+```
+
+## Multi-Agent Orchestration Testing
+
+Test complex agent-to-agent workflows:
 
 ```typescript
-// plugins/my-assertions.ts
-import type { AgentTrace, AssertionResult } from 'agentprobe/types';
+import { evaluateOrchestration } from '@neuzhou/agentprobe';
 
-export function assertNoRepeatedTools(trace: AgentTrace): AssertionResult {
-  const toolCalls = trace.steps
-    .filter(s => s.type === 'tool_call')
-    .map(s => s.data.tool_name!);
-  
-  const duplicates = toolCalls.filter((t, i) => toolCalls.indexOf(t) !== i);
-  
+const result = await evaluateOrchestration({
+  agents: ['planner', 'researcher', 'writer'],
+  input: 'Write a blog post about AI testing',
+  expect: {
+    handoff_sequence: ['planner', 'researcher', 'writer'],
+    max_total_steps: 20,
+    final_agent: 'writer',
+    output_contains: 'testing',
+  },
+});
+```
+
+## OpenTelemetry Export
+
+Export test results to OpenTelemetry-compatible backends:
+
+```yaml
+export:
+  otel:
+    endpoint: "http://localhost:4318"
+    service_name: "agentprobe"
+```
+
+```bash
+agentprobe run tests/ --otel-endpoint http://localhost:4318
+```
+
+## Custom Assertions
+
+Register your own assertion types:
+
+```typescript
+import { registerAssertion } from '@neuzhou/agentprobe/custom-assertions';
+
+registerAssertion('word_count', (response, config) => {
+  const count = response.split(/\s+/).length;
   return {
-    name: 'no_repeated_tools',
-    passed: duplicates.length === 0,
-    expected: 'no duplicate tool calls',
-    actual: duplicates.length > 0 ? `duplicates: ${[...new Set(duplicates)].join(', ')}` : 'none',
+    passed: count <= config.max,
+    message: `Word count ${count} (max: ${config.max})`,
   };
-}
+});
 ```
 
-### Using via `custom` assertion
-
 ```yaml
-expect:
-  custom: |
-    const seen = new Set();
-    toolCalls.every(t => { const dup = seen.has(t); seen.add(t); return !dup; })
-```
-
-## Hooks
-
-Run setup/teardown commands at suite or test level:
-
-```yaml
-name: My Tests
-hooks:
-  beforeAll:
-    command: "node scripts/seed-database.js"
-  afterAll:
-    command: "node scripts/cleanup.js"
-  beforeEach:
-    command: "node scripts/reset-state.js"
-  afterEach:
-    command: "node scripts/collect-metrics.js"
-
 tests:
-  - name: Test with clean state
-    input: "..."
+  - input: "Summarize this article"
     expect:
-      tool_called: query_db
+      word_count: { max: 100 }
 ```
 
-Hooks run as shell commands. Non-zero exit codes abort the test suite.
+## Configuration File
+
+Create `agentprobe.config.yaml` for project-wide defaults:
+
+```yaml
+adapter: openai
+model: gpt-4o
+timeout_ms: 30000
+retries: 2
+parallel: 4
+
+security:
+  scan_all: true
+
+compliance:
+  frameworks: [gdpr]
+
+reporters:
+  - console
+  - { type: junit, output: results.xml }
+
+export:
+  otel:
+    endpoint: http://localhost:4318
+```

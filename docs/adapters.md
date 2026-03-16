@@ -1,110 +1,193 @@
-# Adapters Reference
+# Adapters
 
-Adapters convert traces from various AI frameworks into AgentProbe's native `AgentTrace` format.
+AgentProbe connects to any LLM provider through its adapter system. Switch providers by changing one line.
 
 ## Supported Adapters
 
-| Adapter | Source | Auto-Detect |
-|---|---|:---:|
-| OpenAI | OpenAI API responses | ✅ |
-| Anthropic | Anthropic API responses | ✅ |
-| LangChain | LangChain trace format | ✅ |
-| OpenClaw | OpenClaw session traces | ✅ |
-| Generic JSONL | Line-delimited JSON | ✅ |
+| Provider | Adapter Key | Status |
+|---|---|---|
+| OpenAI | `openai` | ✅ Stable |
+| Anthropic | `anthropic` | ✅ Stable |
+| Google (Gemini) | `google` | ✅ Stable |
+| AWS Bedrock | `bedrock` | ✅ Stable |
+| Azure OpenAI | `azure` | ✅ Stable |
+| Cohere | `cohere` | ✅ Stable |
+| LangChain | `langchain` | ✅ Stable |
+| OpenClaw | `openclaw` | ✅ Stable |
+| Generic HTTP | `http` | ✅ Stable |
+| Ollama | `ollama` | ✅ Stable |
+| Custom | `custom` | ✅ Stable |
 
-## Auto-Detection
+## OpenAI
 
-AgentProbe auto-detects trace formats:
+```yaml
+adapter: openai
+model: gpt-4o
+```
+
+**Environment:** `OPENAI_API_KEY`
 
 ```bash
-agentprobe run tests.yaml  # Traces are auto-converted
+export OPENAI_API_KEY=sk-...
 ```
 
-Or convert explicitly:
+## Anthropic
+
+```yaml
+adapter: anthropic
+model: claude-sonnet-4-20250514
+```
+
+**Environment:** `ANTHROPIC_API_KEY`
 
 ```bash
-agentprobe convert trace.json -o native-trace.json
+export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-## OpenAI Adapter
+## Google (Gemini)
 
-Converts OpenAI chat completion responses (including tool calls).
-
-```json
-{
-  "model": "gpt-4",
-  "choices": [{
-    "message": {
-      "role": "assistant",
-      "content": "Let me search for that.",
-      "tool_calls": [{
-        "function": { "name": "search", "arguments": "{\"q\":\"weather\"}" }
-      }]
-    }
-  }],
-  "usage": { "total_tokens": 150 }
-}
+```yaml
+adapter: google
+model: gemini-2.0-flash
 ```
 
-## Anthropic Adapter
+**Environment:** `GOOGLE_API_KEY`
 
-Converts Anthropic Messages API responses with tool use blocks.
-
-```json
-{
-  "model": "claude-3-opus",
-  "content": [
-    { "type": "text", "text": "I'll search for that." },
-    { "type": "tool_use", "name": "search", "input": { "q": "weather" } }
-  ],
-  "usage": { "input_tokens": 50, "output_tokens": 100 }
-}
+```bash
+export GOOGLE_API_KEY=...
 ```
 
-## LangChain Adapter
+## AWS Bedrock
 
-Converts LangChain's trace format including agent steps and tool invocations.
-
-## OpenClaw Adapter
-
-Converts OpenClaw session traces (tool calls, messages, timestamps).
-
-## Generic JSONL Adapter
-
-For custom formats — one JSON object per line with `type`, `tool`, `content` fields:
-
-```jsonl
-{"type":"llm","content":"I'll search for that."}
-{"type":"tool","tool":"search","args":{"q":"weather"},"result":"Sunny"}
-{"type":"llm","content":"The weather is sunny."}
+```yaml
+adapter: bedrock
+model: anthropic.claude-3-sonnet
+region: us-east-1
 ```
 
-## Writing a Custom Adapter
+**Environment:** Standard AWS credentials (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`)
 
-1. Create `src/adapters/myformat.ts`:
+## Azure OpenAI
+
+```yaml
+adapter: azure
+model: gpt-4o
+endpoint: https://your-resource.openai.azure.com
+deployment: your-deployment-name
+api_version: "2024-06-01"
+```
+
+**Environment:**
+
+```bash
+export AZURE_OPENAI_API_KEY=...
+export AZURE_OPENAI_ENDPOINT=https://your-resource.openai.azure.com
+```
+
+## Cohere
+
+```yaml
+adapter: cohere
+model: command-r-plus
+```
+
+**Environment:** `COHERE_API_KEY`
+
+## LangChain
+
+```yaml
+adapter: langchain
+chain: your-chain-config
+```
+
+Works with any LangChain-compatible chain or agent configuration.
+
+## OpenClaw
+
+```yaml
+adapter: openclaw
+model: gpt-4o
+```
+
+Tests agents running inside the OpenClaw framework.
+
+## Ollama
+
+```yaml
+adapter: ollama
+model: llama3
+endpoint: http://localhost:11434
+```
+
+No API key needed — runs locally.
+
+## Generic HTTP
+
+Connect to any HTTP endpoint:
+
+```yaml
+adapter: http
+endpoint: https://my-agent.internal/api/chat
+headers:
+  Authorization: "Bearer your-token"
+  Content-Type: "application/json"
+request_format:
+  message_field: "input"
+response_format:
+  content_field: "response"
+```
+
+## Custom Adapter (TypeScript)
+
+Build your own adapter:
 
 ```typescript
-import type { AgentTrace } from '../types';
+import { AgentProbe, Adapter, AdapterResponse } from '@neuzhou/agentprobe';
 
-export function detectMyFormat(input: any): boolean {
-  return input?.myFormatVersion != null;
+class MyAdapter implements Adapter {
+  async send(input: string, options: any): Promise<AdapterResponse> {
+    const response = await myCustomLLM.chat(input);
+    return {
+      content: response.text,
+      tool_calls: response.tools || [],
+      latency_ms: response.duration,
+      cost_usd: response.cost,
+    };
+  }
 }
 
-export function convertMyFormat(input: any): AgentTrace {
-  return {
-    agent: input.agent || 'unknown',
-    model: input.model,
-    steps: input.events.map(e => ({
-      type: e.kind === 'tool' ? 'tool_call' : 'llm_call',
-      tool: e.toolName,
-      args: e.toolArgs,
-      output: e.content,
-    })),
-    final_output: input.events[input.events.length - 1]?.content || '',
-    total_tokens: input.tokenCount,
-  };
-}
+const probe = new AgentProbe({
+  adapter: new MyAdapter(),
+});
 ```
 
-2. Register in `src/adapters/index.ts`
-3. Add tests and submit a PR
+## Adapter Configuration
+
+All adapters support these common options:
+
+```yaml
+adapter: openai
+model: gpt-4o
+
+adapter_config:
+  temperature: 0.0          # Deterministic for testing
+  max_tokens: 4096
+  timeout_ms: 30000
+  retries: 2
+  retry_delay_ms: 1000
+```
+
+## Switching Adapters
+
+Run the same tests against different providers:
+
+```bash
+# Test with OpenAI
+agentprobe run tests/ --adapter openai --model gpt-4o
+
+# Same tests with Anthropic
+agentprobe run tests/ --adapter anthropic --model claude-sonnet-4-20250514
+
+# Compare results
+agentprobe diff results-openai.json results-anthropic.json
+```

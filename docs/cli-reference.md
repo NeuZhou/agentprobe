@@ -1,259 +1,159 @@
 # CLI Reference
 
-## Core Commands
+## agentprobe run
 
-### `agentprobe run <suite...>`
-
-Run test suite(s) from YAML files.
+Run test suites.
 
 ```bash
-agentprobe run tests.yaml
-agentprobe run tests/*.yaml
-agentprobe run tests/ --recursive
+agentprobe run <path>             # Run tests from file or directory
+agentprobe run tests/             # Run all tests in directory
+agentprobe run tests/ -f json     # Output as JSON
+agentprobe run tests/ -f junit    # JUnit XML for CI
+agentprobe run tests/ --tag smoke # Filter by tag
+agentprobe run tests/ --grep "booking"  # Filter by name
+agentprobe run tests/ --parallel 4      # Parallel execution
+agentprobe run tests/ --bail            # Stop on first failure
+agentprobe run tests/ --retries 3       # Retry failed tests
+agentprobe run tests/ --timeout 30000   # Timeout per test (ms)
 ```
 
 **Options:**
-| Flag | Description | Default |
-|---|---|---|
-| `-f, --format <fmt>` | Output format: `console`, `json`, `markdown`, `html`, `junit` | `console` |
-| `-o, --output <path>` | Write results to file | stdout |
-| `-w, --watch` | Re-run on file changes | off |
-| `-u, --update-snapshots` | Update snapshot files | off |
-| `-t, --tag <tags...>` | Filter tests by tags | all |
-| `--coverage` | Show tool coverage report | off |
-| `--tools <tools...>` | Declared tools for coverage | — |
-| `--compare-baseline` | Compare against saved baseline | off |
-| `--env-file <path>` | Load `.env` file | — |
-| `--badge <path>` | Generate SVG badge | — |
-| `--profile <name>` | Use config profile | — |
-| `--trace-dir <dir>` | Watch trace directory | — |
-| `-r, --recursive` | Find YAML files recursively | off |
-| `--sample <N>` | Run N random tests | all |
-| `--sample-pct <P>` | Run P% of tests | 100 |
-| `--prioritize` | Smart test ordering | off |
 
-### `agentprobe record`
+| Flag | Description |
+|---|---|
+| `-f, --format <fmt>` | Output format: `console`, `json`, `junit`, `html` |
+| `-o, --output <path>` | Write results to file |
+| `--tag <tag>` | Run only tests with this tag |
+| `--grep <pattern>` | Run tests matching name pattern |
+| `--parallel <n>` | Run n tests concurrently |
+| `--bail` | Stop on first failure |
+| `--retries <n>` | Retry failed tests n times |
+| `--timeout <ms>` | Per-test timeout |
+| `--adapter <name>` | Override adapter |
+| `--model <name>` | Override model |
+| `--verbose` | Verbose output |
 
-Record an agent trace.
+## agentprobe watch
+
+Watch mode with hot reload.
 
 ```bash
-agentprobe record -s agent.js -o trace.json
-agentprobe record -s agent.js -o trace.json --adapter openai
+agentprobe watch tests/           # Re-run on file changes
 ```
 
-### `agentprobe replay <trace>`
+## agentprobe record
 
-Replay a recorded trace.
+Record an agent trace for replay and test generation.
 
 ```bash
-agentprobe replay trace.json
-agentprobe replay trace.json --deterministic --seed 42
+agentprobe record -s agent.js     # Record agent script
+agentprobe record -s agent.js -o trace.json  # Save trace
 ```
 
-### `agentprobe init`
+## agentprobe security
 
-Interactive project setup — creates sample test files and configuration.
+Run security scans.
 
 ```bash
-agentprobe init
-agentprobe init --ci github   # Include CI config
+agentprobe security tests/                    # Standard security scan
+agentprobe security tests/ --depth deep       # Deep scan
+agentprobe security tests/ --depth quick      # Quick scan
+agentprobe security --mcp-config mcp.json --scan-tools  # MCP analysis
+agentprobe security --generate --output tests/security.test.yaml  # Generate security tests
 ```
 
-## Generation Commands
+## agentprobe compliance
 
-### `agentprobe generate <description>`
-
-Generate test YAML from natural language.
+Compliance audit.
 
 ```bash
-agentprobe generate "Test that my agent calls search and returns results"
-agentprobe generate "Verify the agent stays under budget" -o tests/budget.yaml
+agentprobe compliance check                   # Run all frameworks
+agentprobe compliance check --framework gdpr  # Specific framework
+agentprobe compliance check --dir tests/      # Scan directory
+agentprobe compliance report --output report.html  # Generate report
 ```
 
-### `agentprobe codegen <trace>`
+## agentprobe contract
 
-Generate tests from a recorded trace.
+Verify behavioral contracts.
 
 ```bash
-agentprobe codegen trace.json -o tests/generated.yaml
+agentprobe contract verify <file>             # Verify single contract
+agentprobe contract verify contracts/         # Verify all contracts
+agentprobe contract verify contracts/ --strict  # Treat warnings as errors
+agentprobe contract diff v1.yaml v2.yaml      # Compare contracts
 ```
 
-### `agentprobe generate-security`
+## agentprobe profile
 
-Generate a security test suite with 30+ attack patterns.
+Performance profiling.
 
 ```bash
-agentprobe generate-security -o tests/security.yaml
+agentprobe profile tests/                     # Profile all tests
+agentprobe profile tests/ --runs 10           # Run 10 iterations
+agentprobe profile tests/ -f json             # JSON output
 ```
 
-### `agentprobe generate-openapi <spec>`
+## agentprobe codegen
 
-Generate tests from an OpenAPI specification.
+Generate tests from traces.
 
 ```bash
-agentprobe generate-openapi openapi.yaml -o tests/api.yaml
+agentprobe codegen trace.json                 # Generate YAML tests
+agentprobe codegen trace.json -o tests/       # Output to directory
 ```
 
-## Analysis Commands
+## agentprobe diff
 
-### `agentprobe profile <traces/>`
-
-Performance profiling with percentiles.
+Compare test runs.
 
 ```bash
-agentprobe profile traces/
-# Shows p50, p95, p99 latency, token efficiency, cost per query, bottlenecks
+agentprobe diff run1.json run2.json           # Compare two runs
 ```
 
-### `agentprobe stats <traces/>`
+## agentprobe init
 
-Aggregate statistics across traces.
+Scaffold a new project.
 
 ```bash
-agentprobe stats traces/
+agentprobe init                               # Interactive setup
+agentprobe init --adapter openai              # Pre-configured
 ```
 
-### `agentprobe trace view <trace>`
+## agentprobe doctor
 
-Visual trace inspection in terminal.
+Check setup health.
 
 ```bash
-agentprobe trace view trace.json
+agentprobe doctor                             # Verify environment
 ```
 
-### `agentprobe trace diff <a> <b>`
+## agentprobe portal
 
-Compare two traces for behavioral drift.
+Generate a dashboard.
 
 ```bash
-agentprobe trace diff old.json new.json
+agentprobe portal -o report.html              # HTML dashboard
 ```
 
-### `agentprobe trace timeline <trace>`
+## agentprobe ci
 
-Gantt-style timeline visualization.
-
-```bash
-agentprobe trace timeline trace.json
-```
-
-### `agentprobe trace anonymize <trace>`
-
-Redact PII (API keys, emails, IPs, names, phone numbers).
+Generate CI configuration.
 
 ```bash
-agentprobe trace anonymize trace.json -o safe-trace.json
-```
-
-### `agentprobe trace export`
-
-Export traces to other formats.
-
-```bash
-agentprobe trace export trace.json --format otel
-agentprobe trace export trace.json --format langsmith
-agentprobe trace export trace.json --format csv
-```
-
-### `agentprobe search <query> <traces/>`
-
-Search across multiple traces.
-
-```bash
-agentprobe search "web_search" traces/
-agentprobe search --model gpt-4 --min-cost 0.01 traces/
-```
-
-## Quality Commands
-
-### `agentprobe validate <suite>`
-
-Validate YAML structure without running tests.
-
-```bash
-agentprobe validate tests/agent.test.yaml
-```
-
-### `agentprobe golden record/verify`
-
-Golden test management.
-
-```bash
-agentprobe golden record tests.yaml -o golden/
-agentprobe golden verify tests.yaml --golden golden/
-```
-
-### `agentprobe baseline save/compare`
-
-Regression baselines.
-
-```bash
-agentprobe baseline save results.json
-agentprobe run tests.yaml --compare-baseline
-```
-
-### `agentprobe compliance <traces/>`
-
-Run compliance checks against policy.
-
-```bash
-agentprobe compliance traces/ --policy compliance.yml
-```
-
-### `agentprobe simulate`
-
-Generate synthetic traces.
-
-```bash
-agentprobe simulate --agent research --steps 5 --tools search,summarize --seed 42
-```
-
-## Utility Commands
-
-### `agentprobe convert <trace>`
-
-Convert trace formats.
-
-```bash
-agentprobe convert openai-trace.json -o native.json
-```
-
-### `agentprobe deps --graph`
-
-Generate test dependency graph (Mermaid).
-
-```bash
-agentprobe deps tests.yaml --graph
-```
-
-### `agentprobe health`
-
-Check project health and setup.
-
-```bash
-agentprobe health
-```
-
-### `agentprobe plugin list/install`
-
-Plugin management.
-
-```bash
-agentprobe plugin list
-agentprobe plugin install agentprobe-plugin-slack
-```
-
-### `agentprobe report-compare`
-
-Compare two test reports.
-
-```bash
-agentprobe report-compare old.json new.json --output delta.html
+agentprobe ci github-actions                  # GitHub Actions workflow
+agentprobe ci gitlab                          # GitLab CI config
+agentprobe ci azure-pipelines                 # Azure Pipelines
+agentprobe ci jenkins                         # Jenkinsfile
 ```
 
 ## Global Options
 
 | Flag | Description |
 |---|---|
-| `-V, --version` | Show version |
-| `-h, --help` | Show help |
+| `--help` | Show help |
+| `--version` | Show version |
+| `--config <path>` | Path to config file |
+| `--verbose` | Verbose output |
+| `--quiet` | Suppress non-error output |
+| `--no-color` | Disable colored output |

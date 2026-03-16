@@ -1,87 +1,66 @@
 # CI/CD Integration
 
-## GitHub Actions
+Run AgentProbe tests automatically in your CI pipeline.
 
-### Basic workflow
+## GitHub Actions
 
 ```yaml
 # .github/workflows/agent-tests.yml
 name: Agent Tests
+
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm ci
-      - run: npx agentprobe run tests/ --format markdown > agent-report.md
-      - run: npx agentprobe run tests/ --badge badge.svg
 
-      # Upload badge as artifact
-      - uses: actions/upload-artifact@v4
-        with:
-          name: agent-badge
-          path: badge.svg
-
-      # Post PR comment with results
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          path: agent-report.md
-```
-
-### With security gate
-
-```yaml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - run: npm ci
 
-      # Run all tests
-      - run: npx agentprobe run tests/
+      - name: Run Agent Tests
+        run: npx agentprobe run tests/ -f junit -o results.xml
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      # Security gate — must pass 100%
-      - run: npx agentprobe run tests/security.yaml --tag security
-```
+      - name: Security Scan
+        run: npx agentprobe security tests/ --depth standard
 
-### With LLM-as-Judge (requires API key)
+      - name: Contract Verification
+        run: npx agentprobe contract verify contracts/ --strict
 
-```yaml
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Compliance Check
+        run: npx agentprobe compliance check --framework gdpr
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 20
-      - run: npm ci
-      - run: npx agentprobe run tests/
+          name: agent-test-results
+          path: results.xml
+
+      - name: Publish Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: AgentProbe Results
+          path: results.xml
+          reporter: java-junit
 ```
 
-### Generate with CLI
+### Generate Automatically
 
 ```bash
-agentprobe init --ci github
+agentprobe ci github-actions > .github/workflows/agent-tests.yml
 ```
-
-Creates `.github/workflows/agent-tests.yml` with a sensible default.
 
 ## GitLab CI
 
@@ -92,119 +71,125 @@ agent-tests:
   stage: test
   script:
     - npm ci
-    - npx agentprobe run tests/ --format json > agent-results.json
-    - npx agentprobe run tests/ --badge badge.svg
+    - npx agentprobe run tests/ -f junit -o results.xml
+    - npx agentprobe security tests/
+    - npx agentprobe contract verify contracts/ --strict
   artifacts:
-    paths:
-      - agent-results.json
-      - badge.svg
     reports:
-      junit: agent-results.json  # if JSON resembles JUnit
+      junit: results.xml
+    when: always
+  variables:
+    OPENAI_API_KEY: $OPENAI_API_KEY
 ```
 
-## Generic CI
-
-Any CI system that can run Node.js:
+### Generate Automatically
 
 ```bash
-#!/bin/bash
-set -e
-
-npm ci
-npx agentprobe run tests/
-
-# Exit code 0 = all pass, 1 = failures
+agentprobe ci gitlab > .gitlab-ci.yml
 ```
 
-### Environment variables
+## Jenkins
 
-| Variable | Purpose |
-|----------|---------|
-| `OPENAI_API_KEY` | Required for `judge` / `judge_rubric` assertions |
-| `OPENAI_BASE_URL` | Custom API endpoint (Azure, local proxy) |
-| `AGENTPROBE_CACHE_DIR` | Override cache directory (default: `.agentprobe-cache`) |
+```groovy
+// Jenkinsfile
+pipeline {
+    agent { docker { image 'node:20' } }
 
-## PR Comments
+    environment {
+        OPENAI_API_KEY = credentials('openai-api-key')
+    }
 
-Generate markdown output for PR comments:
+    stages {
+        stage('Install') {
+            steps { sh 'npm ci' }
+        }
+        stage('Agent Tests') {
+            steps {
+                sh 'npx agentprobe run tests/ -f junit -o results.xml'
+            }
+            post {
+                always {
+                    junit 'results.xml'
+                }
+            }
+        }
+        stage('Security') {
+            steps {
+                sh 'npx agentprobe security tests/ --depth standard'
+            }
+        }
+        stage('Contracts') {
+            steps {
+                sh 'npx agentprobe contract verify contracts/ --strict'
+            }
+        }
+    }
+}
+```
+
+### Generate Automatically
 
 ```bash
-npx agentprobe run tests/ --format markdown > report.md
+agentprobe ci jenkins > Jenkinsfile
 ```
 
-Example output:
-
-```markdown
-## 🔬 AgentProbe Results
-
-| Test | Status | Duration |
-|------|--------|----------|
-| Agent uses search tool | ✅ Pass | 5ms |
-| No prompt injection | ✅ Pass | 3ms |
-| Token budget | ❌ Fail | 8ms |
-
-**3/4 passed (75%)**
-```
-
-### HTML reports
-
-```bash
-npx agentprobe run tests/ --format html > report.html
-```
-
-Generates a self-contained HTML file with expandable test details.
-
-## Regression Baselines
-
-Track agent behavior across versions:
-
-```bash
-# Create a baseline from current test results
-agentprobe baseline create --from tests/ --output baselines/v1.json
-
-# After changes, compare
-agentprobe baseline compare --baseline baselines/v1.json --current tests/
-
-# In CI
-agentprobe baseline compare --baseline baselines/v1.json --current tests/ --fail-on-regression
-```
-
-### What counts as a regression?
-
-- A previously passing test now fails
-- Token usage increased by more than a configurable threshold
-- New tools are being called that weren't before
-- Cost increased beyond threshold
-
-## Badge Generation
-
-```bash
-# Generate SVG badge
-agentprobe run tests/ --badge badge.svg
-```
-
-The badge shows pass rate:
-
-- 🟢 Green: 100% pass
-- 🟡 Yellow: 80-99% pass
-- 🔴 Red: <80% pass
-
-Add to README:
-
-```markdown
-![Agent Tests](./badge.svg)
-```
-
-Or host on a CDN / GitHub Pages for dynamic updating:
+## Azure Pipelines
 
 ```yaml
-# In CI: commit badge to a branch
-- run: |
-    git config user.name "CI"
-    git config user.email "ci@example.com"
-    git checkout badges || git checkout -b badges
-    cp badge.svg .
-    git add badge.svg
-    git commit -m "Update badge" || true
-    git push origin badges
+# azure-pipelines.yml
+trigger:
+  branches:
+    include: [main]
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+
+  - script: npm ci
+    displayName: Install Dependencies
+
+  - script: npx agentprobe run tests/ -f junit -o $(Build.ArtifactStagingDirectory)/results.xml
+    displayName: Run Agent Tests
+    env:
+      OPENAI_API_KEY: $(OPENAI_API_KEY)
+
+  - task: PublishTestResults@2
+    condition: always()
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: '$(Build.ArtifactStagingDirectory)/results.xml'
 ```
+
+## Output Formats for CI
+
+```bash
+# JUnit XML (most CI systems)
+agentprobe run tests/ -f junit -o results.xml
+
+# JSON (custom processing)
+agentprobe run tests/ -f json -o results.json
+
+# HTML dashboard
+agentprobe portal -o report.html
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| `0` | All tests passed |
+| `1` | One or more tests failed |
+| `2` | Configuration or runtime error |
+
+## Tips
+
+- **Use `--bail`** for fast feedback on PRs — stop on first failure
+- **Store API keys as secrets** — never commit them
+- **Run security scans on PRs** — catch issues before merge
+- **Use `--parallel`** to speed up large test suites
+- **Cache `node_modules`** for faster CI runs
+- **Use `--retries 2`** for flaky LLM-dependent tests
