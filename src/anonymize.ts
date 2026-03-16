@@ -36,13 +36,13 @@ const DEFAULT_OPTIONS: Required<Omit<AnonymizeOptions, 'custom'>> = {
 // Patterns for API keys / secrets / tokens
 const SECRET_PATTERNS: RegExp[] = [
   // Generic API key patterns (long hex/base64 strings preceded by key-like identifiers)
-  /(?:api[_-]?key|api[_-]?secret|access[_-]?token|secret[_-]?key|auth[_-]?token|bearer)\s*[=:]\s*["']?([A-Za-z0-9+/=_\-]{20,})["']?/gi,
+  /(?:api[_-]?key|api[_-]?secret|access[_-]?token|secret[_-]?key|auth[_-]?token|bearer)\s*[=:]\s*["']?([A-Za-z0-9+/=_-]{20,})["']?/gi,
   // AWS keys
   /AKIA[0-9A-Z]{16}/g,
   // OpenAI keys
   /sk-[A-Za-z0-9]{20,}/g,
   // Anthropic keys
-  /sk-ant-[A-Za-z0-9\-]{20,}/g,
+  /sk-ant-[A-Za-z0-9-]{20,}/g,
   // GitHub tokens
   /gh[ps]_[A-Za-z0-9]{36,}/g,
   /github_pat_[A-Za-z0-9_]{20,}/g,
@@ -52,7 +52,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /(?:token|key|secret|password|passwd|pwd)\s*[=:]\s*["']?([a-f0-9]{32,})["']?/gi,
 ];
 
-const EMAIL_PATTERN = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
 const IP_PATTERN = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
 const PHONE_PATTERN = /(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
 
