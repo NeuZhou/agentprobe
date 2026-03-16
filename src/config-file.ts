@@ -16,11 +16,22 @@ export interface AdapterConfig {
   [key: string]: any;
 }
 
+export interface ProfileConfig {
+  adapter?: string;
+  model?: string;
+  timeout_ms?: number;
+  env?: Record<string, string>;
+  tags?: string[];
+  parallel?: boolean;
+  max_concurrency?: number;
+}
+
 export interface ExtendedConfig {
   adapters?: {
     default?: string;
     [name: string]: AdapterConfig | string | undefined;
   };
+  profiles?: Record<string, ProfileConfig>;
   parallel?: number;
   timeout_ms?: number;
   reporter?: string;
@@ -152,4 +163,18 @@ export function loadEnvFromConfig(config: ExtendedConfig, baseDir?: string): voi
       process.env[key] = value;
     }
   }
+}
+
+/**
+ * Get a named profile from config.
+ */
+export function getProfile(config: ExtendedConfig, name: string): ProfileConfig | undefined {
+  return config.profiles?.[name];
+}
+
+/**
+ * List all available profile names.
+ */
+export function listProfiles(config: ExtendedConfig): string[] {
+  return Object.keys(config.profiles ?? {});
 }

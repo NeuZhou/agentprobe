@@ -131,6 +131,25 @@ export type { ExportFormat, ExportOptions } from './export';
 // Dependencies graph
 export { generateDependencyGraph, formatDependencyGraph } from './deps';
 
+// Custom assertions API
+export { registerAssertion, unregisterAssertion, hasAssertion, listAssertions, evaluateCustomAssertion, clearAssertions } from './custom-assertions';
+export type { CustomAssertionFn } from './custom-assertions';
+
+// Trace comparison
+export { compareTraces, formatComparison } from './trace-compare';
+export type { TraceComparison } from './trace-compare';
+
+// Interactive explorer
+export { loadReport, formatTestList, formatTestDetail, runExplorer } from './explorer';
+
+// Watch mode (enhanced)
+export { startWatch, watchTraceDir } from './watcher';
+export type { WatchOptions, WatchSummary } from './watcher';
+
+// Environment profiles
+export { getProfile, listProfiles } from './config-file';
+export type { ProfileConfig } from './config-file';
+
 // Types - re-export everything
 export type {
   AgentTrace,
@@ -152,4 +171,6 @@ export type {
   AgentConfig,
   HookConfig,
   SuiteHooks,
+  ChainStep,
+  CustomAssertionRef,
 } from './types';

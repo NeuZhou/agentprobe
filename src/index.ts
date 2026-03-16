@@ -73,6 +73,8 @@ program
   .option('--compare-baseline', 'Compare results against saved baseline')
   .option('--env-file <path>', 'Load environment variables from a .env file')
   .option('--badge <path>', 'Generate a shields.io-style badge SVG')
+  .option('--profile <name>', 'Use an environment profile from .agentproberc.yml')
+  .option('--trace-dir <dir>', 'Watch trace directory (with --watch)')
   .action(
     async (
       suitePath: string,
@@ -87,6 +89,8 @@ program
         compareBaseline?: boolean;
         envFile?: string;
         badge?: string;
+        profile?: string;
+        traceDir?: string;
       },
     ) => {
       if (!fs.existsSync(suitePath)) {
@@ -112,8 +116,40 @@ program
           format: opts.format as ReportFormat,
           updateSnapshots: opts.updateSnapshots,
           tags: opts.tag,
+          traceDir: opts.traceDir,
         });
         return;
+      }
+
+      // Load profile if specified
+      if (opts.profile) {
+        const extConfig = loadExtendedConfig();
+        const prof = getProfile(extConfig, opts.profile);
+        if (!prof) {
+          const available = listProfiles(extConfig);
+          console.error(chalk.red(`❌ Profile "${opts.profile}" not found.`));
+          if (available.length > 0) {
+            console.error(chalk.yellow(`   Available profiles: ${available.join(', ')}`));
+          }
+          process.exit(1);
+        }
+        // Apply profile env vars
+        if (prof.env) {
+          for (const [key, value] of Object.entries(prof.env)) {
+            process.env[key] = value;
+          }
+        }
+        // Apply profile model to env
+        if (prof.model) {
+          process.env.AGENTPROBE_MODEL = prof.model;
+        }
+        if (prof.adapter) {
+          process.env.AGENTPROBE_ADAPTER = prof.adapter;
+        }
+        if (prof.timeout_ms) {
+          process.env.AGENTPROBE_TIMEOUT_MS = String(prof.timeout_ms);
+        }
+        console.log(chalk.cyan(`📋 Using profile: ${opts.profile}`));
       }
 
       // Validate suite before running
@@ -486,6 +522,24 @@ trace
   });
 
 trace
+  .command('compare <traceA> <traceB>')
+  .description('Compare two traces side-by-side: steps, tools, tokens, cost diff')
+  .action((fileA: string, fileB: string) => {
+    if (!fs.existsSync(fileA)) {
+      console.error(chalk.red(`❌ File not found: ${fileA}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(fileB)) {
+      console.error(chalk.red(`❌ File not found: ${fileB}`));
+      process.exit(1);
+    }
+    const traceA = loadTrace(fileA);
+    const traceB = loadTrace(fileB);
+    const cmp = compareTraces(traceA, traceB);
+    console.log(formatComparison(cmp));
+  });
+
+trace
   .command('merge <traces...>')
   .description('Merge multiple agent traces into a single timeline')
   .option('-o, --output <path>', 'Output file', 'merged-trace.json')
@@ -852,6 +906,17 @@ import { exportTrace, listExportFormats } from './export';
 import type { ExportFormat } from './export';
 import { generateDependencyGraph, formatDependencyGraph } from './deps';
 import type { DepTestCase } from './deps';
+import { runExplorer } from './explorer';
+import { compareTraces, formatComparison } from './trace-compare';
+import { loadExtendedConfig, getProfile, listProfiles } from './config-file';
+
+// ===== Interactive Test Explorer =====
+program
+  .command('explore <report>')
+  .description('Interactive terminal UI for browsing test results')
+  .action(async (reportPath: string) => {
+    await runExplorer(reportPath);
+  });
 
 // ===== Diff command (compare two run results) =====
 program

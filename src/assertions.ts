@@ -1,5 +1,6 @@
-import type { AgentTrace, Expectations, AssertionResult } from './types';
+import type { AgentTrace, Expectations, AssertionResult, ChainStep } from './types';
 import { calculateCost } from './cost';
+import { evaluateCustomAssertion } from './custom-assertions';
 
 export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResult[] {
   const results: AssertionResult[] = [];
@@ -300,7 +301,79 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
     }
   }
 
+  // chain — sequential assertion that verifies a flow
+  if (expect.chain && expect.chain.length > 0) {
+    const chainResult = evaluateChain(trace, expect.chain);
+    results.push(chainResult);
+  }
+
+  // custom_assertions — registered custom assertions
+  if (expect.custom_assertions) {
+    for (const ref of expect.custom_assertions) {
+      results.push(evaluateCustomAssertion(ref.name, trace, ref.params));
+    }
+  }
+
   return results;
+}
+
+/**
+ * Evaluate a chain of sequential assertions against a trace.
+ */
+function evaluateChain(trace: AgentTrace, chain: ChainStep[]): AssertionResult {
+  // Flatten the chain (handle nested `then`)
+  const steps = flattenChain(chain);
+  const traceSteps = trace.steps;
+  let traceIdx = 0;
+
+  for (let i = 0; i < steps.length; i++) {
+    const chainStep = steps[i];
+    let found = false;
+
+    while (traceIdx < traceSteps.length) {
+      const ts = traceSteps[traceIdx];
+      traceIdx++;
+
+      if (chainStep.tool_called && ts.type === 'tool_call' && ts.data.tool_name === chainStep.tool_called) {
+        found = true;
+        break;
+      }
+      if (chainStep.output_contains && ts.type === 'output' && (ts.data.content ?? '').includes(chainStep.output_contains)) {
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      const desc = chainStep.tool_called
+        ? `tool_called: ${chainStep.tool_called}`
+        : `output_contains: "${chainStep.output_contains}"`;
+      return {
+        name: `chain[${i}]: ${desc}`,
+        passed: false,
+        message: `Chain step ${i} failed: expected ${desc} after step ${i > 0 ? i - 1 : 'start'}`,
+      };
+    }
+  }
+
+  const names = steps.map((s) =>
+    s.tool_called ? `tool:${s.tool_called}` : `output:"${s.output_contains}"`,
+  );
+  return {
+    name: `chain: [${names.join(' → ')}]`,
+    passed: true,
+  };
+}
+
+function flattenChain(chain: ChainStep[]): ChainStep[] {
+  const result: ChainStep[] = [];
+  for (const step of chain) {
+    result.push({ tool_called: step.tool_called, output_contains: step.output_contains });
+    if (step.then) {
+      result.push(...flattenChain([step.then]));
+    }
+  }
+  return result;
 }
 
 function deepPartialMatch(actual: Record<string, any>, expected: Record<string, any>): boolean {

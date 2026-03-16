@@ -139,6 +139,19 @@ export interface Expectations {
   all_of?: Expectations[];
   any_of?: Expectations[];
   none_of?: Expectations[];
+  chain?: ChainStep[];
+  custom_assertions?: CustomAssertionRef[];
+}
+
+export interface ChainStep {
+  tool_called?: string;
+  output_contains?: string;
+  then?: ChainStep;
+}
+
+export interface CustomAssertionRef {
+  name: string;
+  params?: Record<string, any>;
 }
 
 // ===== Result types =====
