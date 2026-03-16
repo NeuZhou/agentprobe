@@ -67,6 +67,7 @@ import { parseDuration as _parseDuration, aggregateResults as _aggregateResults,
 import type { LoadTestConfig as _LoadTestConfig } from './load-test';
 import { searchEngine, formatSearchEngineResult } from './search-engine';
 import { collectDashboardMetrics, generateDashboardHTML } from './health-dashboard';
+import { collectDashboardData, renderDashboard, renderCompactDashboard } from './dashboard';
 import { migrate, formatMigrateResult } from './migrate';
 import type { SourceFormat } from './migrate';
 import { createSampler as _createSampler } from './recorder';
@@ -2725,6 +2726,42 @@ mcp
       if (required.length > 0) {
         console.log(`    Required: ${required.join(', ')}`);
       }
+    }
+  });
+
+// ── Dashboard ──────────────────────────────────────────────────────
+
+program
+  .command('dashboard [suites...]')
+  .description('Show a terminal dashboard with test results, coverage, cost, and trend')
+  .option('--compact', 'Single-line CI-friendly output')
+  .option('--width <n>', 'Dashboard width', '58')
+  .option('--json', 'Output raw JSON data instead of UI')
+  .action(async (suites: string[], opts: { compact?: boolean; width?: string; json?: boolean }) => {
+    const suitePaths = suites.length > 0 ? suites : fs.readdirSync('tests').filter(f => f.endsWith('.yaml') || f.endsWith('.yml')).map(f => path.join('tests', f));
+    if (suitePaths.length === 0) {
+      console.log('No test suites found. Run "agentprobe init" to create one.');
+      return;
+    }
+
+    const results: import('./types').SuiteResult[] = [];
+    for (const s of suitePaths) {
+      try {
+        const r = await runSuite(s, {});
+        results.push(r);
+      } catch (err: any) {
+        console.error(`⚠ Error running ${s}: ${err.message}`);
+      }
+    }
+
+    const data = collectDashboardData(results);
+
+    if (opts.json) {
+      console.log(JSON.stringify(data, null, 2));
+    } else if (opts.compact) {
+      console.log(renderCompactDashboard(data));
+    } else {
+      console.log(renderDashboard(data, { width: parseInt(opts.width ?? '58') }));
     }
   });
 

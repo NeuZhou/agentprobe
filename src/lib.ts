@@ -650,3 +650,16 @@ export {
 export type {
   DocGenOptions, DocGenResult, DocGenStats, MarkdownEndpoint,
 } from './doc-gen';
+
+// v4.7.0 - Dashboard, Enhanced Config, Watch & Init
+export {
+  sparkline, collectDashboardData, estimateTestCost,
+  renderDashboard, renderCompactDashboard,
+} from './dashboard';
+export type { DashboardData as TerminalDashboardData, DashboardOptions as TerminalDashboardOptions } from './dashboard';
+
+export {
+  loadConfigRaw, parseDuration as parseConfigDuration, interpolateEnv, interpolateEnvDeep,
+  resolveDefaults, resolveSecurityPatterns, findConfigFile,
+} from './config';
+export type { AgentProbeConfig as FullConfig, AdapterSection, DefaultsSection, SecuritySection, ResolvedDefaults } from './config';
