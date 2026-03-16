@@ -1,0 +1,26 @@
+name: E2E Calculator Agent
+description: End-to-end tests using a real Ollama LLM to generate traces
+
+tests:
+  - name: Agent uses calculator for math
+    input: "What is 42 * 17?"
+    trace: examples/traces/e2e-calculator.json
+    expect:
+      tool_called: calculate
+      output_matches: "714"
+      max_steps: 10
+
+  - name: Agent handles simple addition
+    input: "What is 123 + 456?"
+    trace: examples/traces/e2e-calculator.json
+    expect:
+      tool_called: calculate
+      output_matches: "\\d+"
+      max_steps: 10
+
+  - name: Trace has reasonable performance
+    input: "What is 42 * 17?"
+    trace: examples/traces/e2e-calculator.json
+    expect:
+      tool_called: calculate
+      max_steps: 5
