@@ -338,3 +338,39 @@ export type { CoverageCategory, CoverageEntry, CoverageMap } from './coverage-ma
 // v2.6.0 — Notification Hub (enhanced webhooks)
 export { buildPagerDutyPayload, buildEmailBody, sendNotification, triggerNotifications } from './webhooks';
 export type { NotificationType, EmailNotificationConfig, PagerDutyNotificationConfig, HttpNotificationConfig, SlackNotificationConfig, NotificationConfig, NotificationHubConfig } from './webhooks';
+
+// v2.8.0 — Agent Debugger
+export {
+  formatStep, buildContext, formatContext, matchesBreakpoint,
+  parseBreakpoint, createDebugState, processCommand, formatDebugHeader,
+} from './debugger';
+export type { DebugBreakpoint, DebugContext, DebugState } from './debugger';
+
+// v2.8.0 — Trace Recorder Middleware
+export {
+  createTraceBuffer, flushTraceBuffer, addToBuffer,
+  buildTraceFromHTTP, agentProbeMiddleware, withAgentProbe, formatMiddlewareStats,
+} from './middleware';
+export type { MiddlewareOptions, TraceBuffer, WrapperOptions } from './middleware';
+
+// v2.8.0 — Test Scheduler
+export {
+  parseCronField, parseCron, matchesCron, nextCronMatch,
+  validateSchedule, getDueEntries, resolveEntry, createRun,
+  formatSchedule, formatRun,
+} from './scheduler';
+export type { ScheduleEntry, ScheduleConfig, ScheduleRun } from './scheduler';
+
+// v2.8.0 — Agent Contract Testing
+export {
+  parseContract, checkCapabilities, checkBehaviors, checkSafety,
+  verifyContract, formatContractResult,
+} from './contract';
+export type { CapabilitySpec, AgentContract, ContractViolation, ContractResult } from './contract';
+
+// v2.8.0 — Trace Format Converters
+export {
+  toLangSmith, toOpenTelemetry, toArize, fromLangSmith,
+  fromOpenTelemetry, fromArize, convertTrace, listFormats, detectFormat,
+} from './converters';
+export type { TraceFormat, LangSmithRun, LangSmithTrace, ArizeSpan, ArizeTrace } from './converters';

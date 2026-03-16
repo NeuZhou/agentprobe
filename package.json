@@ -1,6 +1,6 @@
 {
   "name": "@neuzhou/agentprobe",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -45,7 +45,12 @@
     "./multi-agent": "./dist/multi-agent.js",
     "./cost-optimizer": "./dist/cost-optimizer.js",
     "./regression-detector": "./dist/regression-detector.js",
-    "./profiles": "./dist/profiles.js"
+    "./profiles": "./dist/profiles.js",
+    "./debugger": "./dist/debugger.js",
+    "./middleware": "./dist/middleware.js",
+    "./scheduler": "./dist/scheduler.js",
+    "./contract": "./dist/contract.js",
+    "./converters": "./dist/converters.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"

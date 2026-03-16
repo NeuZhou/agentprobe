@@ -48,6 +48,12 @@ import { runABTest, formatABTest } from './ab-test';
 import { loadTraces, buildFingerprint, formatFingerprint } from './fingerprint';
 import { loadSLAConfig, loadReports, checkSLA, formatSLACheck } from './sla';
 import { enrichTraceDir, formatEnrichment } from './enrich';
+import { formatDebugHeader, createDebugState, processCommand } from './debugger';
+import { verifyContract, parseContract, formatContractResult } from './contract';
+import { convertTrace } from './converters';
+import type { TraceFormat } from './converters';
+import { validateSchedule, formatSchedule } from './scheduler';
+import type { ScheduleConfig } from './scheduler';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -2083,6 +2089,100 @@ program
     const config = parseAssertionConfigFile(configFile);
     const results = evaluateAll(config, opts.output);
     console.log(formatAssertionResults(results));
+  });
+
+// ===== v2.8.0 — debug command =====
+program
+  .command('debug <trace>')
+  .description('Step-through debugging for agent traces')
+  .action(async (tracePath: string) => {
+    if (!fs.existsSync(tracePath)) {
+      console.error(chalk.red(`❌ Trace file not found: ${tracePath}`));
+      process.exit(1);
+    }
+    const trace = loadTrace(tracePath);
+    console.log(formatDebugHeader(trace));
+
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    let state = createDebugState(trace);
+
+    const prompt = () => {
+      rl.question('> ', (input) => {
+        const { state: newState, output, quit } = processCommand(state, input);
+        state = newState;
+        console.log(output);
+        if (quit) { rl.close(); return; }
+        prompt();
+      });
+    };
+    prompt();
+  });
+
+// ===== v2.8.0 — convert command =====
+program
+  .command('convert <trace>')
+  .description('Convert between trace formats (agentprobe, langsmith, opentelemetry, arize)')
+  .requiredOption('--from <format>', 'Source format')
+  .requiredOption('--to <format>', 'Target format')
+  .option('-o, --output <path>', 'Output file path')
+  .action(async (tracePath: string, opts: { from: string; to: string; output?: string }) => {
+    if (!fs.existsSync(tracePath)) {
+      console.error(chalk.red(`❌ File not found: ${tracePath}`));
+      process.exit(1);
+    }
+    const raw = JSON.parse(fs.readFileSync(tracePath, 'utf-8'));
+    const result = convertTrace(raw, opts.from as TraceFormat, opts.to as TraceFormat);
+    const json = JSON.stringify(result, null, 2);
+    if (opts.output) {
+      fs.writeFileSync(opts.output, json);
+      console.log(chalk.green(`✅ Converted ${opts.from} → ${opts.to}: ${opts.output}`));
+    } else {
+      console.log(json);
+    }
+  });
+
+// ===== v2.8.0 — contract command =====
+program
+  .command('contract <contractFile> <traceFile>')
+  .description('Verify an agent trace against a contract')
+  .action(async (contractFile: string, traceFile: string) => {
+    if (!fs.existsSync(contractFile)) {
+      console.error(chalk.red(`❌ Contract file not found: ${contractFile}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ Trace file not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const contractRaw = YAML.parse(fs.readFileSync(contractFile, 'utf-8'));
+    const contract = parseContract(contractRaw);
+    if (!contract) {
+      console.error(chalk.red('❌ Invalid contract format'));
+      process.exit(1);
+    }
+    const trace = loadTrace(traceFile);
+    const result = verifyContract(trace, contract);
+    console.log(formatContractResult(result));
+    if (!result.passed) process.exit(1);
+  });
+
+// ===== v2.8.0 — schedule command =====
+program
+  .command('schedule <configFile>')
+  .description('Show scheduled test runs from a YAML config')
+  .action(async (configFile: string) => {
+    if (!fs.existsSync(configFile)) {
+      console.error(chalk.red(`❌ Config file not found: ${configFile}`));
+      process.exit(1);
+    }
+    const config: ScheduleConfig = YAML.parse(fs.readFileSync(configFile, 'utf-8'));
+    const errors = validateSchedule(config);
+    if (errors.length > 0) {
+      console.error(chalk.red('❌ Invalid schedule:'));
+      for (const e of errors) console.error(chalk.red(`  - ${e}`));
+      process.exit(1);
+    }
+    console.log(formatSchedule(config));
   });
 
 program.parse();
