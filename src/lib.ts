@@ -447,7 +447,7 @@ export {
 export type { AgentReport, GovernanceData, FleetOverview } from './governance';
 
 export { detectAnomalies, formatAnomalies } from './anomaly';
-export type { AnomalyResult, Anomaly, BaselineStats } from './anomaly';
+export type { AnomalyResult, Anomaly as AnomalyDetail, BaselineStats } from './anomaly';
 
 export { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
 export type { PerformanceProfile } from './behavior-profiler';
