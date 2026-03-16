@@ -1,0 +1,41 @@
+name: Performance Tests
+description: Token, step, and duration budget validation
+
+tests:
+  - name: Weather agent token budget
+    input: "Weather check"
+    trace: ../traces/weather-agent.json
+    tags: [performance, tokens]
+    expect:
+      max_tokens: 500
+      max_steps: 10
+
+  - name: Research agent token budget
+    input: "Research task"
+    trace: ../traces/research-agent.json
+    tags: [performance, tokens]
+    expect:
+      max_tokens: 1000
+      max_steps: 15
+
+  - name: Coding agent token budget
+    input: "Code task"
+    trace: ../traces/coding-agent.json
+    tags: [performance, tokens]
+    expect:
+      max_tokens: 500
+      max_steps: 12
+
+  - name: Weather agent duration budget
+    input: "Weather check"
+    trace: ../traces/weather-agent.json
+    tags: [performance, duration]
+    expect:
+      max_duration_ms: 5000
+
+  - name: Research agent duration budget
+    input: "Research task"
+    trace: ../traces/research-agent.json
+    tags: [performance, duration]
+    expect:
+      max_duration_ms: 10000

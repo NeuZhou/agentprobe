@@ -1,0 +1,88 @@
+{
+  "id": "coding-agent-001",
+  "timestamp": "2026-03-16T10:10:00Z",
+  "steps": [
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T10:10:00.000Z",
+      "data": {
+        "model": "claude-sonnet-4-20250514",
+        "messages": [
+          { "role": "system", "content": "You are a coding assistant. Read files before modifying them." },
+          { "role": "user", "content": "Add error handling to the main function in src/index.ts" }
+        ],
+        "tokens": { "input": 40, "output": 60 }
+      },
+      "duration_ms": 500
+    },
+    {
+      "type": "thought",
+      "timestamp": "2026-03-16T10:10:00.500Z",
+      "data": {
+        "content": "I need to read the file first, then modify it to add proper error handling."
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T10:10:00.500Z",
+      "data": {
+        "tool_name": "read_file",
+        "tool_args": { "path": "src/index.ts" }
+      },
+      "duration_ms": 50
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T10:10:00.550Z",
+      "data": {
+        "tool_name": "read_file",
+        "tool_result": "export function main() {\n  const data = fetchData();\n  process(data);\n  return data;\n}"
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T10:10:00.550Z",
+      "data": {
+        "tool_name": "write_file",
+        "tool_args": {
+          "path": "src/index.ts",
+          "content": "export function main() {\n  try {\n    const data = fetchData();\n    process(data);\n    return data;\n  } catch (error) {\n    console.error('Error in main:', error);\n    throw error;\n  }\n}"
+        }
+      },
+      "duration_ms": 30
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T10:10:00.580Z",
+      "data": {
+        "tool_name": "write_file",
+        "tool_result": "File written successfully"
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T10:10:00.580Z",
+      "data": {
+        "model": "claude-sonnet-4-20250514",
+        "tokens": { "input": 120, "output": 50 }
+      },
+      "duration_ms": 350
+    },
+    {
+      "type": "output",
+      "timestamp": "2026-03-16T10:10:00.930Z",
+      "data": {
+        "content": "I've updated src/index.ts with try-catch error handling around the main function. The error is logged and re-thrown for upstream handling."
+      },
+      "duration_ms": 0
+    }
+  ],
+  "metadata": {
+    "agent": "coding-bot",
+    "version": "1.0",
+    "total_tokens": 270
+  }
+}

@@ -10,9 +10,20 @@
     "build": "tsc",
     "dev": "ts-node src/index.ts",
     "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["ai", "agent", "testing", "llm", "playwright", "trace", "openai", "anthropic"],
+  "keywords": [
+    "ai",
+    "agent",
+    "testing",
+    "llm",
+    "playwright",
+    "trace",
+    "openai",
+    "anthropic"
+  ],
   "author": "Kang Zhou <neuzhou@outlook.com>",
   "license": "MIT",
   "dependencies": {
@@ -25,6 +36,6 @@
     "@types/node": "^20.11.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.0"
+    "vitest": "^1.6.1"
   }
 }

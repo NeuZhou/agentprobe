@@ -1,4 +1,5 @@
 import type { AgentTrace, Expectations, AssertionResult } from './types';
+import { calculateCost } from './cost';
 
 export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResult[] {
   const results: AssertionResult[] = [];
@@ -152,6 +153,18 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
         });
       }
     }
+  }
+
+  // max_cost_usd
+  if (expect.max_cost_usd != null) {
+    const cost = calculateCost(trace);
+    results.push({
+      name: `max_cost_usd: $${expect.max_cost_usd}`,
+      passed: cost.total_cost <= expect.max_cost_usd,
+      expected: `<= $${expect.max_cost_usd}`,
+      actual: `$${cost.total_cost.toFixed(4)}`,
+      message: cost.total_cost > expect.max_cost_usd ? `Cost $${cost.total_cost.toFixed(4)} exceeds max $${expect.max_cost_usd}` : undefined,
+    });
   }
 
   // custom

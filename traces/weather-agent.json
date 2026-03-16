@@ -1,0 +1,63 @@
+{
+  "id": "weather-agent-001",
+  "timestamp": "2026-03-16T10:00:00Z",
+  "steps": [
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T10:00:00.000Z",
+      "data": {
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "system", "content": "You are a helpful weather assistant. Use the get_weather tool to check weather conditions." },
+          { "role": "user", "content": "What's the weather like in Tokyo?" }
+        ],
+        "tokens": { "input": 45, "output": 20 }
+      },
+      "duration_ms": 320
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T10:00:00.320Z",
+      "data": {
+        "tool_name": "get_weather",
+        "tool_args": { "location": "Tokyo" }
+      },
+      "duration_ms": 150
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T10:00:00.470Z",
+      "data": {
+        "tool_name": "get_weather",
+        "tool_result": { "temp": 20, "condition": "rainy", "humidity": 80 }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T10:00:00.470Z",
+      "data": {
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "assistant", "content": null, "tool_calls": [{ "id": "call_1", "type": "function", "function": { "name": "get_weather", "arguments": "{\"location\":\"Tokyo\"}" } }] },
+          { "role": "tool", "content": "{\"temp\":20,\"condition\":\"rainy\",\"humidity\":80}", "tool_call_id": "call_1" }
+        ],
+        "tokens": { "input": 80, "output": 35 }
+      },
+      "duration_ms": 280
+    },
+    {
+      "type": "output",
+      "timestamp": "2026-03-16T10:00:00.750Z",
+      "data": {
+        "content": "It's currently 20°C and rainy in Tokyo with 80% humidity."
+      },
+      "duration_ms": 0
+    }
+  ],
+  "metadata": {
+    "agent": "weather-bot",
+    "version": "1.0",
+    "total_tokens": 180
+  }
+}

@@ -120,6 +120,7 @@ export interface Expectations {
   tool_args_match?: Record<string, any>;
   tool_sequence?: string[];
   snapshot?: boolean;
+  max_cost_usd?: number;
   custom?: string;
   judge?: JudgeSpec;
   judge_rubric?: JudgeRubricCriterion[] & { threshold?: number };
@@ -154,7 +155,7 @@ export interface SuiteResult {
   results: TestResult[];
 }
 
-export type ReportFormat = 'console' | 'json' | 'markdown';
+export type ReportFormat = 'console' | 'json' | 'markdown' | 'html';
 
 // ===== Runner options =====
 

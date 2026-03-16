@@ -1,0 +1,40 @@
+name: Research Agent Tests
+description: Test suite for research agent trace validation
+
+tests:
+  - name: Agent uses web_search tool
+    input: "What are the latest trends in AI agent testing?"
+    trace: ../traces/research-agent.json
+    tags: [research, smoke]
+    expect:
+      tool_called: web_search
+
+  - name: Agent fetches article content
+    input: "Research AI agent testing"
+    trace: ../traces/research-agent.json
+    tags: [research, fetch]
+    expect:
+      tool_called: [web_search, web_fetch]
+
+  - name: Research follows search-then-fetch sequence
+    input: "Research AI agent testing"
+    trace: ../traces/research-agent.json
+    tags: [research, sequence]
+    expect:
+      tool_sequence: [web_search, web_fetch]
+
+  - name: Output synthesizes findings
+    input: "Research AI agent testing"
+    trace: ../traces/research-agent.json
+    tags: [research, output]
+    expect:
+      output_contains: "Trace-based testing"
+      output_not_contains: "I don't know"
+
+  - name: Research agent stays within token budget
+    input: "Research AI agent testing"
+    trace: ../traces/research-agent.json
+    tags: [research, performance]
+    expect:
+      max_tokens: 1000
+      max_steps: 15

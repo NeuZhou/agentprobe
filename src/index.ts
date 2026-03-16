@@ -15,13 +15,24 @@ import { diffTraces, formatDiff } from './diff';
 import { loadTrace } from './recorder';
 import type { ReportFormat } from './types';
 import YAML from 'yaml';
+import { loadConfig } from './config';
+import { loadPlugins } from './plugins';
+import { saveBaseline, loadBaseline, detectRegressions, formatRegressions } from './regression';
+import { calculateCost, formatCostReport } from './cost';
+import { autoConvert } from './adapters';
 
 const program = new Command();
 
 program
   .name('agentprobe')
   .description('🔬 Playwright for AI Agents - Test, record, and replay agent behaviors')
-  .version('0.3.0');
+  .version('0.4.0');
+
+// Load config and plugins at startup
+const config = loadConfig();
+if (config.plugins?.length) {
+  try { loadPlugins(config.plugins); } catch { /* ignore plugin load errors at startup */ }
+}
 
 program
   .command('run <suite>')
@@ -33,6 +44,7 @@ program
   .option('-t, --tag <tags...>', 'Filter tests by tags')
   .option('--coverage', 'Show tool coverage report')
   .option('--tools <tools...>', 'Declared tools for coverage (space-separated)')
+  .option('--compare-baseline', 'Compare results against saved baseline')
   .action(async (suitePath: string, opts: {
     format: string;
     output?: string;
@@ -41,6 +53,7 @@ program
     tag?: string[];
     coverage?: boolean;
     tools?: string[];
+    compareBaseline?: boolean;
   }) => {
     if (!fs.existsSync(suitePath)) {
       console.error(`❌ File not found: ${suitePath}`);

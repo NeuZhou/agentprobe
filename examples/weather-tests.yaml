@@ -1,0 +1,43 @@
+name: Weather Agent Tests
+description: Test suite for weather agent trace validation
+
+tests:
+  - name: Agent calls get_weather tool
+    input: "What's the weather in Tokyo?"
+    trace: ../traces/weather-agent.json
+    tags: [weather, smoke]
+    expect:
+      tool_called: get_weather
+      output_contains: Tokyo
+
+  - name: Weather output includes temperature
+    input: "What's the weather in Tokyo?"
+    trace: ../traces/weather-agent.json
+    tags: [weather, output]
+    expect:
+      output_contains: ["20°C", "rainy"]
+
+  - name: Agent passes location argument correctly
+    input: "What's the weather in Tokyo?"
+    trace: ../traces/weather-agent.json
+    tags: [weather, args]
+    expect:
+      tool_args_match:
+        get_weather:
+          location: Tokyo
+
+  - name: Weather agent completes in reasonable steps
+    input: "What's the weather in Tokyo?"
+    trace: ../traces/weather-agent.json
+    tags: [weather, performance]
+    expect:
+      max_steps: 10
+      tool_called: get_weather
+
+  - name: Weather agent uses correct tool sequence
+    input: "What's the weather in Tokyo?"
+    trace: ../traces/weather-agent.json
+    tags: [weather, sequence]
+    expect:
+      tool_sequence: [get_weather]
+      output_contains: humidity
