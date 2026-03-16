@@ -2,7 +2,13 @@
 
 All notable changes to AgentProbe are documented here.
 
-## [3.8.0] — 2026-03-16
+## [4.3.0] - 2026-03-16
+
+### Changed
+- **World-class README rewrite** — hero section, problem statement, quick start, full feature showcase with code examples, comparison table vs promptfoo/deepeval/ragas/giskard, architecture diagram, adapter reference, CLI reference
+- Updated CONTRIBUTING.md with development workflow, project structure, and contribution guidelines
+
+## [3.8.0] - 2026-03-16
 
 ### Added
 - Full README rewrite with architecture diagram, CLI reference, comparison table
@@ -12,7 +18,7 @@ All notable changes to AgentProbe are documented here.
 ### Fixed
 - `formatABTest` crash when using legacy `modelA`/`modelB` result shape (round22 test failures)
 
-## [3.7.0] — 2026-03-16
+## [3.7.0] - 2026-03-16
 
 ### Added
 - A/B testing framework with chi-squared significance testing
@@ -21,7 +27,7 @@ All notable changes to AgentProbe are documented here.
 - Retry policy engine with exponential backoff
 - Metrics collector with aggregation
 
-## [3.6.0] — 2026-03-16
+## [3.6.0] - 2026-03-16
 
 ### Added
 - Agent sandbox for isolated test execution
@@ -30,16 +36,16 @@ All notable changes to AgentProbe are documented here.
 - Coverage analyzer with gap detection
 - Config validator with schema checks
 
-## [3.5.0] — 2026-03-16
+## [3.5.0] - 2026-03-16
 
 ### Added
-- Agent fingerprinting — behavioral DNA for agents
+- Agent fingerprinting - behavioral DNA for agents
 - Flake manager with quarantine and auto-retry
 - Timeline viewer (HTML export)
 - Version registry for tracking agent versions
 - Webhook notifications
 
-## [3.4.0] — 2026-03-16
+## [3.4.0] - 2026-03-16
 
 ### Added
 - Canary deployment testing
@@ -48,7 +54,7 @@ All notable changes to AgentProbe are documented here.
 - SLA trend analysis
 - Test builder fluent API
 
-## [3.3.0] — 2026-03-16
+## [3.3.0] - 2026-03-16
 
 ### Added
 - Agent replay with deterministic verification
@@ -57,7 +63,7 @@ All notable changes to AgentProbe are documented here.
 - Plugin registry with versioning
 - Smart test prioritizer (risk-based)
 
-## [3.2.0] — 2026-03-16
+## [3.2.0] - 2026-03-16
 
 ### Added
 - Load testing with concurrent agent execution
@@ -66,7 +72,7 @@ All notable changes to AgentProbe are documented here.
 - Test migration tool (format upgrades)
 - Smart sampling for large test suites
 
-## [3.1.0] — 2026-03-16
+## [3.1.0] - 2026-03-16
 
 ### Added
 - `OTelExporter` class for programmatic OpenTelemetry integration
@@ -75,14 +81,14 @@ All notable changes to AgentProbe are documented here.
 - `agentprobe init` scaffolding command
 - `agentprobe doctor` diagnostic command
 
-## [3.0.0] — 2026-03-16
+## [3.0.0] - 2026-03-16
 
 ### Changed
 - **Major milestone**: production-grade release
 - Stabilized all public APIs
 - Comprehensive error handling across all modules
 
-## [2.9.0] — 2026-03-16
+## [2.9.0] - 2026-03-16
 
 ### Added
 - Governance dashboard
@@ -91,7 +97,7 @@ All notable changes to AgentProbe are documented here.
 - Report themes (dark, light, corporate)
 - Enhanced NL codegen with few-shot examples
 
-## [2.8.0] — 2026-03-16
+## [2.8.0] - 2026-03-16
 
 ### Added
 - Agent debugger (step-through traces)
@@ -100,7 +106,7 @@ All notable changes to AgentProbe are documented here.
 - Contract testing framework
 - Format converters (Promptfoo, DeepEval, custom)
 
-## [2.7.0] — 2026-03-16
+## [2.7.0] - 2026-03-16
 
 ### Added
 - Chaos testing framework (fault injection, latency, token corruption)
@@ -108,7 +114,7 @@ All notable changes to AgentProbe are documented here.
 - Agent diff (compare versions side-by-side)
 - Custom assertion builder (visual)
 
-## [2.6.0] — 2026-03-16
+## [2.6.0] - 2026-03-16
 
 ### Added
 - Benchmark suite with statistical analysis
@@ -117,7 +123,7 @@ All notable changes to AgentProbe are documented here.
 - Coverage map visualization
 - Notification hub (Slack, email, webhook)
 
-## [2.5.0] — 2026-03-16
+## [2.5.0] - 2026-03-16
 
 ### Added
 - Multi-agent testing (orchestration, delegation)
@@ -126,7 +132,7 @@ All notable changes to AgentProbe are documented here.
 - Enhanced plugin system with lifecycle hooks
 - Environment profiles
 
-## [2.4.0] — 2026-03-16
+## [2.4.0] - 2026-03-16
 
 ### Added
 - Safety score computation
@@ -135,7 +141,7 @@ All notable changes to AgentProbe are documented here.
 - Smart retry with backoff
 - Test hooks (before/after)
 
-## [2.3.0] — 2026-03-16
+## [2.3.0] - 2026-03-16
 
 ### Added
 - A/B testing with statistical significance
@@ -144,7 +150,7 @@ All notable changes to AgentProbe are documented here.
 - Trace enrichment with metadata
 - Group-based test filtering
 
-## [2.2.0] — 2026-03-16
+## [2.2.0] - 2026-03-16
 
 ### Added
 - MCP server testing
@@ -153,7 +159,7 @@ All notable changes to AgentProbe are documented here.
 - Enhanced conversation testing (multi-turn)
 - Trace metadata annotations
 
-## [2.1.0] — 2026-03-16
+## [2.1.0] - 2026-03-16
 
 ### Added
 - SDK API for programmatic use
@@ -162,14 +168,14 @@ All notable changes to AgentProbe are documented here.
 - Error catalog with fix suggestions
 - Trace compression
 
-## [2.0.0] — 2026-03-16
+## [2.0.0] - 2026-03-16
 
 ### Changed
 - **Production-ready release** with complete documentation
 - Public API stabilization
 - Full test coverage
 
-## [1.9.0] — 2026-03-16
+## [1.9.0] - 2026-03-16
 
 ### Added
 - VS Code extension
@@ -178,7 +184,7 @@ All notable changes to AgentProbe are documented here.
 - OpenAPI test generator
 - Trace visualization (terminal)
 
-## [1.8.0] — 2026-03-16
+## [1.8.0] - 2026-03-16
 
 ### Added
 - Report portal (web UI)
@@ -187,7 +193,7 @@ All notable changes to AgentProbe are documented here.
 - Performance regression detection
 - Enhanced anonymizer
 
-## [1.7.0] — 2026-03-16
+## [1.7.0] - 2026-03-16
 
 ### Added
 - CI templates (GitHub Actions, GitLab, Azure Pipelines, CircleCI)
@@ -197,7 +203,7 @@ All notable changes to AgentProbe are documented here.
 - i18n support
 - Dependency resolver
 
-## [1.6.0] — 2026-03-16
+## [1.6.0] - 2026-03-16
 
 ### Added
 - Compliance framework
@@ -207,7 +213,7 @@ All notable changes to AgentProbe are documented here.
 - Enhanced merge
 - Report comparison
 
-## [1.5.0] — 2026-03-16
+## [1.5.0] - 2026-03-16
 
 ### Added
 - OpenTelemetry integration
@@ -217,7 +223,7 @@ All notable changes to AgentProbe are documented here.
 - Benchmarks
 - Enhanced statistics
 
-## [1.4.0] — 2026-03-16
+## [1.4.0] - 2026-03-16
 
 ### Added
 - AI-powered test suggestions
@@ -226,7 +232,7 @@ All notable changes to AgentProbe are documented here.
 - Budget enforcement
 - Multi-suite support
 
-## [1.3.0] — 2026-03-16
+## [1.3.0] - 2026-03-16
 
 ### Added
 - Interactive explorer
@@ -236,7 +242,7 @@ All notable changes to AgentProbe are documented here.
 - Chain assertions
 - Environment profiles
 
-## [1.2.0] — 2026-03-16
+## [1.2.0] - 2026-03-16
 
 ### Added
 - Config file support (`.agentprobe.yml`)
@@ -245,7 +251,7 @@ All notable changes to AgentProbe are documented here.
 - Trace export (JSON, CSV)
 - Dependency graph
 
-## [1.1.0] — 2026-03-16
+## [1.1.0] - 2026-03-16
 
 ### Added
 - Streaming recorder
@@ -255,7 +261,7 @@ All notable changes to AgentProbe are documented here.
 - Sampling support
 - 410 tests
 
-## [1.0.0] — 2026-03-16
+## [1.0.0] - 2026-03-16
 
 ### Added
 - Conversation testing (multi-turn)
@@ -265,7 +271,7 @@ All notable changes to AgentProbe are documented here.
 - Profiler
 - **First stable release**
 
-## [0.9.0] — 2026-03-16
+## [0.9.0] - 2026-03-16
 
 ### Added
 - Assertion explanations
@@ -276,7 +282,7 @@ All notable changes to AgentProbe are documented here.
 - Timeline visualization
 - Enhanced HTML dashboard
 
-## [0.8.0] — 2026-03-16
+## [0.8.0] - 2026-03-16
 
 ### Changed
 - Strict TypeScript
@@ -286,13 +292,13 @@ All notable changes to AgentProbe are documented here.
 - Error handling overhaul
 - GitHub issue/PR templates
 
-## [0.7.0] — 2026-03-16
+## [0.7.0] - 2026-03-16
 
 ### Added
 - Ecosystem integrations
 - Advanced testing patterns
 
-## [0.5.0] — 2026-03-16
+## [0.5.0] - 2026-03-16
 
 ### Added
 - Trace diff for behavioral drift
@@ -302,7 +308,7 @@ All notable changes to AgentProbe are documented here.
 - LLM-as-Judge assertions
 - Fault injection
 
-## [0.3.0] — 2026-03-16
+## [0.3.0] - 2026-03-16
 
 ### Added
 - Live agent execution
@@ -312,17 +318,17 @@ All notable changes to AgentProbe are documented here.
 - Watch mode
 - Snapshot testing
 
-## [0.2.0] — 2026-03-16
+## [0.2.0] - 2026-03-16
 
 ### Added
 - Fixtures system
 - Tool mocking
 - Reporter with colors and stats
 
-## [0.1.0] — 2026-03-16
+## [0.1.0] - 2026-03-16
 
 ### Added
-- Initial MVP — Playwright for AI Agents
+- Initial MVP - Playwright for AI Agents
 - YAML test suites
 - CLI runner
 - Basic assertions (contains, regex, cost-under, latency-under)
