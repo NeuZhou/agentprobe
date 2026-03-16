@@ -1,6 +1,6 @@
 {
   "name": "@neuzhou/agentprobe",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -55,7 +55,11 @@
     "./flake-manager": "./dist/flake-manager.js",
     "./timeline": "./dist/timeline.js",
     "./version-registry": "./dist/version-registry.js",
-    "./webhooks": "./dist/webhooks.js"
+    "./webhooks": "./dist/webhooks.js",
+    "./ab-test": "./dist/ab-test.js",
+    "./report-exporter": "./dist/report-exporter.js",
+    "./retry-policy": "./dist/retry-policy.js",
+    "./metrics": "./dist/metrics.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"

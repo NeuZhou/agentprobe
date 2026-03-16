@@ -29,21 +29,29 @@ export interface AnonymizeOptions {
   phones?: boolean;
   /** Replace credit card numbers. Default: true */
   creditCards?: boolean;
+  /** Replace SSNs. Default: true */
+  ssns?: boolean;
+  /** Replace street addresses. Default: true */
+  addresses?: boolean;
   /** Additional regex patterns to redact */
   custom?: Array<{ pattern: string; replacement: string; name?: string }>;
+  /** Path to YAML config with custom patterns */
+  patternsFile?: string;
   /** Enable reversible anonymization (stores mapping). Default: false */
   reversible?: boolean;
   /** Generate an anonymization report. Default: false */
   report?: boolean;
 }
 
-const DEFAULT_OPTIONS: Required<Omit<AnonymizeOptions, 'custom' | 'reversible' | 'report'>> = {
+const DEFAULT_OPTIONS: Required<Omit<AnonymizeOptions, 'custom' | 'reversible' | 'report' | 'patternsFile'>> = {
   names: true,
   emails: true,
   ips: true,
   secrets: true,
   phones: true,
   creditCards: true,
+  ssns: true,
+  addresses: true,
 };
 
 // Patterns for API keys / secrets / tokens
@@ -64,6 +72,10 @@ const PHONE_PATTERN = /(?:\+\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/
 const NAME_PATTERN = /\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?/g;
 // Credit card: 13-19 digit sequences (with optional separators)
 const CREDIT_CARD_PATTERN = /\b(?:\d{4}[-\s]?){3,4}\d{1,4}\b/g;
+// SSN: xxx-xx-xxxx
+const SSN_PATTERN = /\b\d{3}-\d{2}-\d{4}\b/g;
+// Street addresses (simple heuristic)
+const ADDRESS_PATTERN = /\b\d{1,5}\s+(?:[A-Z][a-z]+\s+){1,3}(?:St|Street|Ave|Avenue|Blvd|Boulevard|Dr|Drive|Rd|Road|Ln|Lane|Way|Ct|Court|Pl|Place)\.?\b/g;
 
 // ===== Anonymization report tracking =====
 
@@ -194,6 +206,20 @@ export function anonymizeString(input: string, options: AnonymizeOptions = {}): 
     result = result.replace(NAME_PATTERN, (match) => {
       trackRedaction('name', match, '[NAME]');
       return '[NAME]';
+    });
+  }
+
+  if (opts.ssns) {
+    result = result.replace(SSN_PATTERN, (match) => {
+      trackRedaction('ssn', match, '[SSN]');
+      return '[SSN]';
+    });
+  }
+
+  if (opts.addresses) {
+    result = result.replace(ADDRESS_PATTERN, (match) => {
+      trackRedaction('address', match, '[ADDRESS]');
+      return '[ADDRESS]';
     });
   }
 
