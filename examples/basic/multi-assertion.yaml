@@ -1,0 +1,30 @@
+# Multi-Assertion — Multiple checks on a single agent response
+# Demonstrates how to validate different aspects of one response.
+
+name: "Multi-Assertion"
+description: "Apply multiple assertions to verify response quality"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini
+  system: "You are a math tutor. Always show your work step by step."
+
+steps:
+  - send: "What is 15% of 200?"
+    assert:
+      # Must contain the correct answer
+      - type: contains
+        value: "30"
+      # Should show working/steps
+      - type: regex
+        pattern: "(step|first|multiply|percent)"
+      # Should not be excessively long
+      - type: max-tokens
+        value: 500
+      # Should not contain wrong answers
+      - type: not-contains
+        value: "25"
+      # LLM-as-judge: is the explanation clear?
+      - type: llm-judge
+        criteria: "The response clearly explains how to calculate 15% of 200"
+        threshold: 0.8

@@ -1,0 +1,65 @@
+# GitLab CI configuration for AgentProbe tests
+# Add this to your repo as .gitlab-ci.yml
+
+stages:
+  - test
+  - chaos
+  - report
+
+variables:
+  NODE_VERSION: "20"
+
+.agentprobe-base:
+  image: node:${NODE_VERSION}
+  before_script:
+    - npm install -g @neuzhou/agentprobe
+  artifacts:
+    when: always
+    reports:
+      junit: results/*.xml
+    paths:
+      - results/
+
+# Core agent tests — run on every push
+basic-tests:
+  extends: .agentprobe-base
+  stage: test
+  script:
+    - agentprobe run examples/basic/ --reporter junit --output results/
+
+security-tests:
+  extends: .agentprobe-base
+  stage: test
+  script:
+    - agentprobe run examples/security/ --reporter junit --output results/
+
+contract-tests:
+  extends: .agentprobe-base
+  stage: test
+  script:
+    - agentprobe run examples/contracts/ --reporter junit --output results/
+
+compliance-tests:
+  extends: .agentprobe-base
+  stage: test
+  script:
+    - agentprobe run examples/compliance/ --reporter junit --output results/
+
+# Chaos tests — only on main branch
+chaos-tests:
+  extends: .agentprobe-base
+  stage: chaos
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - agentprobe run examples/chaos/ --retries 3 --reporter junit --output results/
+  allow_failure: true  # Chaos tests may have expected failures
+
+# Nightly scheduled run for drift detection
+nightly-full-suite:
+  extends: .agentprobe-base
+  stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - agentprobe run examples/ --reporter junit --output results/

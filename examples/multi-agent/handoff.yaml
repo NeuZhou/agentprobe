@@ -1,0 +1,93 @@
+# Multi-Agent Handoff — Test orchestration between agents
+# Verify that agents correctly hand off conversations to specialists.
+
+name: "Multi-Agent Handoff"
+description: "Test agent-to-agent handoff in a multi-agent system"
+
+# Define the agent topology
+agents:
+  router:
+    adapter: openai
+    model: gpt-4o-mini
+    system: >
+      You are a routing agent. Analyze the user's request and hand off to the
+      appropriate specialist: 'billing' for payment/invoice issues,
+      'technical' for product/technical issues.
+      Use the handoff tool to transfer.
+    tools:
+      - name: handoff
+        description: "Transfer conversation to a specialist agent"
+        parameters:
+          type: object
+          properties:
+            target: { type: string, enum: [billing, technical] }
+            context: { type: string }
+          required: [target, context]
+
+  billing:
+    adapter: openai
+    model: gpt-4o-mini
+    system: >
+      You are a billing specialist. Help with invoices, payments, and refunds.
+      You have access to the billing system.
+    tools:
+      - name: lookup_invoice
+        description: "Look up an invoice"
+        parameters:
+          type: object
+          properties:
+            invoice_id: { type: string }
+          required: [invoice_id]
+
+  technical:
+    adapter: openai
+    model: gpt-4o-mini
+    system: >
+      You are a technical support specialist. Help with product issues,
+      bugs, and troubleshooting.
+
+mocks:
+  lookup_invoice:
+    - when: { invoice_id: "INV-100" }
+      respond:
+        amount: 299.00
+        status: "overdue"
+        due_date: "2024-02-01"
+
+# Start with the router agent
+entrypoint: router
+
+steps:
+  # Router should hand off billing question to billing agent
+  - send: "I have a question about invoice INV-100"
+    expect_agent: router
+    assert:
+      - type: tool-called
+        name: handoff
+        args:
+          target: "billing"
+      - type: llm-judge
+        criteria: "The router identifies this as a billing issue"
+        threshold: 0.9
+
+  # After handoff, billing agent should handle the query
+  - send: "Can you look up that invoice?"
+    expect_agent: billing
+    assert:
+      - type: tool-called
+        name: lookup_invoice
+      - type: contains
+        value: "299"
+      - type: llm-judge
+        criteria: "The billing agent looks up the invoice and provides details"
+        threshold: 0.8
+
+  # New conversation — should route to technical
+  - reset: true  # Reset conversation state
+  - send: "My app keeps crashing when I try to export PDF files"
+    expect_agent: router
+    assert:
+      - type: tool-called
+        name: handoff
+        args:
+          target: "technical"

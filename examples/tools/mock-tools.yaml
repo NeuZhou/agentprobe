@@ -1,0 +1,57 @@
+# Mock Tools — Deterministic testing with mocked tool responses
+# Replace real tool calls with predefined responses for reproducible tests.
+
+name: "Mock Tools"
+description: "Test agent behavior with mocked tool responses"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini
+  system: "You are a weather assistant. Use the get_weather tool to answer questions."
+  tools:
+    - name: get_weather
+      description: "Get current weather for a location"
+      parameters:
+        type: object
+        properties:
+          location:
+            type: string
+            description: "City name"
+        required: [location]
+
+# Mock tool responses — agent will receive these instead of calling real APIs
+mocks:
+  get_weather:
+    - when:
+        location: "Tokyo"
+      respond:
+        temperature: 22
+        condition: "sunny"
+        humidity: 45
+    - when:
+        location: "London"
+      respond:
+        temperature: 8
+        condition: "rainy"
+        humidity: 85
+
+steps:
+  - send: "What's the weather like in Tokyo?"
+    assert:
+      # Agent should use our mocked data
+      - type: contains
+        value: "sunny"
+      - type: contains
+        value: "22"
+      # Verify the tool was actually called
+      - type: tool-called
+        name: get_weather
+        args:
+          location: "Tokyo"
+
+  - send: "How about London?"
+    assert:
+      - type: contains
+        value: "rainy"
+      - type: tool-called
+        name: get_weather

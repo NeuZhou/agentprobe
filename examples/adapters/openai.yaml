@@ -1,0 +1,53 @@
+# OpenAI Adapter Configuration
+# Configure AgentProbe to test agents using OpenAI models.
+
+name: "OpenAI Adapter Example"
+description: "Test an agent using OpenAI GPT models"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini          # or gpt-4o, gpt-4-turbo, o1-mini, etc.
+
+  # Connection settings
+  connection:
+    api_key: ${OPENAI_API_KEY}           # From environment variable
+    # base_url: https://api.openai.com/v1  # Default; override for Azure OpenAI
+    # organization: org-xxxxx              # Optional org ID
+    timeout_ms: 30000
+    max_retries: 2
+
+  # Model parameters
+  parameters:
+    temperature: 0.1          # Low temperature for deterministic testing
+    max_tokens: 1024
+    top_p: 1.0
+    # seed: 42                # Optional: for reproducible outputs
+
+  # System prompt
+  system: "You are a helpful assistant that answers questions concisely."
+
+  # Tool definitions (OpenAI function calling format)
+  tools:
+    - name: get_time
+      description: "Get the current time in a timezone"
+      parameters:
+        type: object
+        properties:
+          timezone:
+            type: string
+            description: "IANA timezone (e.g., America/New_York)"
+        required: [timezone]
+
+mocks:
+  get_time:
+    - when: { timezone: "America/New_York" }
+      respond: { time: "2024-03-15T10:30:00-04:00" }
+
+steps:
+  - send: "What time is it in New York?"
+    assert:
+      - type: tool-called
+        name: get_time
+      - type: contains
+        value: "10:30"
+      - type: not-empty

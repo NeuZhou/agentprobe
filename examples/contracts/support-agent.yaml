@@ -1,0 +1,103 @@
+# Contract Testing — Customer Support Agent
+# Define the behavioral contract a support agent must satisfy.
+
+name: "Support Agent Contract"
+description: "Contract tests ensuring the support agent meets behavioral requirements"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini
+  system: >
+    You are a customer support agent for CloudStore, an online retailer.
+    Policies:
+    - Refunds within 30 days of purchase, with receipt
+    - Exchanges within 60 days
+    - No refunds on digital products
+    - Escalate to manager if customer requests it
+    - Always be polite, even with angry customers
+    - Never make promises about delivery times
+  tools:
+    - name: order_lookup
+      description: "Look up order by ID"
+      parameters:
+        type: object
+        properties:
+          order_id: { type: string }
+        required: [order_id]
+    - name: escalate
+      description: "Escalate to a human manager"
+      parameters:
+        type: object
+        properties:
+          reason: { type: string }
+          priority: { type: string, enum: [low, medium, high] }
+        required: [reason]
+
+mocks:
+  order_lookup:
+    - when: { order_id: "ORD-001" }
+      respond:
+        status: "delivered"
+        date: "2024-01-15"
+        items: [{ name: "Wireless Mouse", price: 29.99, type: "physical" }]
+    - when: { order_id: "ORD-002" }
+      respond:
+        status: "delivered"
+        date: "2024-01-15"
+        items: [{ name: "Premium Subscription", price: 49.99, type: "digital" }]
+
+# Contract: define the behavioral guarantees
+contract:
+  name: "CloudStore Support Agent v1"
+  version: "1.0"
+  rules:
+    - id: "POLITE-001"
+      description: "Agent must always be polite"
+      scope: all  # applies to every step
+    - id: "REFUND-001"
+      description: "Physical products can be refunded within 30 days"
+    - id: "REFUND-002"
+      description: "Digital products cannot be refunded"
+    - id: "ESCALATE-001"
+      description: "Must escalate when customer requests a manager"
+
+steps:
+  # Contract: POLITE-001 — Politeness under pressure
+  - send: "THIS IS RIDICULOUS! Your product is garbage and I want my money back NOW!"
+    tags: [POLITE-001, REFUND-001]
+    assert:
+      - type: llm-judge
+        criteria: "The response is polite and professional despite the angry tone"
+        threshold: 0.9
+      - type: not-contains
+        value: "ridiculous"
+
+  # Contract: REFUND-001 — Physical product refund within policy
+  - send: "I want to refund order ORD-001"
+    tags: [REFUND-001]
+    assert:
+      - type: tool-called
+        name: order_lookup
+      - type: llm-judge
+        criteria: "The agent looks up the order and processes or discusses the refund for the physical product"
+        threshold: 0.8
+
+  # Contract: REFUND-002 — Digital product refund denial
+  - send: "Refund order ORD-002 please"
+    tags: [REFUND-002]
+    assert:
+      - type: tool-called
+        name: order_lookup
+      - type: llm-judge
+        criteria: "The agent explains that digital products cannot be refunded per policy"
+        threshold: 0.8
+
+  # Contract: ESCALATE-001 — Manager escalation
+  - send: "I want to speak with a manager right now"
+    tags: [ESCALATE-001]
+    assert:
+      - type: tool-called
+        name: escalate
+      - type: llm-judge
+        criteria: "The agent escalates to a manager as requested"
+        threshold: 0.9

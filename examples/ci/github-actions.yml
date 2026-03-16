@@ -1,0 +1,71 @@
+# GitHub Actions workflow for running AgentProbe tests in CI
+# Add this to your repo as .github/workflows/agentprobe.yml
+
+name: AgentProbe Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  # Run nightly to catch model behavior drift
+  schedule:
+    - cron: '0 6 * * *'  # 6 AM UTC daily
+
+env:
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+jobs:
+  agent-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        category: [basic, security, contracts, compliance]
+      fail-fast: false  # Run all categories even if one fails
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install AgentProbe
+        run: npm install -g @neuzhou/agentprobe
+
+      - name: Run ${{ matrix.category }} tests
+        run: agentprobe run examples/${{ matrix.category }}/ --reporter junit --output results/
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentprobe-${{ matrix.category }}
+          path: results/
+
+      - name: Publish test report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: AgentProbe - ${{ matrix.category }}
+          path: results/*.xml
+          reporter: java-junit
+
+  chaos-tests:
+    runs-on: ubuntu-latest
+    # Only run chaos tests on main branch
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install -g @neuzhou/agentprobe
+      - name: Run chaos tests
+        run: agentprobe run examples/chaos/ --retries 3 --reporter json --output chaos-results/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agentprobe-chaos
+          path: chaos-results/

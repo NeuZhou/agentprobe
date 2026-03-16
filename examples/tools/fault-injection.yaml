@@ -1,0 +1,64 @@
+# Fault Injection — Test how agents handle tool failures
+# Simulate errors, timeouts, and malformed responses from tools.
+
+name: "Fault Injection"
+description: "Verify agent gracefully handles tool failures"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini
+  system: "You are a helpful assistant with access to a database lookup tool."
+  tools:
+    - name: db_lookup
+      description: "Look up a user record by ID"
+      parameters:
+        type: object
+        properties:
+          user_id:
+            type: string
+        required: [user_id]
+
+# Inject faults into tool responses
+faults:
+  db_lookup:
+    # First call: timeout
+    - sequence: 1
+      type: timeout
+      delay_ms: 30000
+    # Second call: error response
+    - sequence: 2
+      type: error
+      error:
+        code: 500
+        message: "Internal server error: connection refused"
+    # Third call: malformed response
+    - sequence: 3
+      type: malformed
+      response: "{{invalid json}}"
+
+steps:
+  - send: "Look up user ID 12345"
+    timeout: 5000  # We expect this to fail fast, not hang
+    assert:
+      # Agent should NOT crash or return empty
+      - type: not-empty
+      # Agent should communicate the failure gracefully
+      - type: llm-judge
+        criteria: "The agent acknowledges the lookup failed and offers alternatives or asks to retry"
+        threshold: 0.7
+
+  - send: "Try again please"
+    assert:
+      # Should handle the 500 error gracefully
+      - type: not-contains
+        value: "500"
+      - type: llm-judge
+        criteria: "The agent explains there was an issue without exposing raw error details"
+        threshold: 0.7
+
+  - send: "One more time"
+    assert:
+      # Should handle malformed response without crashing
+      - type: not-contains
+        value: "invalid json"
+      - type: not-empty

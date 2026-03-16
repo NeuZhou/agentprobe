@@ -1,0 +1,18 @@
+# Hello World — Simplest possible AgentProbe test
+# Just send a message and verify the agent responds.
+
+name: "Hello World"
+description: "Verify the agent can respond to a basic greeting"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini
+
+steps:
+  - send: "Hello! What's your name?"
+    assert:
+      # The agent should respond with something (not empty)
+      - type: not-empty
+      # The response should be reasonable length
+      - type: max-tokens
+        value: 200

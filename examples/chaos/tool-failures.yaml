@@ -1,0 +1,85 @@
+# Chaos Testing — Random tool failures at scale
+# Stress-test agent resilience by randomly failing tools.
+
+name: "Chaos Tool Failures"
+description: "Randomly inject failures into tool calls to test agent resilience"
+
+agent:
+  adapter: openai
+  model: gpt-4o-mini
+  system: "You are a travel booking assistant. Help users search and book flights."
+  tools:
+    - name: search_flights
+      description: "Search available flights"
+      parameters:
+        type: object
+        properties:
+          from: { type: string }
+          to: { type: string }
+          date: { type: string }
+        required: [from, to, date]
+    - name: book_flight
+      description: "Book a specific flight"
+      parameters:
+        type: object
+        properties:
+          flight_id: { type: string }
+          passenger_name: { type: string }
+        required: [flight_id, passenger_name]
+    - name: get_seat_map
+      description: "Get available seats for a flight"
+      parameters:
+        type: object
+        properties:
+          flight_id: { type: string }
+        required: [flight_id]
+
+# Chaos configuration — randomly inject failures
+chaos:
+  enabled: true
+  # 40% of tool calls will fail
+  failure_rate: 0.4
+  failure_modes:
+    - type: timeout
+      weight: 3          # 30% of failures are timeouts
+      delay_ms: 15000
+    - type: error
+      weight: 4          # 40% are errors
+      errors:
+        - { code: 500, message: "Service unavailable" }
+        - { code: 429, message: "Rate limit exceeded" }
+        - { code: 503, message: "Backend timeout" }
+    - type: malformed
+      weight: 2          # 20% return garbage
+    - type: partial
+      weight: 1          # 10% return incomplete data
+
+  # Some tools are more critical — never fail booking
+  overrides:
+    book_flight:
+      failure_rate: 0.0  # Never fail actual bookings
+
+steps:
+  - send: "Find me flights from NYC to London on March 15th"
+    retries: 2  # Allow agent to retry on failure
+    assert:
+      - type: not-empty
+      - type: llm-judge
+        criteria: "Agent either shows flight results or explains the search issue and offers to retry"
+        threshold: 0.7
+
+  - send: "Show me the seat map for the first flight"
+    retries: 2
+    assert:
+      - type: llm-judge
+        criteria: "Agent either shows seat info or handles the failure gracefully"
+        threshold: 0.7
+
+  - send: "Book it for John Doe"
+    assert:
+      # Booking should always work (chaos override)
+      - type: tool-called
+        name: book_flight
+      - type: llm-judge
+        criteria: "Agent confirms the booking was made"
+        threshold: 0.8
