@@ -291,8 +291,8 @@ export { compressTrace, decompressTrace, compressDirectory, decompressDirectory,
 export type { CompressedArchive, CompressedEntry, CompressionStats } from './compress';
 
 // MCP Server Testing
-export { evaluateMCPExpectations, validateMCPSuite, evaluateMCPSuite, buildMockMCPResult, formatMCPResults } from './mcp-test';
-export type { MCPServerConfig, MCPExpectations, MCPTestCase, MCPTestSuite, MCPToolInfo, MCPToolResult, MCPTestResult, MCPSuiteResult } from './mcp-test';
+export { evaluateMCPExpectations, validateMCPSuite, evaluateMCPSuite, buildMockMCPResult, formatMCPResults, analyzeMCPSecurity, formatMCPSecurity, isDangerousTool } from './mcp-test';
+export type { MCPServerConfig, MCPExpectations, MCPTestCase, MCPTestSuite, MCPToolInfo, MCPToolResult, MCPTestResult, MCPSuiteResult, MCPSecurityCheck, MCPSecurityCheckItem, MCPSecurityReport } from './mcp-test';
 
 // Rate Limiter
 export { RateLimiter, createRateLimiter, parseRate } from './rate-limiter';
@@ -305,6 +305,14 @@ export type { TestTemplate } from './templates-lib';
 // Enhanced Conversation (tone detection, context maintenance)
 export { detectTone } from './conversation';
 export type { ToneLabel, ConversationExpectations } from './conversation';
+
+// Adapter Auto-Detection
+export { autoDetect, detectFromEnv, detectFromConfig, formatAutoDetect, validateKey } from './auto-detect';
+export type { DetectedAdapter, AutoDetectResult } from './auto-detect';
+
+// Benchmark Database
+export { BenchmarkDB, formatComparison as formatBenchmarkComparison, formatDashboard } from './benchmark-db';
+export type { BenchmarkResult, StoredBenchmark, TrendData, TrendPoint as BenchmarkTrendPoint, ComparisonResult as BenchmarkComparisonResult, ComparisonEntry, DashboardData } from './benchmark-db';
 
 // Trace Metadata
 export { tagTrace, filterByMetadata, mergeMetadata, validateMetadata, extractMetadataIndex } from './trace-metadata';

@@ -300,6 +300,165 @@ export function formatMCPResults(results: MCPSuiteResult): string {
   return lines.join('\n');
 }
 
+// ===== Security Analysis =====
+
+export interface MCPSecurityCheck {
+  toolName: string;
+  checks: MCPSecurityCheckItem[];
+  score: number; // 0-100
+  passed: boolean;
+}
+
+export interface MCPSecurityCheckItem {
+  name: string;
+  passed: boolean;
+  severity: 'critical' | 'warning' | 'info';
+  message: string;
+}
+
+export interface MCPSecurityReport {
+  tools: MCPSecurityCheck[];
+  overall_score: number;
+  passed_count: number;
+  total_count: number;
+  critical_issues: string[];
+}
+
+/** Dangerous tool name patterns that suggest write/delete/admin operations. */
+const DANGEROUS_PATTERNS = [
+  /delete/i, /remove/i, /drop/i, /destroy/i,
+  /admin/i, /sudo/i, /root/i, /exec/i, /execute/i, /eval/i,
+  /write/i, /update/i, /modify/i, /patch/i,
+];
+
+/** Check if a tool name suggests a dangerous operation. */
+export function isDangerousTool(name: string): boolean {
+  return DANGEROUS_PATTERNS.some(p => p.test(name));
+}
+
+/**
+ * Analyze security posture of MCP tools.
+ */
+export function analyzeMCPSecurity(
+  tools: MCPToolInfo[],
+  toolResults?: Map<string, MCPToolResult>,
+): MCPSecurityReport {
+  const checks: MCPSecurityCheck[] = [];
+  const critical_issues: string[] = [];
+
+  for (const tool of tools) {
+    const items: MCPSecurityCheckItem[] = [];
+
+    // 1. Input schema validation
+    const hasSchema = !!tool.inputSchema && Object.keys(tool.inputSchema).length > 0;
+    items.push({
+      name: 'input_validation',
+      passed: hasSchema,
+      severity: isDangerousTool(tool.name) ? 'critical' : 'warning',
+      message: hasSchema
+        ? 'Tool has input schema defined'
+        : `Tool "${tool.name}" has no input validation schema`,
+    });
+    if (!hasSchema && isDangerousTool(tool.name)) {
+      critical_issues.push(`Tool "${tool.name}" is dangerous but has no input validation`);
+    }
+
+    // 2. Description present
+    const hasDesc = !!tool.description && tool.description.length > 10;
+    items.push({
+      name: 'has_description',
+      passed: hasDesc,
+      severity: 'info',
+      message: hasDesc
+        ? 'Tool has description'
+        : `Tool "${tool.name}" lacks a meaningful description`,
+    });
+
+    // 3. Dangerous operation without confirmation hint
+    if (isDangerousTool(tool.name)) {
+      const hasConfirmation = tool.description?.toLowerCase().includes('confirm') ||
+        tool.inputSchema?.properties?.confirm !== undefined ||
+        tool.inputSchema?.properties?.force !== undefined;
+      items.push({
+        name: 'dangerous_operation_safeguard',
+        passed: hasConfirmation,
+        severity: 'critical',
+        message: hasConfirmation
+          ? 'Dangerous tool has confirmation/force parameter'
+          : `Tool "${tool.name}" performs dangerous operations without safeguard`,
+      });
+      if (!hasConfirmation) {
+        critical_issues.push(`Tool "${tool.name}" lacks authorization/confirmation check`);
+      }
+    }
+
+    // 4. Error handling check (if we have results)
+    if (toolResults) {
+      const errorKey = `${tool.name}-error`;
+      const errorResult = toolResults.get(errorKey);
+      if (errorResult) {
+        const handlesErrors = !!errorResult.error || errorResult.content.includes('error');
+        items.push({
+          name: 'error_handling',
+          passed: handlesErrors,
+          severity: 'warning',
+          message: handlesErrors
+            ? 'Tool handles errors gracefully'
+            : `Tool "${tool.name}" does not handle errors properly`,
+        });
+      }
+    }
+
+    const passedItems = items.filter(i => i.passed).length;
+    const score = items.length > 0 ? Math.round((passedItems / items.length) * 100) : 100;
+
+    checks.push({
+      toolName: tool.name,
+      checks: items,
+      score,
+      passed: !items.some(i => !i.passed && i.severity === 'critical'),
+    });
+  }
+
+  const passedCount = checks.filter(c => c.passed).length;
+  const overall = checks.length > 0
+    ? Math.round(checks.reduce((s, c) => s + c.score, 0) / checks.length)
+    : 100;
+
+  return {
+    tools: checks,
+    overall_score: overall,
+    passed_count: passedCount,
+    total_count: checks.length,
+    critical_issues,
+  };
+}
+
+/** Format security report for display. */
+export function formatMCPSecurity(report: MCPSecurityReport): string {
+  const lines: string[] = [];
+  lines.push('\n🔒 MCP Security Report');
+  lines.push('='.repeat(40));
+
+  for (const tool of report.tools) {
+    const icon = tool.passed ? '✅' : '❌';
+    lines.push(`${icon} ${tool.toolName} (score: ${tool.score}/100)`);
+    for (const check of tool.checks) {
+      if (!check.passed) {
+        const sev = { critical: '❌', warning: '⚠️', info: 'ℹ️' }[check.severity];
+        lines.push(`   ${sev} ${check.message}`);
+      }
+    }
+  }
+
+  lines.push(`\nSecurity: ${report.passed_count}/${report.total_count} tools pass security checks`);
+  if (report.critical_issues.length > 0) {
+    lines.push(`Critical issues: ${report.critical_issues.length}`);
+  }
+
+  return lines.join('\n');
+}
+
 /**
  * Run MCP test suite against provided tool/action handlers.
  * This is the evaluation-only version - actual server spawning is done by adapters.

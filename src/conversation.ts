@@ -66,6 +66,10 @@ export interface ConversationExpectations extends Expectations {
   context_maintained?: boolean;
   /** Output length constraints */
   output_length?: { min?: number; max?: number };
+  /** Specific context keys that should be retained from prior turns */
+  context_retained?: string[];
+  /** Tool args must contain these key-value pairs (context carry-forward) */
+  args_contain?: Record<string, any>;
 }
 
 /**
@@ -235,6 +239,53 @@ export function evaluateConversation(
         actual: contextPresent ? 'context found' : 'no context from previous turn',
         message: contextPresent ? undefined : 'Agent does not appear to maintain context from previous turn',
       });
+    }
+
+    // Enhanced: context_retained — check specific context keys are present
+    if (turn.expect.context_retained && turn.expect.context_retained.length > 0) {
+      const allToolArgs = turnTrace.steps
+        .filter(s => s.type === 'tool_call')
+        .map(s => JSON.stringify(s.data.tool_args ?? {}))
+        .join(' ')
+        .toLowerCase();
+      const allOutput = turnTrace.steps
+        .filter(s => s.type === 'output')
+        .map(s => s.data.content ?? '')
+        .join('\n')
+        .toLowerCase();
+      const combined = allToolArgs + ' ' + allOutput;
+
+      for (const key of turn.expect.context_retained) {
+        const found = combined.includes(key.toLowerCase());
+        assertions.push({
+          name: `context_retained: ${key}`,
+          passed: found,
+          expected: `context key "${key}" retained`,
+          actual: found ? 'found' : 'missing',
+          message: found ? undefined : `Context key "${key}" not found in agent response or tool args`,
+        });
+      }
+    }
+
+    // Enhanced: args_contain — check tool call args contain specific values
+    if (turn.expect.args_contain) {
+      const toolCalls = turnTrace.steps.filter(s => s.type === 'tool_call');
+      for (const [key, expectedVal] of Object.entries(turn.expect.args_contain)) {
+        const found = toolCalls.some(tc => {
+          const args = tc.data.tool_args ?? {};
+          if (typeof expectedVal === 'string') {
+            return String(args[key] ?? '').toLowerCase() === expectedVal.toLowerCase();
+          }
+          return args[key] === expectedVal;
+        });
+        assertions.push({
+          name: `args_contain: ${key}=${JSON.stringify(expectedVal)}`,
+          passed: found,
+          expected: `${key}=${JSON.stringify(expectedVal)}`,
+          actual: found ? 'found' : `not found in ${toolCalls.length} tool calls`,
+          message: found ? undefined : `No tool call has ${key}=${JSON.stringify(expectedVal)}`,
+        });
+      }
     }
 
     // Enhanced: output_length check
