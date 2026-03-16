@@ -298,3 +298,23 @@ export type { ToneLabel, ConversationExpectations } from './conversation';
 // Trace Metadata
 export { tagTrace, filterByMetadata, mergeMetadata, validateMetadata, extractMetadataIndex } from './trace-metadata';
 export type { TraceMetadata, MetadataFilter } from './trace-metadata';
+
+// Multi-Agent Testing
+export { AgentRegistry, parseMultiAgentConfig, detectDelegation, evaluateConversationStep, formatMultiAgentResult } from './multi-agent';
+export type { AgentDefinition, MultiAgentTest, MultiAgentResult, DelegationEvent, ConversationStepResult } from './multi-agent';
+
+// Cost Optimizer
+export { analyzeTestCosts, findDuplicateTests, optimizeCosts, formatCostOptimization } from './cost-optimizer';
+export type { CostOptimizationReport, CostRecommendation, TestCostEntry } from './cost-optimizer';
+
+// Regression Detector
+export { createSnapshot, compareSnapshots, formatRegressionReport, DEFAULT_THRESHOLDS } from './regression-detector';
+export type { ReportSnapshot, TestSnapshot, RegressionChange, RegressionReport, RegressionThresholds } from './regression-detector';
+
+// Environment Profiles
+export { loadProfiles, resolveProfile, validateProfile, applyProfile, formatProfiles, listProfileNames, scaffoldProfiles } from './profiles';
+export type { EnvironmentProfile, ProfilesConfig } from './profiles';
+
+// Enhanced Plugin System
+export { registerPlugin, unregisterPlugin, getRegisteredPlugins, getPlugin, clearAllPlugins, runPluginHook, watchPlugin, unwatchPlugin } from './plugins';
+export type { AgentProbePlugin, PluginHooks } from './plugins';
