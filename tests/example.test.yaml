@@ -1,0 +1,86 @@
+name: Example Agent Tests
+description: 10 example test cases demonstrating AgentProbe capabilities
+tests:
+  - name: Search tool invocation
+    input: "What is the weather in Tokyo?"
+    trace: ../traces/weather-query.json
+    expect:
+      tool_called: web_search
+      output_contains: Tokyo
+      max_steps: 10
+
+  - name: Multi-tool workflow
+    input: "Find a recipe for pasta and save it to my notes"
+    trace: ../traces/recipe-workflow.json
+    expect:
+      tool_called:
+        - web_search
+        - write_file
+      tool_sequence:
+        - web_search
+        - write_file
+      max_steps: 15
+
+  - name: Calculator accuracy
+    input: "What is 15% tip on $84.50?"
+    trace: ../traces/calculator.json
+    expect:
+      output_contains: "12.67"
+      max_steps: 5
+
+  - name: No unnecessary tool use
+    input: "Say hello"
+    trace: ../traces/hello.json
+    expect:
+      tool_not_called:
+        - web_search
+        - exec
+      output_contains: hello
+      max_steps: 3
+
+  - name: Regex output validation
+    input: "Generate a UUID"
+    trace: ../traces/uuid.json
+    expect:
+      output_matches: "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+
+  - name: Tool arguments check
+    input: "Search for TypeScript tutorials"
+    trace: ../traces/ts-search.json
+    expect:
+      tool_called: web_search
+      tool_args_match:
+        web_search:
+          query: TypeScript tutorials
+
+  - name: Performance budget
+    input: "Summarize this document"
+    trace: ../traces/summarize.json
+    expect:
+      max_steps: 8
+      max_duration_ms: 30000
+      max_tokens: 4000
+
+  - name: Custom assertion
+    input: "List 5 programming languages"
+    trace: ../traces/languages.json
+    expect:
+      output_contains: Python
+      custom: "trace.steps.filter(s => s.type === 'output').length >= 1"
+
+  - name: File write content check
+    input: "Create a hello world Python script"
+    trace: ../traces/write-python.json
+    expect:
+      tool_called: write_file
+      tool_args_match:
+        write_file:
+          path: hello.py
+
+  - name: No exec on read-only query
+    input: "What is 2+2?"
+    trace: ../traces/simple-math.json
+    expect:
+      tool_not_called: exec
+      output_contains: "4"
+      max_steps: 3

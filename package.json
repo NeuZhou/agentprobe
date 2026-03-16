@@ -1,0 +1,30 @@
+{
+  "name": "agentprobe",
+  "version": "0.1.0",
+  "description": "🔬 Playwright for AI Agents — Test, record, and replay agent behaviors",
+  "main": "dist/index.js",
+  "bin": {
+    "agentprobe": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["ai", "agent", "testing", "llm", "playwright", "trace", "openai", "anthropic"],
+  "author": "Kang Zhou <neuzhou@outlook.com>",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "glob": "^10.3.10",
+    "yaml": "^2.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}
