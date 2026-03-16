@@ -1,171 +1,149 @@
 # Getting Started with AgentProbe
 
-> 🔬 Playwright for AI Agents — from zero to tested in 5 minutes.
-
-## Install
+## Installation
 
 ```bash
-# Global (recommended for CLI)
-npm install -g agentprobe
-
-# Or as a dev dependency
-npm install --save-dev agentprobe
+npm install -D @neuzhou/agentprobe
 ```
 
-Verify the installation:
+Or globally:
 
 ```bash
-agentprobe --version
+npm install -g @neuzhou/agentprobe
 ```
 
-## Create Your First Test
+## Quick Start
 
-### 1. Record or create a trace
-
-An agent trace is a JSON file describing what your agent did — the LLM calls, tool invocations, and outputs. Here's a minimal one:
-
-```bash
-mkdir -p traces
-```
-
-Create `traces/my-agent.json`:
-
-```json
-{
-  "id": "my-first-trace",
-  "timestamp": "2026-03-16T10:00:00Z",
-  "steps": [
-    {
-      "type": "llm_call",
-      "timestamp": "2026-03-16T10:00:00.000Z",
-      "data": {
-        "model": "gpt-4o",
-        "messages": [
-          { "role": "user", "content": "Search for the latest news about AI" }
-        ],
-        "tokens": { "input": 20, "output": 15 }
-      },
-      "duration_ms": 400
-    },
-    {
-      "type": "tool_call",
-      "timestamp": "2026-03-16T10:00:00.400Z",
-      "data": {
-        "tool_name": "web_search",
-        "tool_args": { "query": "latest AI news 2026" }
-      },
-      "duration_ms": 200
-    },
-    {
-      "type": "tool_result",
-      "timestamp": "2026-03-16T10:00:00.600Z",
-      "data": {
-        "tool_name": "web_search",
-        "tool_result": { "results": [{ "title": "AI Breakthrough", "url": "https://example.com" }] }
-      },
-      "duration_ms": 0
-    },
-    {
-      "type": "output",
-      "timestamp": "2026-03-16T10:00:00.800Z",
-      "data": {
-        "content": "Here are the latest AI news: AI Breakthrough — a major advancement was announced today."
-      },
-      "duration_ms": 0
-    }
-  ],
-  "metadata": { "agent": "news-bot", "version": "1.0" }
-}
-```
-
-### 2. Write a test in YAML
-
-Create `tests/my-first.test.yaml`:
-
-```yaml
-name: My First Agent Tests
-tests:
-  - name: Agent uses search tool
-    input: "Search for the latest news about AI"
-    trace: ../traces/my-agent.json
-    expect:
-      tool_called: web_search
-      output_contains: "AI"
-      max_steps: 10
-```
-
-### 3. Or use interactive init
+### 1. Initialize a Project
 
 ```bash
 agentprobe init
 ```
 
-This walks you through creating a test file with guided prompts.
+This creates a sample test file and example trace to get you started.
 
-## Run Your First Test
+### 2. Write Your First Test
+
+Create `tests/agent.test.yaml`:
+
+```yaml
+name: My Agent Tests
+tests:
+  - name: Agent calls search tool
+    trace: traces/search.json
+    expect:
+      tool_called: web_search
+      output_contains: "result"
+      max_steps: 10
+```
+
+### 3. Run Tests
 
 ```bash
-agentprobe run tests/my-first.test.yaml
+agentprobe run tests/agent.test.yaml
 ```
 
-Output:
+## Core Concepts
 
+### Traces
+
+A **trace** is a recording of an agent's execution — every LLM call, tool invocation, and output. AgentProbe tests run against traces, making them deterministic and fast.
+
+```json
+{
+  "agent": "my-agent",
+  "model": "gpt-4",
+  "steps": [
+    { "type": "llm_call", "input": "What's the weather?", "output": "I'll search for that." },
+    { "type": "tool_call", "tool": "web_search", "args": { "query": "weather" }, "result": "Sunny, 72°F" },
+    { "type": "llm_call", "input": null, "output": "The weather is sunny and 72°F." }
+  ],
+  "final_output": "The weather is sunny and 72°F.",
+  "total_tokens": 150,
+  "cost_usd": 0.003
+}
 ```
-🔬 AgentProbe v0.6.0
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 My First Agent Tests
 
-  ✓ Agent uses search tool (5ms)
-    ✓ tool_called: web_search
-    ✓ output_contains: "AI"
-    ✓ max_steps: 10
+### Test Suites
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1/1 passed (100%) in 5ms
+Tests are defined in YAML files containing a `name` and a list of `tests`:
+
+```yaml
+name: Suite Name
+tests:
+  - name: Test case
+    input: "user input"
+    trace: path/to/trace.json
+    expect:
+      tool_called: some_tool
+      output_contains: "expected text"
 ```
 
-## Understand the Results
+### Assertions
 
-Each test produces assertion results:
+Assertions verify specific properties of agent behavior. See [assertions.md](assertions.md) for the full list.
 
-| Symbol | Meaning |
-|--------|---------|
-| ✓ | Assertion passed |
-| ✗ | Assertion failed — shows expected vs actual |
+### Adapters
 
-### Exit codes
+If your traces aren't in AgentProbe's native format, adapters convert them automatically. See [adapters.md](adapters.md).
 
-| Code | Meaning |
-|------|---------|
-| 0 | All tests passed |
-| 1 | One or more tests failed |
+## Recording Traces
 
-This makes AgentProbe CI-friendly — any failure exits non-zero.
+### From OpenAI SDK
 
-### Useful flags
+```typescript
+import { Recorder } from '@neuzhou/agentprobe';
+
+const recorder = new Recorder();
+recorder.patchOpenAI(openai); // Patches the OpenAI client
+// ... run your agent ...
+const trace = recorder.stop();
+recorder.save('traces/my-trace.json');
+```
+
+### From Anthropic SDK
+
+```typescript
+recorder.patchAnthropic(anthropic);
+```
+
+### Streaming
+
+```typescript
+import { StreamingRecorder } from '@neuzhou/agentprobe/streaming';
+// Records from streaming (SSE) responses
+```
+
+## Running Tests
+
+### Basic
 
 ```bash
-# Watch mode — re-runs on file changes
-agentprobe run tests/ --watch
+agentprobe run tests/agent.test.yaml
+```
 
-# Filter by tag
-agentprobe run tests/ --tag smoke
+### Multiple Suites
 
-# JSON output for programmatic use
-agentprobe run tests/ --format json
+```bash
+agentprobe run tests/*.yaml
+agentprobe run tests/ --recursive
+```
 
-# Coverage report
-agentprobe run tests/ --coverage
+### With Options
 
-# Update snapshots
-agentprobe run tests/ --update-snapshots
+```bash
+agentprobe run tests/ -f json -o results.json    # JSON output
+agentprobe run tests/ -f junit -o results.xml     # JUnit for CI
+agentprobe run tests/ --tag security              # Filter by tag
+agentprobe run tests/ --coverage --tools search,fetch  # Tool coverage
+agentprobe run tests/ --badge badge.svg           # Generate badge
 ```
 
 ## What's Next?
 
-- **[Assertions Reference](assertions.md)** — every assertion type explained
-- **[Recording Traces](recording.md)** — capture traces from OpenAI, Anthropic, Ollama, and more
-- **[Security Testing](security-testing.md)** — auto-generate security test suites
-- **[CI/CD Integration](ci-cd.md)** — run tests in GitHub Actions, GitLab CI
-- **[Advanced Features](advanced.md)** — fault injection, LLM-as-judge, fixtures
-- **[Cookbook](cookbook.md)** — 10 practical recipes for real-world testing
+- [All Assertion Types](assertions.md)
+- [Adapter Reference](adapters.md)
+- [CLI Reference](cli-reference.md)
+- [Security Testing](security-testing.md)
+- [CI Integration](ci-integration.md)
+- [Configuration](configuration.md)

@@ -3,134 +3,197 @@
 All notable changes to AgentProbe will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.0.0] - 2026-03-16
+
+### 🎉 Major Release — Production Ready
+
+AgentProbe 2.0 is a milestone release marking the framework as production-ready. This release focuses on polish, comprehensive documentation, and developer experience.
+
+### Added
+- Complete README rewrite — hero section, feature matrix, architecture diagram, comparison table
+- Full documentation suite: getting-started, assertions, adapters, CLI reference, configuration, security testing, CI integration
+- CONTRIBUTING.md with architecture overview and extension guides
+
+### Changed
+- Version bump to 2.0.0
+- 781 tests passing across 40 test files
+- All documentation updated to reflect current feature set
+
+## [1.9.0] - 2026-03-16
+
+### Added
+- **VSCode Extension** (`src/vscode/`) — inline test results, trace tree view, status bar integration
+- **GitHub Action** — reusable action for CI pipelines
+- **Deterministic Replay** (`src/replay.ts`) — exact reproduction of agent behavior with seed support
+- **OpenAPI Test Generation** (`src/openapi.ts`) — generate tests from OpenAPI/Swagger specs
+- **Trace Visualization** (`src/viz.ts`) — Mermaid diagrams, text trees, and HTML visualizations of traces
+
+## [1.8.0] - 2026-03-16
+
+### Added
+- **Web Portal** (`src/portal.ts`) — standalone HTML dashboard for test results
+- **Health Check** (`src/health.ts`) — validate project setup and dependencies
+- **Test Matrix** (`src/matrix.ts`) — run tests across multiple configurations (models, adapters, params)
+- **Performance Regression Detection** (`src/perf-regression.ts`) — detect latency/cost regressions between runs
+- **Enhanced Anonymizer** — additional PII patterns (credit cards, SSNs, phone numbers)
+
+## [1.7.0] - 2026-03-16
+
+### Added
+- **CI Templates** (`src/ci.ts`) — generate GitHub Actions, GitLab CI, CircleCI configs
+- **Detailed Coverage Reports** (`src/coverage-report.ts`) — tool-level and assertion-level coverage
+- **Behavior Profiler** (`src/behavior-profiler.ts`) — categorize agent behaviors across traces
+- **Mutation Testing** (`src/mutation.ts`) — mutate traces to verify assertion sensitivity
+- **Internationalization** (`src/i18n.ts`) — locale-aware output formatting
+- **Dependency Resolver** (`src/deps.ts`) — enhanced test dependency graph with cycle detection
 
 ## [1.6.0] - 2026-03-16
 
 ### Added
-- **Agent Compliance Framework** (`src/compliance.ts`): Define compliance policies (PII detection, cost limits, tool allowlists/denylists) and check traces against them. CLI: `agentprobe compliance traces/ --policy compliance.yml`
-- **Trace Simulator** (`src/simulator.ts`): Generate synthetic traces for testing without calling any LLM. Deterministic with seed support. CLI: `agentprobe simulate --agent research --steps 5 --tools search,summarize`
-- **Webhook Notifications** (`src/webhooks.ts`): Send notifications on test failure/regression/success to Slack, Teams, Discord, or generic webhooks via `.agentproberc.yml` config
-- **Test Prioritization** (`src/prioritize.ts`): Smart test ordering — previously failing tests first, change-affected next, slowest last. CLI: `agentprobe run tests.yaml --prioritize`
-- **Trace Merge Enhancement** (enhanced `src/merge.ts`): Handoff detection between agents, context flow tracking, conversation view formatting
-- **Report Comparison** (`src/reporters/compare.ts`): Compare two test reports to show regressions, fixes, new/removed tests, and HTML delta report. CLI: `agentprobe report-compare old.json new.json --output delta.html`
-- 43 new tests covering all new features
+- **Compliance Framework** (`src/compliance.ts`) — PII detection, cost limits, tool allowlists/denylists
+- **Trace Simulator** (`src/simulator.ts`) — generate synthetic traces without calling LLMs
+- **Webhook Notifications** (`src/webhooks.ts`) — Slack, Teams, Discord notifications on test events
+- **Test Prioritization** (`src/prioritize.ts`) — smart ordering: failures first, change-affected next, slowest last
+- **Merge Enhancement** (`src/merge.ts`) — handoff detection, context flow tracking
+- **Report Comparison** (`src/reporters/compare.ts`) — HTML delta reports between test runs
+
+## [1.5.0] - 2026-03-16
+
+### Added
+- **OpenTelemetry Integration** (`src/otel.ts`) — export traces as OTel spans
+- **Flaky Test Detection** (`src/flaky.ts`) — identify non-deterministic tests across runs
+- **Impact Analysis** (`src/impact.ts`) — determine which tests are affected by code changes
+- **Assertion Builder** (`src/builder.ts`) — fluent API for constructing assertions programmatically
+- **Benchmarks** (`src/benchmarks.ts`) — performance benchmarks for the framework itself
+- **Enhanced Stats** — percentile distributions, model-level breakdowns
+
+## [1.4.0] - 2026-03-16
+
+### Added
+- **AI Test Suggestions** (`src/suggest.ts`) — analyze traces and suggest missing test cases
+- **Trace Validator** (`src/trace-validator.ts`) — validate trace structure and completeness
+- **Regression Manager** (`src/regression-manager.ts`) — automated regression tracking across releases
+- **Budget Enforcement** (`src/budget.ts`) — hard limits on token/cost usage with abort support
+- **Multi-Suite Support** — run multiple suite files with glob patterns and `--recursive`
+
+## [1.3.0] - 2026-03-16
+
+### Added
+- **Interactive Explorer** (`src/explorer.ts`) — terminal-based trace browser
+- **Custom Assertions** (`src/custom-assertions.ts`) — register and load custom assertion functions
+- **Trace Compare** (`src/trace-compare.ts`) — structured comparison of trace pairs
+- **Watch Enhancement** — watch trace directories for new files
+- **Chain Assertions** — sequential assertion dependencies
+- **Config Profiles** — named environment profiles in `.agentproberc.yml`
 
 ## [1.2.0] - 2026-03-16
 
 ### Added
-- **Config File Support** (`src/config-file.ts`): Load `.agentproberc.yml` / `agentprobe.config.ts` with adapter settings, parallel, timeout, reporter, output_dir, and env_file options
-- **Diff Reporter** (`src/reporters/diff.ts`): Compare two test run JSON reports side-by-side showing regressions, improvements, new passes/failures (`agentprobe diff`)
-- **Plugin Marketplace** (`src/marketplace.ts`): List/install community plugins via `agentprobe plugin list` and `agentprobe plugin install <name>` with npm-based discovery
-- **Trace Export** (`src/export.ts`): Export traces to OpenTelemetry, LangSmith, and CSV formats (`agentprobe trace export --format <fmt>`)
-- **Dependency Graph** (enhanced `src/deps.ts`): Generate Mermaid diagrams of test dependencies (`agentprobe deps --graph`)
-- 38 new tests covering all new features (448 total)
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+- **Config File Support** (`src/config-file.ts`) — `.agentproberc.yml` / `agentprobe.config.ts`
+- **Diff Reporter** (`src/reporters/diff.ts`) — side-by-side test run comparison
+- **Plugin Marketplace** (`src/marketplace.ts`) — browse and install community plugins
+- **Trace Export** (`src/export.ts`) — export to OpenTelemetry, LangSmith, CSV
+- **Dependency Graph** — Mermaid diagrams of test dependencies
 
 ## [1.1.0] - 2026-03-16
 
 ### Added
-- **Streaming Recorder** (`src/streaming.ts`) — record agent traces from streaming responses (OpenAI, Anthropic, SSE formats)
-- **Trace Search** (`src/search.ts`) — `agentprobe search "query" traces/` to search across multiple traces by tool, content, model, cost, step type
-- **Assertion Negation** — universal `not:` wrapper to negate any assertion in test YAML
-- **Per-test Timeout** — `timeout_ms` field on test cases kills long-running live executions
-- **Trace Sampling** (`src/sampling.ts`) — `--sample N` / `--sample-pct P` for running tests on a subset of traces with reproducible seeded RNG
-- 95 new tests (315 → 410)
+- **Streaming Recorder** (`src/streaming.ts`) — record from streaming responses (SSE)
+- **Trace Search** (`src/search.ts`) — search across traces by tool, content, model, cost
+- **Assertion Negation** — `not:` wrapper for any assertion
+- **Per-test Timeout** — `timeout_ms` field
+- **Trace Sampling** (`src/sampling.ts`) — `--sample N` / `--sample-pct P`
+- Test suite expanded to 410 tests
 
 ## [1.0.0] - 2026-03-16
 
 ### Added
-- **Multi-turn conversation testing** (`src/conversation.ts`) — test agent behavior across sequential turns with per-turn assertions
-- **Weighted scoring** (`src/scoring.ts`) — assign weights to assertions and set pass thresholds for quality scoring
-- **Natural language test generation** (`src/nlgen.ts`) — `agentprobe generate "description"` creates test YAML from English descriptions, no LLM needed
-- **Trace anonymizer** (`src/anonymize.ts`) — `agentprobe trace anonymize` redacts API keys, emails, IPs, names, phone numbers before sharing
-- **Performance profiler** (`src/profiler.ts`) — `agentprobe profile traces/` shows latency percentiles (p50/p95/p99), token efficiency, cost per query, bottleneck identification
-- Full programmatic API for all new features
+- **Multi-turn Conversation Testing** (`src/conversation.ts`)
+- **Weighted Scoring** (`src/scoring.ts`) — assertion weights and pass thresholds
+- **Natural Language Test Generation** (`src/nlgen.ts`) — `agentprobe generate "description"`
+- **Trace Anonymizer** (`src/anonymize.ts`) — redact API keys, emails, IPs, names
+- **Performance Profiler** (`src/profiler.ts`) — latency percentiles, bottleneck identification
+- Full programmatic API
 
 ### Changed
-- **KILLER README rewrite** — hero badges, 30-second demo, comparison table, architecture diagram, organized feature list
-- Version bump to 1.0.0 🎉
+- Complete README rewrite with hero section, demos, architecture diagram
 
 ## [0.9.0] - 2026-03-16
 
 ### Added
-- **Golden test pattern** — `agentprobe golden record/verify` for reference run comparison
-- **Assertion templates** — reusable assertion patterns with `template:` syntax
-- **Trace replay with overrides** — modify tool responses during replay
-- **Multi-agent orchestration testing** — test agent handoffs and delegation patterns
-- **Parameterized test dependencies** — `depends_on` with execution ordering
-- **Trace merge** — combine multiple agent traces into unified timeline
-- **Suite validation** — `agentprobe validate` checks YAML/JSON without running
-
-### Changed
-- Expanded test coverage to 141 tests
-- Improved error messages throughout
+- Golden test pattern — `agentprobe golden record/verify`
+- Assertion templates — reusable patterns
+- Trace replay with overrides
+- Multi-agent orchestration testing
+- Trace merge for unified timelines
+- Suite validation command
 
 ## [0.8.0] - 2026-03-16
 
 ### Added
-- **Retry with backoff** — `retries` and `retry_delay_ms` per test case
-- **Test dependencies** — `depends_on` for ordered execution with skip-on-fail
-- **Environment variable support** — `--env-file`, per-suite and per-test `env`
-- **Badge generation** — `--badge badge.svg` creates shields.io-style SVG badges
-- **Suite validation** — validates YAML structure and expectations before running
+- Retry with backoff (`retries`, `retry_delay_ms`)
+- Test dependencies (`depends_on`)
+- Environment variable support (`--env-file`)
+- Badge generation (`--badge`)
+- Suite validation before execution
 
 ## [0.7.0] - 2026-03-16
 
 ### Added
-- **LLM-as-Judge rubric scoring** — multi-criteria evaluation with weighted rubrics
-- **Composed assertions** — `all_of`, `any_of`, `none_of` for complex boolean logic
-- **Fixture system** — reusable test environments with mock and env presets
+- LLM-as-Judge with rubric scoring
+- Composed assertions (`all_of`, `any_of`, `none_of`)
+- Fixture system for reusable test environments
 
 ## [0.6.0] - 2026-03-16
 
 ### Added
-- **Test codegen from traces** — `agentprobe codegen trace.json` generates YAML tests (like Playwright codegen)
-- **JUnit XML reporter** — `-f junit` for CI integration
-- **HTML reporter** — standalone HTML test reports
-- **Trace timeline** — Gantt-style visualization of agent execution
+- Test codegen from traces (`agentprobe codegen`)
+- JUnit XML reporter
+- HTML reporter with dashboard
+- Trace timeline visualization
 
 ## [0.5.0] - 2026-03-16
 
 ### Added
-- **YAML duplicate key detection** — warns when same key appears twice
-- **Better error messages** — human-friendly errors with suggestions
-- **OpenClaw adapter** — convert OpenClaw session traces to AgentTrace
-- **Interactive init** — `agentprobe init` with guided setup
-- **Stats command** — `agentprobe stats traces/` for aggregate analysis
-- **CONTRIBUTING.md** and **CHANGELOG.md**
+- YAML duplicate key detection
+- Human-friendly error messages
+- OpenClaw adapter
+- Interactive init wizard
+- Stats command
+- CONTRIBUTING.md and CHANGELOG.md
 
 ## [0.4.0] - 2026-03-16
 
 ### Added
-- **Trace adapters** — OpenAI, Anthropic, LangChain, Generic JSONL converters
-- **Auto-detect** — `agentprobe convert` auto-detects trace format
-- **Cost calculation** — token-based cost estimation with model-specific pricing
-- **Regression detection** — `agentprobe baseline save/compare`
-- **Plugin system** — custom assertions, adapters, reporters via plugins
-- **Config file** — `.agentproberc.yaml` for project-wide settings
+- Trace adapters (OpenAI, Anthropic, LangChain, Generic JSONL)
+- Auto-detect trace format
+- Cost calculation with model-specific pricing
+- Regression detection with baselines
+- Plugin system
+- Config file support
 
 ## [0.3.0] - 2026-03-16
 
 ### Added
-- **Fault injection** — chaos engineering: error, timeout, slow, corrupt modes
-- **LLM-as-Judge** — score output quality with criteria or rubrics
-- **Security test generation** — 30+ built-in attack patterns across 4 categories
-- **GitHub Actions template** — `agentprobe init --ci github`
-- **Trace viewer** — visual trace inspection in terminal
-- **Trace diff** — compare two traces to detect behavioral drift
+- Fault injection (error, timeout, slow, corrupt modes)
+- LLM-as-Judge assertions
+- Security test generation (30+ patterns)
+- GitHub Actions CI template
+- Trace viewer and trace diff
 
 ## [0.2.0] - 2026-03-16
 
 ### Added
-- **Tool mocking** — `MockToolkit` with mock, mockOnce, mockSequence, mockError
-- **Fixtures** — pre-configured test environments
-- **Live agent execution** — run agents directly, not just replay traces
-- **Snapshot testing** — behavioral snapshots
-- **Watch mode** — re-run tests on file changes
-- **Coverage report** — tool coverage analysis
-- **Parameterized tests** — `each:` expansion
-- **Tags & filtering** — `--tag` for running subsets
-- **Hooks** — beforeAll, afterAll, beforeEach, afterEach
+- Tool mocking (`MockToolkit`)
+- Fixtures and snapshot testing
+- Live agent execution
+- Watch mode
+- Coverage report
+- Parameterized tests (`each:`)
+- Tags & filtering (`--tag`)
+- Hooks (beforeAll, afterAll, beforeEach, afterEach)
 
 ## [0.1.0] - 2026-03-16
 
