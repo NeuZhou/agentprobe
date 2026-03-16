@@ -2,7 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import YAML from 'yaml';
+import chalk from 'chalk';
 import type { TestSuite, TestCase, TestResult, SuiteResult, AgentTrace, RunOptions, HookConfig } from './types';
+import { parseYamlWithValidation } from './yaml-validator';
 import { evaluate } from './assertions';
 import { loadTrace } from './recorder';
 import { MockToolkit } from './mocks';
@@ -47,7 +49,21 @@ function filterByTags(tests: TestCase[], tags?: string[]): TestCase[] {
 
 export async function runSuite(suitePath: string, options?: RunOptions): Promise<SuiteResult> {
   const raw = fs.readFileSync(suitePath, 'utf-8');
-  const suite: TestSuite = YAML.parse(raw);
+
+  // Validate YAML with duplicate key detection
+  const { parsed: suite, warnings } = parseYamlWithValidation(raw, suitePath) as { parsed: TestSuite; warnings: string[] };
+  for (const w of warnings) {
+    console.error(chalk.yellow(w));
+  }
+
+  if (!suite || !suite.tests) {
+    throw new Error(
+      `Invalid test suite: ${suitePath}\n` +
+      `Expected a YAML file with 'name' and 'tests' fields.\n` +
+      `💡 Run 'agentprobe init' to generate an example.`
+    );
+  }
+
   const suiteDir = path.dirname(suitePath);
   const start = Date.now();
   const results: TestResult[] = [];
@@ -89,6 +105,12 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
       if (test.trace) {
         // Replay mode: load existing trace
         const tracePath = path.isAbsolute(test.trace) ? test.trace : path.join(suiteDir, test.trace);
+        if (!fs.existsSync(tracePath)) {
+          throw new Error(
+            `Trace file not found: ${tracePath}\n` +
+            `💡 Record a trace first: agentprobe record --script your-agent.js -o ${test.trace}`
+          );
+        }
         trace = loadTrace(tracePath);
       } else if (test.agent) {
         // Live agent execution
