@@ -271,12 +271,26 @@ export async function runABTest(config: ABTestConfig): Promise<ABTestResult> {
 export function formatABTest(result: ABTestResult): string {
   const lines: string[] = [];
   lines.push(chalk.bold('\n🔬 A/B Test Results\n'));
-  for (const v of result.variants) {
-    lines.push(`  ${v.model}: Pass ${v.passRate.toFixed(1)}%, Avg cost $${v.avgCost.toFixed(3)}, Avg time ${v.avgTime.toFixed(1)}s (${v.passCount}P/${v.failCount}F)`);
+
+  // Support both legacy (modelA/modelB) and new (variants array) shapes
+  const variants: Array<{ model: string; passRate: number; avgCost: number; avgTime: number; passCount?: number; failCount?: number }> =
+    (result as any).variants ??
+    [(result as any).modelA, (result as any).modelB].filter(Boolean);
+
+  for (const v of variants) {
+    const passCount = v.passCount ?? '';
+    const failCount = v.failCount ?? '';
+    const suffix = passCount !== '' ? ` (${passCount}P/${failCount}F)` : '';
+    lines.push(`  ${v.model}: Pass ${v.passRate.toFixed(1)}%, Avg cost $${v.avgCost.toFixed(3)}, Avg time ${v.avgTime.toFixed(1)}s${suffix}`);
   }
   lines.push('');
-  lines.push(`  Chi-squared: ${result.chiSquared.toFixed(4)}, p=${result.pValue.toFixed(4)} (${result.significant ? 'significant' : 'not significant'})`);
+
+  const chi = (result as any).chiSquared;
+  const chiStr = chi != null ? `Chi-squared: ${chi.toFixed(4)}, ` : '';
+  lines.push(`  ${chiStr}p=${result.pValue.toFixed(4)} (${result.significant ? 'significant' : 'not significant'})`);
   lines.push(`  Quality winner: ${result.qualityWinner} | Cost winner: ${result.costWinner}`);
-  lines.push(`  ${result.recommendation}`);
+  if ((result as any).recommendation) {
+    lines.push(`  ${(result as any).recommendation}`);
+  }
   return lines.join('\n');
 }
