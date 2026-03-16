@@ -50,10 +50,29 @@ export interface TestConfig {
   env?: Record<string, string>;
 }
 
+export interface HookConfig {
+  command: string;
+}
+
+export interface SuiteHooks {
+  beforeAll?: HookConfig;
+  afterAll?: HookConfig;
+  beforeEach?: HookConfig;
+  afterEach?: HookConfig;
+}
+
+export interface AgentConfig {
+  script?: string;
+  command?: string;
+  module?: string;
+  entry?: string;
+}
+
 export interface TestSuite {
   name: string;
   description?: string;
   config?: TestConfig;
+  hooks?: SuiteHooks;
   tests: TestCase[];
 }
 
@@ -62,6 +81,11 @@ export interface TestCase {
   input: string;
   context?: Record<string, any>;
   trace?: string;
+  agent?: AgentConfig;
+  fixture?: string;
+  mocks?: Record<string, any>;
+  tags?: string[];
+  each?: Array<Record<string, any>>;
   expect: Expectations;
 }
 
@@ -76,6 +100,7 @@ export interface Expectations {
   max_duration_ms?: number;
   tool_args_match?: Record<string, any>;
   tool_sequence?: string[];
+  snapshot?: boolean;
   custom?: string;
 }
 
@@ -96,6 +121,7 @@ export interface TestResult {
   duration_ms: number;
   trace?: AgentTrace;
   error?: string;
+  tags?: string[];
 }
 
 export interface SuiteResult {
@@ -108,3 +134,12 @@ export interface SuiteResult {
 }
 
 export type ReportFormat = 'console' | 'json' | 'markdown';
+
+// ===== Runner options =====
+
+export interface RunOptions {
+  updateSnapshots?: boolean;
+  tags?: string[];
+  coverage?: boolean;
+  declaredTools?: string[];
+}
