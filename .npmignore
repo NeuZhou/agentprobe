@@ -1,0 +1,13 @@
+src/
+tests/
+traces/
+examples/
+.github/
+__snapshots__/
+*.ts
+tsconfig.json
+vitest.config.*
+.agentproberc.yaml
+.baselines/
+CONTRIBUTING.md
+CHANGELOG.md
