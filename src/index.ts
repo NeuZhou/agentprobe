@@ -63,14 +63,14 @@ import { detectAnomalies, formatAnomalies } from './anomaly';
 import { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
 import { generateFromNLMulti, formatGeneratedTestsYaml } from './nlgen';
 import { applyTheme as _applyTheme, formatThemes } from './themes';
-import { parseDuration, aggregateResults, formatLoadTestResult } from './load-test';
-import type { LoadTestConfig } from './load-test';
+import { parseDuration as _parseDuration, aggregateResults as _aggregateResults, formatLoadTestResult as _formatLoadTestResult } from './load-test';
+import type { LoadTestConfig as _LoadTestConfig } from './load-test';
 import { searchEngine, formatSearchEngineResult } from './search-engine';
 import { collectDashboardMetrics, generateDashboardHTML } from './health-dashboard';
 import { migrate, formatMigrateResult } from './migrate';
 import type { SourceFormat } from './migrate';
-import { createSampler } from './recorder';
-import type { TraceSamplingConfig } from './recorder';
+import { createSampler as _createSampler } from './recorder';
+import type { TraceSamplingConfig as _TraceSamplingConfig } from './recorder';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -2553,6 +2553,90 @@ program
     const result = await orch.run();
     console.log(formatOrchestratorResult(result));
     process.exit(result.passed ? 0 : 1);
+  });
+
+// === v4.2.0 — Compliance Framework ===
+import { ComplianceFramework, formatFrameworkReport } from './compliance-framework';
+
+program
+  .command('compliance-audit <traceDir>')
+  .description('Audit traces against enterprise compliance regulations (GDPR, SOC2, HIPAA, PCI-DSS)')
+  .option('--regulations <list>', 'Comma-separated regulation names', 'GDPR,SOC2,HIPAA,PCI-DSS')
+  .action(async (traceDir: string, opts: any) => {
+    const fw = new ComplianceFramework();
+    const regs = opts.regulations.split(',').map((r: string) => r.trim());
+    const traces = loadTraces(traceDir);
+    const report = fw.audit(traces, regs);
+    console.log(formatFrameworkReport(report));
+    process.exit(report.overall_passed ? 0 : 1);
+  });
+
+// === v4.2.0 — Test Dependency Analyzer ===
+import { TestDependencyAnalyzer, formatExecutionPlan } from './test-deps';
+
+program
+  .command('test-deps <suiteFile>')
+  .description('Analyze test dependencies and generate optimal execution plan')
+  .action(async (suiteFile: string) => {
+    const raw = fs.readFileSync(suiteFile, 'utf-8');
+    const suite = YAML.parse(raw);
+    const analyzer = new TestDependencyAnalyzer(suite);
+    const plan = analyzer.optimize();
+    const circular = analyzer.detectCircular();
+    console.log(formatExecutionPlan(plan));
+    if (circular.length > 0) {
+      console.log(chalk.red(`⚠️  ${circular.length} circular dependency cycle(s) detected:`));
+      for (const cycle of circular) {
+        console.log(`   ${cycle.join(' → ')} → ${cycle[0]}`);
+      }
+    }
+  });
+
+// === v4.2.0 — Snapshot Approval Workflow ===
+import {
+  loadApprovalState, saveApprovalState, formatApprovalState,
+  approveSnapshot as approveSnap, rejectSnapshot as rejectSnap,
+} from './snapshot-approval';
+
+const snapshotCmd = program.command('snapshot').description('Snapshot approval workflow');
+
+snapshotCmd
+  .command('review')
+  .description('Review pending snapshot changes')
+  .option('--dir <dir>', 'Snapshot directory', '__snapshots__')
+  .action(async (opts: any) => {
+    const state = loadApprovalState(opts.dir);
+    console.log(formatApprovalState(state));
+  });
+
+snapshotCmd
+  .command('approve <testName>')
+  .description('Approve a specific snapshot change')
+  .option('--dir <dir>', 'Snapshot directory', '__snapshots__')
+  .action(async (testName: string, opts: any) => {
+    const state = loadApprovalState(opts.dir);
+    const ok = approveSnap(state, testName);
+    if (ok) {
+      saveApprovalState(state);
+      console.log(chalk.green(`✅ Approved snapshot for: ${testName}`));
+    } else {
+      console.log(chalk.yellow(`No pending snapshot found for: ${testName}`));
+    }
+  });
+
+snapshotCmd
+  .command('reject <testName>')
+  .description('Reject a specific snapshot change')
+  .option('--dir <dir>', 'Snapshot directory', '__snapshots__')
+  .action(async (testName: string, opts: any) => {
+    const state = loadApprovalState(opts.dir);
+    const ok = rejectSnap(state, testName);
+    if (ok) {
+      saveApprovalState(state);
+      console.log(chalk.red(`❌ Rejected snapshot for: ${testName}`));
+    } else {
+      console.log(chalk.yellow(`No pending snapshot found for: ${testName}`));
+    }
   });
 
 program.parse();

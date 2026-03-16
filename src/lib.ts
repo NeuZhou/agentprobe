@@ -577,3 +577,26 @@ export {
 export type {
   NLAssertion, NLAssertionCategory, NLTestCase, NLTestSuite, NLEvalResult, NLTestResult,
 } from './nl-assert';
+
+// v4.2.0 - Compliance Framework
+export { ComplianceFramework, formatFrameworkReport } from './compliance-framework';
+export type {
+  ComplianceRule, ComplianceCheckResult, ComplianceFinding, ComplianceReport as FrameworkComplianceReport,
+  RegulationResult,
+} from './compliance-framework';
+
+// v4.2.0 - Test Dependency Analyzer
+export { TestDependencyAnalyzer, formatExecutionPlan } from './test-deps';
+export type {
+  DependencyGraph as TestDependencyGraph, TestNode, TestGroup, TestChain, TestExecutionPlan,
+} from './test-deps';
+
+// v4.2.0 - Snapshot Approval Workflow
+export {
+  loadApprovalState, saveApprovalState, submitForReview, approveSnapshot,
+  rejectSnapshot, getApprovalSummary, getPendingReviews, formatApprovalState,
+  diffSnapshots,
+} from './snapshot-approval';
+export type {
+  SnapshotRecord, SnapshotStatus, ApprovalState, ApprovalSummary, SnapshotFieldDiff,
+} from './snapshot-approval';

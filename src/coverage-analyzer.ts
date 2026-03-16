@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { TestCase, TestSuite, AgentTrace } from './types';
+import type { TestCase, AgentTrace } from './types';
 
 export interface CoverageConfig {
   declaredTools?: string[];

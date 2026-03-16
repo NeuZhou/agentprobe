@@ -2,10 +2,10 @@
  * Agent Load Testing — stress test an agent with concurrent requests.
  * @module load-test
  */
-import type { TestSuite, TestResult, SuiteResult, AgentTrace } from './types';
-import { runSuite } from './runner';
-import * as fs from 'fs';
-import YAML from 'yaml';
+import type { TestSuite as _TS, TestResult as _TR, SuiteResult as _SR, AgentTrace as _AT } from './types';
+import { runSuite as _runSuite } from './runner';
+import * as _fs from 'fs';
+import _YAML from 'yaml';
 
 export interface LoadTestConfig {
   /** Number of concurrent workers */

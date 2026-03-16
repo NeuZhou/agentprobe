@@ -132,7 +132,7 @@ export function checkViolations(steps: TraceStep[], config: SandboxConfig, durat
 /**
  * Extract tool call names from trace steps
  */
-export function extractToolCalls(steps: TraceStep[]): { called: string[]; blocked: string[]; allowedTools: string[] } & Record<string, never> {
+export function extractToolCalls(steps: TraceStep[]): { called: string[]; blocked: string[]; allowedTools: string[] } {
   // Just extract called tools - blocking is checked separately
   const called: string[] = [];
   for (const step of steps) {
