@@ -51,6 +51,28 @@ export type { DetailedLatencyBreakdown, PercentileSet } from './perf-profiler';
 // Security
 export { generateSecurityTests } from './security';
 
+// A2A Protocol
+export { A2AAdapter, validateAgentCard } from './adapters/a2a';
+export type {
+  AgentCard, AgentCapability, AgentSkill, A2ATask, TaskStatus,
+  A2AMessage, MessagePart, TaskArtifact, A2AAdapterConfig, A2ATestCase, A2ATestResult,
+} from './adapters/a2a';
+
+// A2A Security
+export { A2ASecurityScanner, formatSecurityReport } from './security/a2a-scanner';
+export type { SecurityFinding, SecurityReport, A2AScannerConfig } from './security/a2a-scanner';
+
+// Protocol Comparison
+export { ProtocolComparator, formatComparisonReport } from './protocol-compare';
+export type {
+  ComparisonTestCase, ComparisonReport, ComparisonResult as ProtocolComparisonResult,
+  ComparisonSummary, ComparatorConfig, ProtocolStats,
+} from './protocol-compare';
+
+// Agent Discovery
+export { AgentDiscovery, formatVerificationReport } from './discovery';
+export type { VerificationReport, VerificationResult, DiscoveryConfig } from './discovery';
+
 // Stats
 export { computeStats, formatStats, computeDetailedStats, formatDetailedStats } from './stats';
 export type { DetailedStats } from './stats';

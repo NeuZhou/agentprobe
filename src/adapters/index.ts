@@ -77,3 +77,11 @@ export function convertWith(name: string, input: any): AgentTrace {
 export function registerAdapter(adapter: TraceAdapter): void {
   adapters.push(adapter);
 }
+
+// A2A Protocol support
+export { A2AAdapter, validateAgentCard } from './a2a';
+export type {
+  AgentCard, AgentCapability, AgentSkill, AuthenticationInfo, ProviderInfo,
+  A2ATask, TaskStatus, A2AMessage, MessagePart, TaskArtifact, A2AResponse,
+  A2AAdapterConfig, A2ATestCase, A2ATestResult,
+} from './a2a';
