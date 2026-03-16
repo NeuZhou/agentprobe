@@ -24,6 +24,9 @@ import * as readline from 'readline';
 import { generateTests, formatGeneratedTests } from './codegen';
 import { generateBadge } from './badge';
 import { validateSuite, formatValidationErrors } from './validate';
+import { generateFromNL, formatGeneratedTestsYaml } from './nlgen';
+import { anonymizeTrace } from './anonymize';
+import { profile as profileTraces, formatProfile } from './profiler';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -765,6 +768,81 @@ program
     }
     console.log(chalk.gray(`\nUse in tests: template: <name>`));
     console.log('');
+  });
+
+// ===== Generate from natural language =====
+program
+  .command('generate <description>')
+  .description('Generate test YAML from a natural language description')
+  .option('-o, --output <path>', 'Output YAML file (stdout if omitted)')
+  .action((description: string, opts: { output?: string }) => {
+    const test = generateFromNL(description);
+    const yaml = formatGeneratedTestsYaml([test]);
+
+    if (opts.output) {
+      const dir = path.dirname(opts.output);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(opts.output, yaml);
+      console.log(chalk.green(`✅ Generated test → ${opts.output}`));
+    } else {
+      console.log(yaml);
+    }
+  });
+
+// ===== Trace anonymize =====
+trace
+  .command('anonymize <traceFile>')
+  .description('Remove sensitive data (API keys, emails, IPs) from a trace')
+  .option('-o, --output <path>', 'Output file (stdout if omitted)')
+  .option('--no-names', 'Skip name detection')
+  .action((traceFile: string, opts: { output?: string; names?: boolean }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const raw = JSON.parse(fs.readFileSync(traceFile, 'utf-8'));
+    const safe = anonymizeTrace(raw, { names: opts.names !== false });
+    const json = JSON.stringify(safe, null, 2);
+
+    if (opts.output) {
+      fs.writeFileSync(opts.output, json);
+      console.log(chalk.green(`🔒 Anonymized trace → ${opts.output}`));
+    } else {
+      console.log(json);
+    }
+  });
+
+// ===== Performance profiling =====
+program
+  .command('profile <dir>')
+  .description('Analyze trace performance: latency percentiles, cost, bottlenecks')
+  .action((dir: string) => {
+    if (!fs.existsSync(dir)) {
+      console.error(chalk.red(`❌ Directory not found: ${dir}`));
+      process.exit(1);
+    }
+    const { glob } = require('glob');
+    const files: string[] = glob.sync(path.join(dir, '**/*.json').replace(/\\/g, '/'));
+    if (files.length === 0) {
+      console.error(chalk.yellow(`No trace files found in ${dir}`));
+      process.exit(1);
+    }
+
+    const traces: AgentTrace[] = [];
+    for (const file of files) {
+      try {
+        traces.push(loadTrace(file));
+      } catch {
+        // Skip non-trace JSON files
+      }
+    }
+
+    if (traces.length === 0) {
+      console.error(chalk.yellow(`No valid AgentProbe traces found in ${dir}`));
+      process.exit(1);
+    }
+
+    console.log(formatProfile(profileTraces(traces)));
   });
 
 program.parse();

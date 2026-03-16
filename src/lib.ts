@@ -80,6 +80,26 @@ export { recordGolden, saveGolden, loadGolden, verifyGolden } from './golden';
 // Viewer
 export { formatTraceTimeline } from './viewer';
 
+// Conversation testing
+export { evaluateConversation, formatConversationResult, splitTraceByTurns } from './conversation';
+export type { ConversationTest, ConversationTurn, ConversationResult, TurnResult } from './conversation';
+
+// Scoring
+export { evaluateScoring, formatScoringResult } from './scoring';
+export type { ScoringConfig, ScoringResult } from './scoring';
+
+// Natural language test generation
+export { generateFromNL, formatGeneratedTestsYaml } from './nlgen';
+export type { GeneratedTest } from './nlgen';
+
+// Trace anonymizer
+export { anonymize, anonymizeTrace, anonymizeString } from './anonymize';
+export type { AnonymizeOptions } from './anonymize';
+
+// Performance profiling
+export { profile, formatProfile } from './profiler';
+export type { ProfileResult, PercentileStats, ToolProfile } from './profiler';
+
 // Types - re-export everything
 export type {
   AgentTrace,

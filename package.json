@@ -1,6 +1,6 @@
 {
   "name": "@neuzhou/agentprobe",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -21,7 +21,12 @@
     "./replay": "./dist/replay.js",
     "./templates": "./dist/templates.js",
     "./orchestration": "./dist/orchestration.js",
-    "./golden": "./dist/golden.js"
+    "./golden": "./dist/golden.js",
+    "./conversation": "./dist/conversation.js",
+    "./scoring": "./dist/scoring.js",
+    "./nlgen": "./dist/nlgen.js",
+    "./anonymize": "./dist/anonymize.js",
+    "./profiler": "./dist/profiler.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"
