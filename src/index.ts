@@ -8,14 +8,20 @@ import { report } from './reporter';
 import { Recorder } from './recorder';
 import { startWatch } from './watcher';
 import { analyzeCoverage, formatCoverage } from './coverage';
+import { generateSecurityTests, securityTestsToYaml } from './security';
+import { generateCI } from './ci';
+import { formatTraceView } from './viewer';
+import { diffTraces, formatDiff } from './diff';
+import { loadTrace } from './recorder';
 import type { ReportFormat } from './types';
+import YAML from 'yaml';
 
 const program = new Command();
 
 program
   .name('agentprobe')
   .description('🔬 Playwright for AI Agents - Test, record, and replay agent behaviors')
-  .version('0.2.0');
+  .version('0.3.0');
 
 program
   .command('run <suite>')
@@ -48,7 +54,7 @@ program
         updateSnapshots: opts.updateSnapshots,
         tags: opts.tag,
       });
-      return; // watch mode runs indefinitely
+      return;
     }
 
     const result = await runSuite(suitePath, {
@@ -114,7 +120,6 @@ program
       console.error(`❌ File not found: ${tracePath}`);
       process.exit(1);
     }
-    const { loadTrace } = await import('./recorder');
     const trace = loadTrace(tracePath);
 
     console.log(`🔄 Trace: ${trace.id}`);
@@ -143,7 +148,14 @@ program
   .command('init')
   .description('Create an example test file')
   .option('-o, --output <path>', 'Output file', 'tests/example.test.yaml')
-  .action((opts: { output: string }) => {
+  .option('--ci <provider>', 'Generate CI workflow (github)')
+  .action((opts: { output: string; ci?: string }) => {
+    if (opts.ci) {
+      const filePath = generateCI({ provider: opts.ci as 'github' });
+      console.log(`✨ CI workflow created: ${filePath}`);
+      return;
+    }
+
     const dir = path.dirname(opts.output);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
@@ -188,6 +200,57 @@ tests:
     console.log(`✨ Example test file created: ${opts.output}`);
     console.log('   Edit it to match your agent, then run:');
     console.log(`   agentprobe run ${opts.output}`);
+  });
+
+// Generate security tests
+program
+  .command('generate-security')
+  .description('Generate a security test suite with built-in attack patterns')
+  .option('-o, --output <path>', 'Output YAML file', 'tests/security.yaml')
+  .option('--categories <cats...>', 'Categories: injection, exfiltration, privilege, harmful')
+  .action((opts: { output: string; categories?: string[] }) => {
+    const tests = generateSecurityTests({
+      categories: opts.categories as any,
+    });
+    const suite = securityTestsToYaml(tests);
+    const yamlStr = YAML.stringify(suite);
+
+    const dir = path.dirname(opts.output);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+    fs.writeFileSync(opts.output, yamlStr);
+    console.log(`🛡️  Security test suite generated: ${opts.output}`);
+    console.log(`   ${tests.length} tests across ${[...new Set(tests.flatMap(t => t.tags))].filter(t => t !== 'security').length} categories`);
+  });
+
+// Trace commands
+const trace = program
+  .command('trace')
+  .description('Trace inspection and comparison');
+
+trace
+  .command('view <traceFile>')
+  .description('Visual trace inspection in terminal')
+  .action((traceFile: string) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(`❌ File not found: ${traceFile}`);
+      process.exit(1);
+    }
+    const t = loadTrace(traceFile);
+    console.log(formatTraceView(t));
+  });
+
+trace
+  .command('diff <oldTrace> <newTrace>')
+  .description('Compare two traces to detect behavioral drift')
+  .action((oldFile: string, newFile: string) => {
+    if (!fs.existsSync(oldFile)) { console.error(`❌ File not found: ${oldFile}`); process.exit(1); }
+    if (!fs.existsSync(newFile)) { console.error(`❌ File not found: ${newFile}`); process.exit(1); }
+
+    const oldTrace = loadTrace(oldFile);
+    const newTrace = loadTrace(newFile);
+    const d = diffTraces(oldTrace, newTrace);
+    console.log(formatDiff(d));
   });
 
 program.parse();

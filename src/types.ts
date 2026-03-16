@@ -76,6 +76,24 @@ export interface TestSuite {
   tests: TestCase[];
 }
 
+export interface FaultSpec {
+  type: 'error' | 'timeout' | 'slow' | 'corrupt';
+  message?: string;
+  delay_ms?: number;
+  probability?: number;
+}
+
+export interface JudgeSpec {
+  criteria: string;
+  model?: string;
+  threshold?: number;
+}
+
+export interface JudgeRubricCriterion {
+  criterion: string;
+  weight: number;
+}
+
 export interface TestCase {
   name: string;
   input: string;
@@ -84,6 +102,7 @@ export interface TestCase {
   agent?: AgentConfig;
   fixture?: string;
   mocks?: Record<string, any>;
+  faults?: Record<string, FaultSpec>;
   tags?: string[];
   each?: Array<Record<string, any>>;
   expect: Expectations;
@@ -102,6 +121,8 @@ export interface Expectations {
   tool_sequence?: string[];
   snapshot?: boolean;
   custom?: string;
+  judge?: JudgeSpec;
+  judge_rubric?: JudgeRubricCriterion[] & { threshold?: number };
 }
 
 // ===== Result types =====
