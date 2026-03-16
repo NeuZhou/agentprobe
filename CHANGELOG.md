@@ -4,6 +4,17 @@ All notable changes to AgentProbe will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
+## [1.6.0] - 2026-03-16
+
+### Added
+- **Agent Compliance Framework** (`src/compliance.ts`): Define compliance policies (PII detection, cost limits, tool allowlists/denylists) and check traces against them. CLI: `agentprobe compliance traces/ --policy compliance.yml`
+- **Trace Simulator** (`src/simulator.ts`): Generate synthetic traces for testing without calling any LLM. Deterministic with seed support. CLI: `agentprobe simulate --agent research --steps 5 --tools search,summarize`
+- **Webhook Notifications** (`src/webhooks.ts`): Send notifications on test failure/regression/success to Slack, Teams, Discord, or generic webhooks via `.agentproberc.yml` config
+- **Test Prioritization** (`src/prioritize.ts`): Smart test ordering — previously failing tests first, change-affected next, slowest last. CLI: `agentprobe run tests.yaml --prioritize`
+- **Trace Merge Enhancement** (enhanced `src/merge.ts`): Handoff detection between agents, context flow tracking, conversation view formatting
+- **Report Comparison** (`src/reporters/compare.ts`): Compare two test reports to show regressions, fixes, new/removed tests, and HTML delta report. CLI: `agentprobe report-compare old.json new.json --output delta.html`
+- 43 new tests covering all new features
+
 ## [1.2.0] - 2026-03-16
 
 ### Added

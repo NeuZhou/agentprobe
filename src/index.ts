@@ -1198,6 +1198,9 @@ import { analyzeImpact, formatImpact } from './impact';
 import { buildAssertion } from './builder';
 import { getBenchmarkSuite, listBenchmarkSuites } from './benchmarks';
 import { computeDetailedStats, formatDetailedStats } from './stats';
+import { checkComplianceDir, loadComplianceConfig, formatComplianceResult } from './compliance';
+import { simulateTrace } from './simulator';
+import { compareReports, formatReportDelta, generateDeltaHTML } from './reporters/compare';
 
 // ===== OpenTelemetry export =====
 trace
@@ -1333,6 +1336,70 @@ program
       console.error(chalk.red(e.message));
       console.log(chalk.yellow(`Available suites: ${listBenchmarkSuites().join(', ')}`));
       process.exit(1);
+    }
+  });
+
+// ===== Compliance check =====
+program
+  .command('compliance <traceDir>')
+  .description('Check traces against compliance policies')
+  .requiredOption('--policy <path>', 'Path to compliance policy YAML file')
+  .action((traceDir: string, opts: { policy: string }) => {
+    if (!fs.existsSync(traceDir)) {
+      console.error(chalk.red(`❌ Directory not found: ${traceDir}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(opts.policy)) {
+      console.error(chalk.red(`❌ Policy file not found: ${opts.policy}`));
+      process.exit(1);
+    }
+    const config = loadComplianceConfig(opts.policy);
+    const result = checkComplianceDir(traceDir, config.policies);
+    console.log(formatComplianceResult(result));
+    process.exit(result.passed ? 0 : 1);
+  });
+
+// ===== Trace simulator =====
+program
+  .command('simulate')
+  .description('Generate synthetic traces for testing without calling any LLM')
+  .requiredOption('--agent <name>', 'Agent type (research, coding, weather, or custom)')
+  .option('--steps <n>', 'Number of high-level steps', '5')
+  .option('--tools <tools>', 'Comma-separated tool names')
+  .option('--seed <n>', 'Random seed for deterministic output')
+  .option('-o, --output <path>', 'Output trace file', 'simulated-trace.json')
+  .action((opts: { agent: string; steps: string; tools?: string; seed?: string; output: string }) => {
+    const trace = simulateTrace({
+      agent: opts.agent,
+      steps: parseInt(opts.steps, 10),
+      tools: opts.tools?.split(','),
+      seed: opts.seed ? parseInt(opts.seed, 10) : undefined,
+    });
+    fs.writeFileSync(opts.output, JSON.stringify(trace, null, 2));
+    console.log(chalk.green(`✅ Simulated trace → ${opts.output}`));
+    console.log(`   Agent: ${opts.agent} | Steps: ${trace.steps.length} | Seed: ${trace.metadata.seed}`);
+  });
+
+// ===== Report compare =====
+program
+  .command('report-compare <oldReport> <newReport>')
+  .description('Compare two test report files and show delta')
+  .option('-o, --output <path>', 'Output HTML delta report')
+  .action((oldFile: string, newFile: string, opts: { output?: string }) => {
+    if (!fs.existsSync(oldFile)) {
+      console.error(chalk.red(`❌ File not found: ${oldFile}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(newFile)) {
+      console.error(chalk.red(`❌ File not found: ${newFile}`));
+      process.exit(1);
+    }
+    const delta = compareReports(oldFile, newFile);
+    console.log(formatReportDelta(delta));
+    if (opts.output) {
+      const html = generateDeltaHTML(delta);
+      fs.writeFileSync(opts.output, html);
+      console.log(chalk.green(`📄 Delta report → ${opts.output}`));
     }
   });
 

@@ -37,8 +37,8 @@ export { report } from './reporter';
 export { reportJUnit } from './reporters/junit';
 
 // Trace operations
-export { mergeTraces, splitTrace } from './merge';
-export type { MergedTrace, MergedStep } from './merge';
+export { mergeTraces, splitTrace, formatMergedConversation } from './merge';
+export type { MergedTrace, MergedStep, HandoffPoint, ContextFlow } from './merge';
 
 // Code generation
 export { generateTests } from './codegen';
@@ -218,3 +218,23 @@ export type { BuilderAnswers } from './builder';
 // Benchmark suites
 export { getBenchmarkSuite, listBenchmarkSuites } from './benchmarks';
 export type { BenchmarkSuite } from './benchmarks';
+
+// Compliance framework
+export { checkCompliance, checkComplianceDir, loadComplianceConfig, formatComplianceResult } from './compliance';
+export type { CompliancePolicy, ComplianceConfig, ComplianceViolation, ComplianceResult } from './compliance';
+
+// Trace simulator
+export { simulateTrace, simulateBatch } from './simulator';
+export type { SimulatorOptions, SimulatedTrace } from './simulator';
+
+// Webhook notifications
+export { buildPayload, formatWebhookPayload, sendWebhook, triggerWebhooks } from './webhooks';
+export type { WebhookConfig, WebhooksConfig, WebhookPayload, WebhookFormat, WebhookEvent } from './webhooks';
+
+// Test prioritization
+export { prioritizeTests, loadHistory, saveHistory, updateHistory, formatPrioritization } from './prioritize';
+export type { PrioritizedTest, PrioritizationResult } from './prioritize';
+
+// Report comparison
+export { compareReports, formatReportDelta, generateDeltaHTML } from './reporters/compare';
+export type { ReportDelta } from './reporters/compare';
