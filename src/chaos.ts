@@ -12,10 +12,14 @@ export type ChaosType =
   | 'api_error'
   | 'tool_failure'
   | 'response_corruption'
-  | 'context_overflow';
+  | 'context_overflow'
+  | 'tool_timeout'
+  | 'rate_limit'
+  | 'malformed_response';
 
 export interface ChaosScenario {
   type: ChaosType;
+  name?: string;
   target?: string;
   tool?: string;
   delay_ms?: number;
@@ -23,6 +27,7 @@ export interface ChaosScenario {
   probability?: number;
   corrupt_tokens?: string;
   inject_tokens?: number;
+  inject?: string;  // e.g. "timeout(5s)", "http_429", "truncate(50%)"
 }
 
 export interface ChaosConfig {
@@ -142,6 +147,48 @@ export function applyChaos(trace: AgentTrace, scenario: ChaosScenario): { trace:
       affectedSteps = 1;
       break;
     }
+    case 'tool_timeout': {
+      const timeoutMs = scenario.inject ? parseInt(scenario.inject.match(/\d+/)?.[0] ?? '5', 10) * 1000 : (scenario.delay_ms ?? 5000);
+      const prob = scenario.probability ?? 1.0;
+      for (const step of modified.steps) {
+        if (step.type === 'tool_call') {
+          const targetMatch = !scenario.target || scenario.target === 'all_tools' || step.data.tool_name === scenario.target;
+          if (targetMatch && Math.random() < prob) {
+            step.duration_ms = (step.duration_ms ?? 0) + timeoutMs;
+            step.data.tool_result = { error: `Timeout after ${timeoutMs}ms` };
+            affectedSteps++;
+          }
+        }
+      }
+      break;
+    }
+    case 'rate_limit': {
+      const prob = scenario.probability ?? 0.1;
+      for (const step of modified.steps) {
+        if (step.type === 'tool_call' || step.type === 'llm_call') {
+          const targetMatch = !scenario.target || scenario.target === 'all_tools' || step.data.tool_name === scenario.target;
+          if (targetMatch && Math.random() < prob) {
+            step.data.tool_result = { error: 'HTTP 429 Too Many Requests' };
+            step.data.content = 'Rate limited';
+            affectedSteps++;
+          }
+        }
+      }
+      break;
+    }
+    case 'malformed_response': {
+      const truncPct = scenario.inject ? parseInt(scenario.inject.match(/\d+/)?.[0] ?? '50', 10) / 100 : 0.5;
+      for (const step of modified.steps) {
+        if (step.type === 'llm_call' || (scenario.target === 'llm' && step.type === 'output')) {
+          if (step.data.content) {
+            const cutAt = Math.floor(step.data.content.length * truncPct);
+            step.data.content = step.data.content.substring(0, cutAt);
+            affectedSteps++;
+          }
+        }
+      }
+      break;
+    }
   }
 
   return {
@@ -187,6 +234,12 @@ export function describeChaos(scenario: ChaosScenario): string {
       return `Corrupt ${scenario.corrupt_tokens ?? '10%'} of output tokens`;
     case 'context_overflow':
       return `Inject ${scenario.inject_tokens ?? 100000} tokens into context`;
+    case 'tool_timeout':
+      return `Inject timeout to ${scenario.target ?? 'all'} tools with ${((scenario.probability ?? 1) * 100).toFixed(0)}% probability`;
+    case 'rate_limit':
+      return `Inject HTTP 429 rate limit with ${((scenario.probability ?? 0.1) * 100).toFixed(0)}% probability`;
+    case 'malformed_response':
+      return `Truncate ${scenario.inject ?? '50%'} of LLM responses`;
   }
 }
 
@@ -217,7 +270,7 @@ export function validateChaosConfig(config: any): { valid: boolean; errors: stri
     errors.push('chaos.scenarios must be an array');
     return { valid: false, errors };
   }
-  const validTypes: ChaosType[] = ['api_latency', 'api_error', 'tool_failure', 'response_corruption', 'context_overflow'];
+  const validTypes: ChaosType[] = ['api_latency', 'api_error', 'tool_failure', 'response_corruption', 'context_overflow', 'tool_timeout', 'rate_limit', 'malformed_response'];
   for (const s of config.chaos.scenarios) {
     if (!validTypes.includes(s.type)) {
       errors.push(`Invalid chaos type: ${s.type}`);

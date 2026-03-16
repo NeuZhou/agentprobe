@@ -35,6 +35,23 @@ export interface SafetySpec {
   [key: string]: any;
 }
 
+export interface GuaranteeSpec {
+  always_responds_within?: string;
+  never_calls?: string[];
+  always_calls_before_action?: string[];
+  max_cost_per_interaction?: string | number;
+  maintains_context_for?: string | number;
+  language?: string[];
+}
+
+export interface BehaviorGuarantee {
+  name: string;
+  must_call?: string[];
+  must_not_call?: string[];
+  must_output?: string[];
+  must_not_output?: string[];
+}
+
 export interface AgentContract {
   name: string;
   version: string;
@@ -42,6 +59,8 @@ export interface AgentContract {
   capabilities?: CapabilitySpec[];
   behaviors?: BehaviorSpec[];
   safety?: SafetySpec[];
+  guarantees?: GuaranteeSpec;
+  named_behaviors?: Record<string, BehaviorGuarantee>;
 }
 
 export interface ContractViolation {
@@ -83,6 +102,8 @@ export function parseContract(obj: any): AgentContract | null {
     capabilities: c.capabilities,
     behaviors: c.behaviors,
     safety: c.safety,
+    guarantees: c.guarantees,
+    named_behaviors: c.behaviors && typeof c.behaviors === 'object' && !Array.isArray(c.behaviors) ? c.behaviors : undefined,
   };
 }
 
@@ -302,7 +323,7 @@ export function verifyContract(trace: AgentTrace, contract: AgentContract): Cont
     violations.push(...checkCapabilities(trace, contract.capabilities));
   }
 
-  if (contract.behaviors) {
+  if (contract.behaviors && Array.isArray(contract.behaviors)) {
     checked += contract.behaviors.length;
     violations.push(...checkBehaviors(trace, contract.behaviors));
   }
@@ -310,6 +331,18 @@ export function verifyContract(trace: AgentTrace, contract: AgentContract): Cont
   if (contract.safety) {
     checked += contract.safety.length;
     violations.push(...checkSafety(trace, contract.safety));
+  }
+
+  if (contract.guarantees) {
+    checked++;
+    violations.push(...checkGuarantees(trace, contract.guarantees));
+  }
+
+  if (contract.named_behaviors) {
+    for (const [name, behavior] of Object.entries(contract.named_behaviors)) {
+      checked++;
+      violations.push(...checkNamedBehavior(trace, name, behavior));
+    }
   }
 
   return {
@@ -320,6 +353,159 @@ export function verifyContract(trace: AgentTrace, contract: AgentContract): Cont
     checked,
     timestamp: new Date().toISOString(),
   };
+}
+
+/**
+ * Check guarantee requirements against a trace.
+ */
+export function checkGuarantees(
+  trace: AgentTrace,
+  guarantees: GuaranteeSpec,
+): ContractViolation[] {
+  const violations: ContractViolation[] = [];
+
+  if (guarantees.always_responds_within) {
+    const ms = parseTimeToMs(guarantees.always_responds_within);
+    const totalMs = trace.steps.reduce((sum, s) => sum + (s.duration_ms ?? 0), 0);
+    if (totalMs > ms) {
+      violations.push({
+        type: 'behavior',
+        rule: `always_responds_within:${guarantees.always_responds_within}`,
+        message: `Response time ${totalMs}ms exceeds guarantee of ${ms}ms`,
+        severity: 'error',
+      });
+    }
+  }
+
+  if (guarantees.never_calls) {
+    const toolCalls = trace.steps.filter(s => s.type === 'tool_call');
+    for (const forbidden of guarantees.never_calls) {
+      const found = toolCalls.find(s => s.data.tool_name === forbidden);
+      if (found) {
+        violations.push({
+          type: 'capability',
+          rule: `never_calls:${forbidden}`,
+          message: `Agent called forbidden tool "${forbidden}"`,
+          severity: 'error',
+        });
+      }
+    }
+  }
+
+  if (guarantees.max_cost_per_interaction) {
+    const maxCost = typeof guarantees.max_cost_per_interaction === 'number'
+      ? guarantees.max_cost_per_interaction
+      : parseFloat(String(guarantees.max_cost_per_interaction).replace('$', ''));
+    const totalTokens = trace.steps.reduce((sum, s) => {
+      return sum + (s.data.tokens?.input ?? 0) + (s.data.tokens?.output ?? 0);
+    }, 0);
+    const estimatedCost = totalTokens * 0.00001;
+    if (estimatedCost > maxCost) {
+      violations.push({
+        type: 'behavior',
+        rule: `max_cost:${guarantees.max_cost_per_interaction}`,
+        message: `Estimated cost $${estimatedCost.toFixed(4)} exceeds max $${maxCost}`,
+        severity: 'error',
+      });
+    }
+  }
+
+  if (guarantees.language) {
+    // Check output contains expected language indicators
+    const outputs = trace.steps.filter(s => s.type === 'output');
+    if (outputs.length === 0 && guarantees.language.length > 0) {
+      violations.push({
+        type: 'behavior',
+        rule: `language:${guarantees.language.join(',')}`,
+        message: 'No outputs found to verify language',
+        severity: 'warning',
+      });
+    }
+  }
+
+  return violations;
+}
+
+/**
+ * Check named behavior requirements (must_call, must_not_call patterns).
+ */
+export function checkNamedBehavior(
+  trace: AgentTrace,
+  name: string,
+  behavior: BehaviorGuarantee,
+): ContractViolation[] {
+  const violations: ContractViolation[] = [];
+  const toolCalls = trace.steps.filter(s => s.type === 'tool_call').map(s => s.data.tool_name ?? '');
+  const outputs = trace.steps.filter(s => s.type === 'output').map(s => s.data.content ?? '');
+
+  if (behavior.must_call) {
+    for (const tool of behavior.must_call) {
+      if (!toolCalls.includes(tool)) {
+        violations.push({
+          type: 'behavior',
+          rule: `${name}.must_call:${tool}`,
+          message: `Behavior "${name}" requires calling "${tool}" but it was not called`,
+          severity: 'error',
+        });
+      }
+    }
+  }
+
+  if (behavior.must_not_call) {
+    for (const tool of behavior.must_not_call) {
+      if (toolCalls.includes(tool)) {
+        violations.push({
+          type: 'behavior',
+          rule: `${name}.must_not_call:${tool}`,
+          message: `Behavior "${name}" forbids calling "${tool}" but it was called`,
+          severity: 'error',
+        });
+      }
+    }
+  }
+
+  if (behavior.must_output) {
+    const allOutput = outputs.join(' ');
+    for (const text of behavior.must_output) {
+      if (!allOutput.includes(text)) {
+        violations.push({
+          type: 'behavior',
+          rule: `${name}.must_output`,
+          message: `Behavior "${name}" requires output containing "${text}"`,
+          severity: 'error',
+        });
+      }
+    }
+  }
+
+  if (behavior.must_not_output) {
+    const allOutput = outputs.join(' ');
+    for (const text of behavior.must_not_output) {
+      if (allOutput.includes(text)) {
+        violations.push({
+          type: 'behavior',
+          rule: `${name}.must_not_output`,
+          message: `Behavior "${name}" forbids output containing "${text}"`,
+          severity: 'error',
+        });
+      }
+    }
+  }
+
+  return violations;
+}
+
+function parseTimeToMs(time: string): number {
+  const match = time.match(/^(\d+(?:\.\d+)?)\s*(ms|s|m|h)$/);
+  if (!match) return parseInt(time, 10);
+  const val = parseFloat(match[1]);
+  switch (match[2]) {
+    case 'ms': return val;
+    case 's': return val * 1000;
+    case 'm': return val * 60000;
+    case 'h': return val * 3600000;
+    default: return val;
+  }
 }
 
 /**

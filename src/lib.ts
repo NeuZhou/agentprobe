@@ -533,3 +533,28 @@ export {
 export type {
   ConfigValidationIssue, ConfigValidationResult, AdapterKeyInfo, PluginInfo, ConfigShape,
 } from './config-validator';
+
+// v4.0.0 - Visual Test Studio
+export {
+  loadStudioData, generateStudioHTML, writeStudio, studioFromSuiteResult,
+} from './studio';
+export type {
+  StudioConfig, StudioTestEntry, StudioData,
+} from './studio';
+
+// v4.0.0 - Test Orchestrator
+export {
+  TestOrchestrator, createOrchestrator, formatOrchestratorResult,
+} from './orchestrator';
+export type {
+  AgentConfig as OrchestratorAgentConfig, Interaction, FlowMode, FlowStep,
+  OrchestratorContext, AgentRunResult, InteractionResult, OrchestratorResult,
+} from './orchestrator';
+
+// v4.0.0 - Enhanced Contracts (guarantees, named behaviors)
+export {
+  checkGuarantees, checkNamedBehavior,
+} from './contract';
+export type {
+  GuaranteeSpec, BehaviorGuarantee,
+} from './contract';

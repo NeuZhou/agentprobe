@@ -54,6 +54,10 @@ import { convertTrace } from './converters';
 import type { TraceFormat } from './converters';
 import { validateSchedule, formatSchedule } from './scheduler';
 import type { ScheduleConfig } from './scheduler';
+import { loadStudioData, writeStudio } from './studio';
+import type { StudioConfig } from './studio';
+import { createOrchestrator, formatOrchestratorResult } from './orchestrator';
+
 import { loadGovernanceData, generateGovernanceDashboard, formatGovernance } from './governance';
 import { detectAnomalies, formatAnomalies } from './anomaly';
 import { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
@@ -2515,6 +2519,40 @@ program
     const baseline = buildFingerprint(baseTraces);
     const report = detectDrift(baseline, curTraces, parseFloat(opts.threshold));
     console.log(report.summary);
+  });
+
+program
+  .command('studio')
+  .description('Launch interactive HTML test dashboard')
+  .option('--port <n>', 'Port for live server (generates static HTML)', '3000')
+  .option('--reports <dir>', 'Reports directory', '.agentprobe/reports')
+  .option('--traces <dir>', 'Traces directory', '.agentprobe/traces')
+  .option('--title <title>', 'Dashboard title', 'AgentProbe Test Studio')
+  .option('-o, --output <file>', 'Output HTML file', 'studio.html')
+  .action((opts: any) => {
+    const config: StudioConfig = {
+      port: parseInt(opts.port, 10),
+      reportDir: opts.reports,
+      traceDir: opts.traces,
+      title: opts.title,
+    };
+    const data = loadStudioData(config);
+    writeStudio(opts.output, data);
+    console.log(chalk.green(`✅ Studio dashboard generated: ${opts.output}`));
+    console.log(`   Tests: ${data.summary.total} | Pass: ${data.summary.passed} | Fail: ${data.summary.failed} | Flaky: ${data.summary.flaky}`);
+  });
+
+program
+  .command('orchestrate <configFile>')
+  .description('Run multi-agent test orchestration')
+  .option('--flow <mode>', 'Flow mode: sequential|parallel|conditional', 'sequential')
+  .action(async (configFile: string, opts: any) => {
+    const raw = fs.readFileSync(configFile, 'utf-8');
+    const config = YAML.parse(raw);
+    const orch = createOrchestrator({ ...config, flow: opts.flow });
+    const result = await orch.run();
+    console.log(formatOrchestratorResult(result));
+    process.exit(result.passed ? 0 : 1);
   });
 
 program.parse();
