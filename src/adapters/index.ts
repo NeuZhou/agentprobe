@@ -3,6 +3,7 @@ import { convertOpenAI } from './openai';
 import { convertLangChain } from './langchain';
 import { convertAnthropic } from './anthropic';
 import { convertGeneric } from './generic';
+import { detectOpenClaw, convertOpenClaw } from './openclaw';
 
 export interface TraceAdapter {
   name: string;
@@ -11,6 +12,7 @@ export interface TraceAdapter {
 }
 
 const adapters: TraceAdapter[] = [
+  { name: 'openclaw', detect: detectOpenClaw, convert: convertOpenClaw },
   { name: 'openai', detect: detectOpenAI, convert: convertOpenAI },
   { name: 'langchain', detect: detectLangChain, convert: convertLangChain },
   { name: 'anthropic', detect: detectAnthropic, convert: convertAnthropic },
