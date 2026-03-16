@@ -9,7 +9,15 @@ import { Recorder } from './recorder';
 import { startWatch } from './watcher';
 import { analyzeCoverage, formatCoverage } from './coverage';
 import { generateSecurityTests, securityTestsToYaml } from './security';
-import { generateCI } from './ci';
+import { generateCI, generateCIContent, getSupportedProviders } from './ci';
+import type { CIProvider } from './ci';
+import { generateMutations, applyMutation, formatMutationReport } from './mutation';
+import type { MutationReport } from './mutation';
+import { profileBehavior, formatBehaviorProfile } from './behavior-profiler';
+import { setLocale, detectLocale } from './i18n';
+import {
+  generateDetailedCoverage, formatDetailedCoverage,
+} from './coverage-report';
 import { formatTraceView, formatTraceTimeline } from './viewer';
 import { diffTraces, formatDiff } from './diff';
 import { loadTrace } from './recorder';
@@ -34,6 +42,10 @@ const _pkg = JSON.parse(
   fs.readFileSync(_pkgPath.join(__dirname, '..', 'package.json'), 'utf-8'),
 );
 const VERSION: string = _pkg.version;
+
+// Auto-detect locale
+const _detectedLocale = detectLocale();
+setLocale(_detectedLocale);
 
 const program = new Command();
 
@@ -235,6 +247,15 @@ program
         if (opts.coverage) {
           const cov = analyzeCoverage(result, opts.tools);
           console.log(formatCoverage(cov));
+
+          // Enhanced detailed coverage
+          try {
+            const suiteRaw = YAML.parse(fs.readFileSync(sp, 'utf-8'));
+            if (suiteRaw?.tests) {
+              const detailed = generateDetailedCoverage(result, suiteRaw.tests, opts.tools);
+              console.log(formatDetailedCoverage(detailed));
+            }
+          } catch { /* skip if parse fails */ }
         }
 
         // Compare against baseline
@@ -1401,6 +1422,137 @@ program
       fs.writeFileSync(opts.output, html);
       console.log(chalk.green(`📄 Delta report → ${opts.output}`));
     }
+  });
+
+// ===== CI/CD Generation =====
+
+const ci = program.command('ci').description('Generate CI/CD workflow templates');
+
+ci.command('github-actions')
+  .description('Generate GitHub Actions workflow')
+  .option('-o, --output <path>', 'Output file path', '.github/workflows/agentprobe.yml')
+  .option('-t, --test-path <path>', 'Test file/directory path', 'tests/')
+  .option('-n, --node-version <ver>', 'Node.js version', '20')
+  .action((opts: { output: string; testPath: string; nodeVersion: string }) => {
+    const filePath = generateCI({ provider: 'github', output: opts.output, testPath: opts.testPath, nodeVersion: opts.nodeVersion });
+    console.log(chalk.green(`✅ GitHub Actions workflow created: ${filePath}`));
+  });
+
+ci.command('gitlab')
+  .description('Generate GitLab CI pipeline')
+  .option('-o, --output <path>', 'Output file path', '.gitlab-ci.yml')
+  .option('-t, --test-path <path>', 'Test file/directory path', 'tests/')
+  .option('-n, --node-version <ver>', 'Node.js version', '20')
+  .action((opts: { output: string; testPath: string; nodeVersion: string }) => {
+    const filePath = generateCI({ provider: 'gitlab', output: opts.output, testPath: opts.testPath, nodeVersion: opts.nodeVersion });
+    console.log(chalk.green(`✅ GitLab CI pipeline created: ${filePath}`));
+  });
+
+ci.command('azure-pipelines')
+  .description('Generate Azure Pipelines YAML')
+  .option('-o, --output <path>', 'Output file path', 'azure-pipelines.yml')
+  .option('-t, --test-path <path>', 'Test file/directory path', 'tests/')
+  .option('-n, --node-version <ver>', 'Node.js version', '20')
+  .action((opts: { output: string; testPath: string; nodeVersion: string }) => {
+    const filePath = generateCI({ provider: 'azure-pipelines', output: opts.output, testPath: opts.testPath, nodeVersion: opts.nodeVersion });
+    console.log(chalk.green(`✅ Azure Pipelines config created: ${filePath}`));
+  });
+
+ci.command('circleci')
+  .description('Generate CircleCI config')
+  .option('-o, --output <path>', 'Output file path', '.circleci/config.yml')
+  .option('-t, --test-path <path>', 'Test file/directory path', 'tests/')
+  .option('-n, --node-version <ver>', 'Node.js version', '20')
+  .action((opts: { output: string; testPath: string; nodeVersion: string }) => {
+    const filePath = generateCI({ provider: 'circleci', output: opts.output, testPath: opts.testPath, nodeVersion: opts.nodeVersion });
+    console.log(chalk.green(`✅ CircleCI config created: ${filePath}`));
+  });
+
+ci.command('list')
+  .description('List supported CI providers')
+  .action(() => {
+    console.log('Supported CI providers:');
+    for (const p of getSupportedProviders()) {
+      console.log(`  - ${p}`);
+    }
+  });
+
+ci.command('preview <provider>')
+  .description('Preview generated CI config without writing')
+  .option('-t, --test-path <path>', 'Test file/directory path', 'tests/')
+  .action((provider: string, opts: { testPath: string }) => {
+    const content = generateCIContent({ provider: provider as CIProvider, testPath: opts.testPath });
+    console.log(content);
+  });
+
+// ===== Mutation Testing =====
+
+program
+  .command('mutate <suiteFile>')
+  .description('Mutation testing - verify test assertions catch faults')
+  .action(async (suiteFile: string) => {
+    if (!fs.existsSync(suiteFile)) {
+      console.error(chalk.red(`❌ File not found: ${suiteFile}`));
+      process.exit(1);
+    }
+    const raw = YAML.parse(fs.readFileSync(suiteFile, 'utf-8'));
+    const tests = raw.tests || [];
+    let total = 0, caught = 0;
+    const results: any[] = [];
+
+    for (const test of tests) {
+      const mutations = generateMutations(test);
+      for (const mutation of mutations) {
+        total++;
+        // Static analysis: removing/changing an assertion should weaken the test
+        const mutatedTest = applyMutation(test, mutation);
+        const hasFewer = Object.keys(mutatedTest.expect || {}).length < Object.keys(test.expect || {}).length;
+        const hasChanged = JSON.stringify(mutatedTest.expect) !== JSON.stringify(test.expect);
+        const isCaught = hasFewer || hasChanged;
+        if (isCaught) caught++;
+        results.push({ mutation, caught: isCaught });
+      }
+    }
+
+    const report: MutationReport = {
+      total,
+      caught,
+      escaped: total - caught,
+      score: total > 0 ? Math.round((caught / total) * 100) : 100,
+      results: results.map(r => ({
+        mutation: r.mutation,
+        caught: r.caught,
+        message: r.caught ? 'CAUGHT' : 'ESCAPED',
+      })),
+    };
+
+    console.log(formatMutationReport(report));
+  });
+
+// ===== Behavior Profiler =====
+
+program
+  .command('behavior-profile <dir>')
+  .description('Profile agent behavior patterns from traces')
+  .action((dir: string) => {
+    if (!fs.existsSync(dir)) {
+      console.error(chalk.red(`❌ Directory not found: ${dir}`));
+      process.exit(1);
+    }
+    const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
+    const traces: AgentTrace[] = [];
+    for (const file of files) {
+      try {
+        const trace = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf-8'));
+        traces.push(trace);
+      } catch { /* skip invalid */ }
+    }
+    if (traces.length === 0) {
+      console.error(chalk.yellow('⚠️  No valid trace files found'));
+      process.exit(1);
+    }
+    const bp = profileBehavior(traces);
+    console.log(formatBehaviorProfile(bp));
   });
 
 program.parse();
