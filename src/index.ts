@@ -2138,9 +2138,9 @@ program
     prompt();
   });
 
-// ===== v2.8.0 — convert command =====
+// ===== v2.8.0 — convert-trace command =====
 program
-  .command('convert <trace>')
+  .command('convert-trace <trace>')
   .description('Convert between trace formats (agentprobe, langsmith, opentelemetry, arize)')
   .requiredOption('--from <format>', 'Source format')
   .requiredOption('--to <format>', 'Target format')
