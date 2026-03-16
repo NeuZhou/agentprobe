@@ -698,7 +698,8 @@ program
 program
   .command('stats <dir>')
   .description('Analyze all traces in a directory and show summary statistics')
-  .action((dir: string) => {
+  .option('--detailed', 'Show detailed statistics with σ, percentiles, model breakdown')
+  .action((dir: string, opts: { detailed?: boolean }) => {
     if (!fs.existsSync(dir)) {
       console.error(chalk.red(`❌ Directory not found: ${dir}`));
       console.error(
@@ -732,6 +733,11 @@ program
 
     const stats = computeStats(traces);
     console.log(formatStats(stats));
+
+    if (opts.detailed) {
+      const detailed = computeDetailedStats(traces);
+      console.log(formatDetailedStats(detailed));
+    }
   });
 
 // Codegen — generate tests from traces
@@ -1184,6 +1190,150 @@ regression
   .action(() => {
     const snapshots = listRegressionSnapshots();
     console.log(formatSnapshotList(snapshots));
+  });
+
+import { traceToOTLP } from './otel';
+import { detectFlaky, formatFlaky } from './flaky';
+import { analyzeImpact, formatImpact } from './impact';
+import { buildAssertion } from './builder';
+import { getBenchmarkSuite, listBenchmarkSuites } from './benchmarks';
+import { computeDetailedStats, formatDetailedStats } from './stats';
+
+// ===== OpenTelemetry export =====
+trace
+  .command('otel <traceFile>')
+  .description('Export a trace as OpenTelemetry spans (OTLP JSON)')
+  .option('-o, --output <path>', 'Output file (stdout if omitted)')
+  .option('--service-name <name>', 'Service name', 'agentprobe')
+  .action((traceFile: string, opts: { output?: string; serviceName?: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const t = loadTrace(traceFile);
+    const otlp = traceToOTLP(t, opts.serviceName);
+    const json = JSON.stringify(otlp, null, 2);
+    if (opts.output) {
+      fs.writeFileSync(opts.output, json);
+      console.log(chalk.green(`✅ OTLP export → ${opts.output}`));
+    } else {
+      console.log(json);
+    }
+  });
+
+// ===== Flaky test detection =====
+program
+  .command('flaky <suite>')
+  .description('Run a test suite multiple times to detect flaky tests')
+  .option('--runs <n>', 'Number of runs', '5')
+  .action(async (suitePath: string, opts: { runs: string }) => {
+    if (!fs.existsSync(suitePath)) {
+      console.error(chalk.red(`❌ File not found: ${suitePath}`));
+      process.exit(1);
+    }
+    const runs = parseInt(opts.runs, 10);
+    console.log(chalk.cyan(`🔄 Running ${suitePath} × ${runs}...\n`));
+    const results = [];
+    for (let i = 0; i < runs; i++) {
+      console.log(chalk.gray(`  Run ${i + 1}/${runs}...`));
+      results.push(await runSuite(suitePath));
+    }
+    console.log(formatFlaky(detectFlaky(results)));
+  });
+
+// ===== Test impact analysis =====
+program
+  .command('impact')
+  .description('Determine which tests are affected by code changes')
+  .requiredOption('--changed <files...>', 'Changed file paths')
+  .option('--suites <files...>', 'Test suite files to analyze')
+  .action((opts: { changed: string[]; suites?: string[] }) => {
+    const suiteFiles = opts.suites ?? [];
+    if (suiteFiles.length === 0) {
+      // Auto-discover YAML files in tests/
+      const { glob } = require('glob');
+      suiteFiles.push(...glob.sync('tests/**/*.{yaml,yml}'.replace(/\\/g, '/')));
+    }
+    const result = analyzeImpact(opts.changed, suiteFiles);
+    console.log(formatImpact(result));
+  });
+
+// ===== Assertion builder =====
+program
+  .command('build')
+  .description('Interactive assertion builder - generate test YAML from Q&A')
+  .option('-o, --output <path>', 'Output YAML file (stdout if omitted)')
+  .action(async (opts: { output?: string }) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    const ask = (q: string): Promise<string> =>
+      new Promise((resolve) =>
+        rl.question(chalk.cyan(`? ${q} `), (ans) => resolve(ans.trim())),
+      );
+
+    console.log(chalk.bold('\n🔨 AgentProbe Assertion Builder\n'));
+
+    const action = await ask('What should the agent do?');
+    const tool = await ask('Which tool should it call? (empty to skip)');
+    const outputContains = await ask('What should the output contain? (empty to skip)');
+    const maxStepsStr = await ask('Max steps? (empty to skip)');
+    rl.close();
+
+    const answers = {
+      action,
+      tool: tool || undefined,
+      outputContains: outputContains || undefined,
+      maxSteps: maxStepsStr ? parseInt(maxStepsStr, 10) : undefined,
+    };
+
+    const yaml = buildAssertion(answers);
+
+    if (opts.output) {
+      fs.writeFileSync(opts.output, yaml);
+      console.log(chalk.green(`\n✅ Generated → ${opts.output}`));
+    } else {
+      console.log('\n' + chalk.bold('Generated:'));
+      console.log(yaml);
+    }
+  });
+
+// ===== Benchmark suite =====
+program
+  .command('benchmark')
+  .description('Run a pre-built benchmark suite (safety, efficiency, reliability)')
+  .requiredOption('--suite <name>', 'Benchmark suite name')
+  .option('-o, --output <path>', 'Output results file')
+  .action(async (opts: { suite: string; output?: string }) => {
+    try {
+      const suite = getBenchmarkSuite(opts.suite);
+      console.log(chalk.bold(`\n📋 ${suite.name}`));
+      console.log(chalk.gray(`   ${suite.description}\n`));
+      console.log(`   ${suite.tests.length} tests in suite`);
+
+      // Write temp YAML and run
+      const YAML = require('yaml');
+      const tmpPath = path.join(require('os').tmpdir(), `agentprobe-bench-${opts.suite}.yaml`);
+      fs.writeFileSync(tmpPath, YAML.stringify({
+        name: suite.name,
+        tests: suite.tests,
+      }));
+
+      const result = await runSuite(tmpPath);
+      const output = report(result, 'console');
+      console.log(output);
+
+      if (opts.output) {
+        fs.writeFileSync(opts.output, JSON.stringify(result, null, 2));
+        console.log(chalk.green(`📁 Results → ${opts.output}`));
+      }
+
+      // Cleanup
+      try { fs.unlinkSync(tmpPath); } catch { /* ignore */ }
+      process.exit(result.failed > 0 ? 1 : 0);
+    } catch (e: any) {
+      console.error(chalk.red(e.message));
+      console.log(chalk.yellow(`Available suites: ${listBenchmarkSuites().join(', ')}`));
+      process.exit(1);
+    }
   });
 
 program.parse();

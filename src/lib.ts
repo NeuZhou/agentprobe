@@ -47,7 +47,8 @@ export { generateTests } from './codegen';
 export { generateSecurityTests } from './security';
 
 // Stats
-export { computeStats, formatStats } from './stats';
+export { computeStats, formatStats, computeDetailedStats, formatDetailedStats } from './stats';
+export type { DetailedStats } from './stats';
 
 // Cost
 export { calculateCost, formatCostReport } from './cost';
@@ -197,3 +198,23 @@ export type {
   ChainStep,
   CustomAssertionRef,
 } from './types';
+
+// OpenTelemetry integration
+export { traceToOTel, traceToOTLP } from './otel';
+export type { OTelSpan, OTelExport } from './otel';
+
+// Flaky test detection
+export { detectFlaky, formatFlaky } from './flaky';
+export type { FlakyResult, FlakySuiteResult } from './flaky';
+
+// Test impact analysis
+export { analyzeImpact, formatImpact } from './impact';
+export type { ImpactResult, ImpactedTest } from './impact';
+
+// Assertion builder
+export { buildAssertion, buildSuite, parseBuilderInput } from './builder';
+export type { BuilderAnswers } from './builder';
+
+// Benchmark suites
+export { getBenchmarkSuite, listBenchmarkSuites } from './benchmarks';
+export type { BenchmarkSuite } from './benchmarks';
