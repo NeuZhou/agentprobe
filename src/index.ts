@@ -2005,4 +2005,84 @@ program
     console.log('\n' + formatCoverageMap(map));
   });
 
+// === Agent Chaos Testing (v2.7.0) ===
+import { parseChaosConfig, applyAllChaos, formatChaosReport } from './chaos';
+program
+  .command('chaos <testFile>')
+  .description('Run chaos testing against agent traces')
+  .option('--scenario <type>', 'Specific chaos scenario to run')
+  .option('--config <file>', 'Chaos config YAML file')
+  .action((testFile: string, opts: { scenario?: string; config?: string }) => {
+    if (!fs.existsSync(testFile)) {
+      console.error(chalk.red(`File not found: ${testFile}`));
+      process.exit(1);
+    }
+    const raw = fs.readFileSync(testFile, 'utf-8');
+    YAML.parse(raw); // validate YAML
+    const configFile = opts.config ?? testFile;
+    const chaosConfig = parseChaosConfig(configFile);
+    const scenarios = opts.scenario
+      ? chaosConfig.chaos.scenarios.filter((s: any) => s.type === opts.scenario)
+      : chaosConfig.chaos.scenarios;
+    // Apply to a dummy trace for demonstration
+    const trace = { id: 'chaos-test', timestamp: new Date().toISOString(), steps: [], metadata: {} };
+    const { results } = applyAllChaos(trace, scenarios);
+    console.log(formatChaosReport(results));
+  });
+
+// === Agent Compliance Reports (v2.7.0) ===
+import { analyzeTraceData, generateComplianceReport, formatComplianceReport, listStandards } from './compliance-report';
+import type { ComplianceStandard } from './compliance-report';
+program
+  .command('compliance-report')
+  .description('Generate compliance report for regulated industries')
+  .requiredOption('--standard <std>', 'Compliance standard: soc2, hipaa, gdpr, pci-dss')
+  .option('--data <dir>', 'Directory with trace data', '.')
+  .action((opts: { standard: string; data: string }) => {
+    const std = opts.standard.toLowerCase() as ComplianceStandard;
+    if (!listStandards().includes(std)) {
+      console.error(chalk.red(`Unknown standard: ${opts.standard}. Supported: ${listStandards().join(', ')}`));
+      process.exit(1);
+    }
+    const data = analyzeTraceData(opts.data);
+    const report = generateComplianceReport(std, data);
+    console.log(formatComplianceReport(report));
+  });
+
+// === Agent Diff Report (v2.7.0) ===
+import { loadTraces as loadDiffTraces, analyzeVersion, diffVersions, formatAgentDiff } from './agent-diff';
+program
+  .command('agent-diff')
+  .description('Compare two versions of an agent')
+  .requiredOption('--v1 <dir>', 'Directory of v1 traces')
+  .requiredOption('--v2 <dir>', 'Directory of v2 traces')
+  .action((opts: { v1: string; v2: string }) => {
+    const v1Traces = loadDiffTraces(opts.v1);
+    const v2Traces = loadDiffTraces(opts.v2);
+    if (v1Traces.length === 0 && v2Traces.length === 0) {
+      console.error(chalk.red('No traces found in either directory'));
+      process.exit(1);
+    }
+    const v1 = analyzeVersion(v1Traces);
+    const v2 = analyzeVersion(v2Traces);
+    const diff = diffVersions(v1, v2);
+    console.log(formatAgentDiff(diff));
+  });
+
+// === Custom Assertion Builder (v2.7.0) ===
+import { parseAssertionConfigFile, evaluateAll, formatAssertionResults } from './custom-assert-builder';
+program
+  .command('check-assertions <configFile>')
+  .description('Evaluate custom assertions against output')
+  .requiredOption('--output <text>', 'Output text to check')
+  .action((configFile: string, opts: { output: string }) => {
+    if (!fs.existsSync(configFile)) {
+      console.error(chalk.red(`File not found: ${configFile}`));
+      process.exit(1);
+    }
+    const config = parseAssertionConfigFile(configFile);
+    const results = evaluateAll(config, opts.output);
+    console.log(formatAssertionResults(results));
+  });
+
 program.parse();
