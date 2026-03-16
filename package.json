@@ -1,6 +1,6 @@
 {
   "name": "agentprobe",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -25,7 +25,8 @@
   "files": [
     "dist/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsc",
@@ -68,6 +69,11 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^8.57.0",
+    "@typescript-eslint/parser": "^8.57.0",
+    "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vitest": "^1.6.1"
