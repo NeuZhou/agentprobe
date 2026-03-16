@@ -68,6 +68,34 @@ async function runSingleTest(
   suiteDir: string,
   options?: RunOptions,
 ): Promise<TestResult> {
+  // Wrap with per-test timeout if specified
+  if (test.timeout_ms) {
+    return Promise.race([
+      runSingleTestInner(test, suiteDir, options),
+      new Promise<TestResult>((resolve) =>
+        setTimeout(
+          () =>
+            resolve({
+              name: test.name,
+              passed: false,
+              assertions: [],
+              duration_ms: test.timeout_ms!,
+              error: `Test timed out after ${test.timeout_ms}ms`,
+              tags: test.tags,
+            }),
+          test.timeout_ms!,
+        ),
+      ),
+    ]);
+  }
+  return runSingleTestInner(test, suiteDir, options);
+}
+
+async function runSingleTestInner(
+  test: TestCase,
+  suiteDir: string,
+  options?: RunOptions,
+): Promise<TestResult> {
   const testStart = Date.now();
   try {
     // Expand template if specified
@@ -466,10 +494,11 @@ async function executeAgent(
   };
 
   if (agent.command) {
+    const timeout = test.timeout_ms ?? 60000;
     const result = execSync(agent.command, {
       cwd: suiteDir,
       env: { ...process.env, AGENT_INPUT: test.input },
-      timeout: 60000,
+      timeout,
       encoding: 'utf-8',
     });
     trace.steps.push({

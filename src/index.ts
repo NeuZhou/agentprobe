@@ -845,4 +845,29 @@ program
     console.log(formatProfile(profileTraces(traces)));
   });
 
+import { searchTraces, formatSearchResults } from './search';
+
+// ===== Search command =====
+program
+  .command('search <query> <dir>')
+  .description('Search across trace files for tools, content, or patterns')
+  .option('--tool <name>', 'Filter by tool name')
+  .option('--min-cost <usd>', 'Minimum cost filter', parseFloat)
+  .option('--max-cost <usd>', 'Maximum cost filter', parseFloat)
+  .option('--model <name>', 'Filter by model name')
+  .action((query: string, dir: string, opts: any) => {
+    if (!fs.existsSync(dir)) {
+      console.error(chalk.red(`❌ Directory not found: ${dir}`));
+      process.exit(1);
+    }
+    const result = searchTraces(dir, {
+      query,
+      tool: opts.tool,
+      minCost: opts.minCost,
+      maxCost: opts.maxCost,
+      model: opts.model,
+    });
+    console.log(formatSearchResults(result, { query }));
+  });
+
 program.parse();

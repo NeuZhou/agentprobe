@@ -5,6 +5,16 @@ All notable changes to AgentProbe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-03-16
+
+### Added
+- **Streaming Recorder** (`src/streaming.ts`) — record agent traces from streaming responses (OpenAI, Anthropic, SSE formats)
+- **Trace Search** (`src/search.ts`) — `agentprobe search "query" traces/` to search across multiple traces by tool, content, model, cost, step type
+- **Assertion Negation** — universal `not:` wrapper to negate any assertion in test YAML
+- **Per-test Timeout** — `timeout_ms` field on test cases kills long-running live executions
+- **Trace Sampling** (`src/sampling.ts`) — `--sample N` / `--sample-pct P` for running tests on a subset of traces with reproducible seeded RNG
+- 95 new tests (315 → 410)
+
 ## [1.0.0] - 2026-03-16
 
 ### Added

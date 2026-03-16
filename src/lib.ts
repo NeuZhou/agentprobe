@@ -100,6 +100,18 @@ export type { AnonymizeOptions } from './anonymize';
 export { profile, formatProfile } from './profiler';
 export type { ProfileResult, PercentileStats, ToolProfile } from './profiler';
 
+// Streaming recorder
+export { StreamingRecorder } from './streaming';
+export type { StreamingChunk, StreamingRecorderOptions } from './streaming';
+
+// Trace search
+export { searchTraces, matchTrace, formatSearchResults } from './search';
+export type { SearchOptions, SearchMatch, SearchResult } from './search';
+
+// Trace sampling
+export { sampleTraces, sampleFiles } from './sampling';
+export type { SamplingOptions } from './sampling';
+
 // Types - re-export everything
 export type {
   AgentTrace,

@@ -114,6 +114,7 @@ export interface TestCase {
   env?: Record<string, string>;
   template?: string;
   template_params?: Record<string, any>;
+  timeout_ms?: number;
   replay_overrides?: Record<string, any>;
   expect: Expectations;
 }
@@ -134,6 +135,7 @@ export interface Expectations {
   custom?: string;
   judge?: JudgeSpec;
   judge_rubric?: JudgeRubricCriterion[] & { threshold?: number };
+  not?: Partial<Omit<Expectations, 'not' | 'all_of' | 'any_of' | 'none_of'>>;
   all_of?: Expectations[];
   any_of?: Expectations[];
   none_of?: Expectations[];

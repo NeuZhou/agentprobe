@@ -260,6 +260,21 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
     });
   }
 
+  // not (universal negation wrapper)
+  if (expect.not) {
+    const negatedExpect = expect.not as Expectations;
+    const inner = evaluate(trace, negatedExpect);
+    for (const r of inner) {
+      results.push({
+        name: `not(${r.name})`,
+        passed: !r.passed,
+        expected: `NOT ${r.expected ?? 'pass'}`,
+        actual: r.actual,
+        message: !r.passed ? undefined : `Negated assertion failed: "${r.name}" should NOT have passed`,
+      });
+    }
+  }
+
   // custom
   if (expect.custom) {
     try {
