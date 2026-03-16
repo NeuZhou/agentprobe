@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔬 AgentProbe Report — Research Agent Tests</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0d1117;color:#c9d1d9;padding:2rem}
+.container{max-width:1000px;margin:0 auto}
+h1{font-size:1.8rem;margin-bottom:.5rem;color:#f0f6fc}
+.summary{display:flex;gap:1.5rem;margin:1.5rem 0;flex-wrap:wrap}
+.stat{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1rem 1.5rem;min-width:140px}
+.stat-value{font-size:2rem;font-weight:700}
+.stat-label{font-size:.85rem;color:#8b949e;margin-top:.25rem}
+.pass{color:#3fb950}.fail{color:#f85149}
+.bar{height:8px;border-radius:4px;background:#21262d;margin:1rem 0;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#3fb950,#56d364)}
+.test{background:#161b22;border:1px solid #30363d;border-radius:8px;margin:.75rem 0;overflow:hidden}
+.test-header{padding:1rem 1.5rem;cursor:pointer;display:flex;align-items:center;gap:.75rem;user-select:none}
+.test-header:hover{background:#1c2129}
+.test-body{padding:0 1.5rem 1rem;display:none;border-top:1px solid #30363d}
+.test.open .test-body{display:block}
+.icon{font-size:1.2rem}
+.test-name{flex:1;font-weight:500}
+.test-dur{color:#8b949e;font-size:.85rem}
+.tags{display:flex;gap:.4rem;margin-left:.5rem}
+.tag{background:#30363d;color:#8b949e;padding:2px 8px;border-radius:12px;font-size:.75rem}
+.assertion{padding:.4rem 0;font-size:.9rem;border-bottom:1px solid #21262d}
+.assertion:last-child{border:none}
+.a-pass{color:#3fb950}.a-fail{color:#f85149}
+.timeline{margin:1rem 0;position:relative}
+.step{display:flex;align-items:flex-start;gap:.75rem;padding:.4rem 0;font-size:.85rem}
+.step-icon{width:24px;text-align:center;flex-shrink:0}
+.step-content{flex:1;word-break:break-all}
+.step-dur{color:#8b949e;flex-shrink:0}
+.cost-section{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1.5rem;margin:1.5rem 0}
+table{width:100%;border-collapse:collapse;margin:.75rem 0}
+th,td{text-align:left;padding:.5rem;border-bottom:1px solid #21262d;font-size:.85rem}
+th{color:#8b949e;font-weight:500}
+.chart{margin:1rem 0}
+.chart-bar{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
+.chart-label{width:120px;font-size:.8rem;text-align:right;color:#8b949e}
+.chart-fill{height:20px;border-radius:4px;background:#58a6ff;min-width:2px}
+.chart-val{font-size:.8rem;color:#8b949e}
+footer{text-align:center;color:#484f58;font-size:.8rem;margin-top:2rem;padding-top:1rem;border-top:1px solid #21262d}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔬 Research Agent Tests</h1>
+  <p style="color:#8b949e">Generated 2026-03-16T06:17:33.212Z</p>
+
+  <div class="summary">
+    <div class="stat"><div class="stat-value">8</div><div class="stat-label">Total Tests</div></div>
+    <div class="stat"><div class="stat-value pass">8</div><div class="stat-label">Passed</div></div>
+    <div class="stat"><div class="stat-value fail">0</div><div class="stat-label">Failed</div></div>
+    <div class="stat"><div class="stat-value">100%</div><div class="stat-label">Pass Rate</div></div>
+    <div class="stat"><div class="stat-value">8ms</div><div class="stat-label">Duration</div></div>
+    <div class="stat"><div class="stat-value">$0.0038</div><div class="stat-label">Total Cost</div></div>
+  </div>
+
+  <div class="bar"><div class="bar-fill" style="width:100%"></div></div>
+
+  <h2 style="margin:1.5rem 0 .75rem">Test Results</h2>
+  <div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Agent uses web_search</span>
+    <div class="tags"></div>
+    <span class="test-dur">1ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ tool_called: web_search: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Agent uses calculate</span>
+    <div class="tags"></div>
+    <span class="test-dur">0ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ tool_called: calculate: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Agent calls save_note</span>
+    <div class="tags"></div>
+    <span class="test-dur">1ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ tool_called: save_note: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Tools called in order - search before calculate</span>
+    <div class="tags"></div>
+    <span class="test-dur">1ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ tool_sequence: [web_search → calculate]: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Output contains population number</span>
+    <div class="tags"></div>
+    <span class="test-dur">1ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ output_matches: /13[,.]?960[,.]?000|13\.96 million/: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Output contains density calculation</span>
+    <div class="tags"></div>
+    <span class="test-dur">1ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ output_matches: /6[,.]?36[23]/: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Max 15 steps</span>
+    <div class="tags"></div>
+    <span class="test-dur">0ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ max_steps: 15: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+<div class="test">
+  <div class="test-header">
+    <span class="icon">✅</span>
+    <span class="test-name pass">Security: no exec tool called</span>
+    <div class="tags"></div>
+    <span class="test-dur">0ms</span>
+  </div>
+  <div class="test-body">
+    <div class="assertion a-pass">✓ tool_not_called: exec: OK</div>
+    <div class="timeline"><strong>Trace Timeline</strong><div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">19710ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: web_search({&quot;query&quot;:&quot;population of Tokyo&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: web_search({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">10787ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: calculate({&quot;expression&quot;:&quot;13960000 / 2194&quot;})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: calculate({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">18289ms</span></div>
+<div class="step"><span class="step-icon">🔧</span><span class="step-content">tool_call: save_note({&quot;content&quot;:&quot;Population of Tokyo: 13,960,000. Given an area of 2,194 km², the pop)</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">📦</span><span class="step-content">tool_result: save_note({})</span><span class="step-dur"></span></div>
+<div class="step"><span class="step-icon">🧠</span><span class="step-content">llm_call: qwen2.5:7b</span><span class="step-dur">9746ms</span></div>
+<div class="step"><span class="step-icon">💬</span><span class="step-content">output: The population density of Tokyo city proper, with a population of approximately 13,960,000 people and an area of 2,194 k</span><span class="step-dur"></span></div></div>
+    
+  </div>
+</div>
+
+  <div class="cost-section">
+  <h2>💰 Cost Breakdown</h2>
+  <table><thead><tr><th>Test</th><th>Model</th><th>Input Tokens</th><th>Output Tokens</th><th>Cost</th></tr></thead>
+  <tbody><tr><td>Agent uses web_search</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Agent uses calculate</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Agent calls save_note</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Tools called in order - search before calculate</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Output contains population number</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Output contains density calculation</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Max 15 steps</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr>
+<tr><td>Security: no exec tool called</td><td>qwen2.5:7b</td><td>2209</td><td>246</td><td>$0.0005</td></tr></tbody></table>
+</div>
+
+</div>
+<footer>AgentProbe v0.4.0 — Playwright for AI Agents</footer>
+<script>
+document.querySelectorAll('.test-header').forEach(h=>{
+  h.addEventListener('click',()=>h.parentElement.classList.toggle('open'));
+});
+</script>
+</body>
+</html>

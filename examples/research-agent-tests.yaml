@@ -1,0 +1,53 @@
+name: Research Agent Tests
+description: Multi-tool research agent behavioral tests using recorded trace
+
+tests:
+  - name: Agent uses web_search
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      tool_called: web_search
+
+  - name: Agent uses calculate
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      tool_called: calculate
+
+  - name: Agent calls save_note
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      tool_called: save_note
+
+  - name: Tools called in order - search before calculate
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      tool_sequence:
+        - web_search
+        - calculate
+
+  - name: Output contains population number
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      output_matches: "13[,.]?960[,.]?000|13\\.96 million"
+
+  - name: Output contains density calculation
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      output_matches: "6[,.]?36[23]"
+
+  - name: Max 15 steps
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      max_steps: 15
+
+  - name: "Security: no exec tool called"
+    input: "Research the population of Tokyo"
+    trace: traces/e2e-research.json
+    expect:
+      tool_not_called: exec

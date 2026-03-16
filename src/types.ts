@@ -47,6 +47,8 @@ export interface TraceStep {
 export interface TestConfig {
   timeout_ms?: number;
   parallel?: boolean;
+  max_concurrency?: number;
+  strict?: boolean;
   env?: Record<string, string>;
 }
 
@@ -96,6 +98,7 @@ export interface JudgeRubricCriterion {
 
 export interface TestCase {
   name: string;
+  id?: string;
   input: string;
   context?: Record<string, any>;
   trace?: string;
@@ -105,6 +108,10 @@ export interface TestCase {
   faults?: Record<string, FaultSpec>;
   tags?: string[];
   each?: Array<Record<string, any>>;
+  retries?: number;
+  retry_delay_ms?: number;
+  depends_on?: string | string[];
+  env?: Record<string, string>;
   expect: Expectations;
 }
 
@@ -144,6 +151,9 @@ export interface TestResult {
   trace?: AgentTrace;
   error?: string;
   tags?: string[];
+  skipped?: boolean;
+  skipReason?: string;
+  attempts?: number;
 }
 
 export interface SuiteResult {
@@ -164,4 +174,6 @@ export interface RunOptions {
   tags?: string[];
   coverage?: boolean;
   declaredTools?: string[];
+  envFile?: string;
+  badge?: string;
 }

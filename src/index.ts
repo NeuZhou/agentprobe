@@ -23,13 +23,15 @@ import { autoConvert } from './adapters';
 import chalk from 'chalk';
 import { computeStats, formatStats } from './stats';
 import * as readline from 'readline';
+import { generateTests, formatGeneratedTests } from './codegen';
+import { generateBadge } from './badge';
 
 const program = new Command();
 
 program
   .name('agentprobe')
   .description('🔬 Playwright for AI Agents - Test, record, and replay agent behaviors')
-  .version('0.5.0');
+  .version('0.6.0');
 
 // Load config and plugins at startup
 const config = loadConfig();
@@ -48,6 +50,8 @@ program
   .option('--coverage', 'Show tool coverage report')
   .option('--tools <tools...>', 'Declared tools for coverage (space-separated)')
   .option('--compare-baseline', 'Compare results against saved baseline')
+  .option('--env-file <path>', 'Load environment variables from a .env file')
+  .option('--badge <path>', 'Generate a shields.io-style badge SVG')
   .action(async (suitePath: string, opts: {
     format: string;
     output?: string;
@@ -57,6 +61,8 @@ program
     coverage?: boolean;
     tools?: string[];
     compareBaseline?: boolean;
+    envFile?: string;
+    badge?: string;
   }) => {
     if (!fs.existsSync(suitePath)) {
       console.error(chalk.red(`❌ File not found: ${suitePath}`));
@@ -86,6 +92,7 @@ program
     const result = await runSuite(suitePath, {
       updateSnapshots: opts.updateSnapshots,
       tags: opts.tag,
+      envFile: opts.envFile,
     });
     const output = report(result, opts.format as ReportFormat);
     console.log(output);
@@ -107,6 +114,13 @@ program
       } else {
         console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
       }
+    }
+
+    // Generate badge
+    if (opts.badge) {
+      const badgeSvg = generateBadge(result.passed, result.total);
+      fs.writeFileSync(opts.badge, badgeSvg);
+      console.log(`🏷️  Badge saved to ${opts.badge}`);
     }
 
     if (opts.output) {
@@ -477,7 +491,7 @@ program
       process.exit(1);
     }
     const { glob } = require('glob');
-    const files: string[] = glob.sync(path.join(dir, '**/*.json'));
+    const files: string[] = glob.sync(path.join(dir, '**/*.json').replace(/\\/g, '/'));
     if (files.length === 0) {
       console.error(chalk.yellow(`No trace files found in ${dir}`));
       console.error(chalk.yellow(`💡 Trace files should be .json files created by 'agentprobe record'`));
@@ -500,6 +514,30 @@ program
 
     const stats = computeStats(traces);
     console.log(formatStats(stats));
+  });
+
+// Codegen — generate tests from traces
+program
+  .command('codegen <traceFile>')
+  .description('Generate YAML tests from a recorded trace (like Playwright codegen)')
+  .option('-o, --output <path>', 'Output YAML file (stdout if omitted)')
+  .action((traceFile: string, opts: { output?: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const trace = loadTrace(traceFile);
+    const tests = generateTests(trace, traceFile);
+    const yaml = formatGeneratedTests(tests, path.basename(traceFile));
+
+    if (opts.output) {
+      const dir = path.dirname(opts.output);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(opts.output, yaml);
+      console.log(chalk.green(`✨ Generated ${tests.length} tests → ${opts.output}`));
+    } else {
+      console.log(yaml);
+    }
   });
 
 program.parse();
