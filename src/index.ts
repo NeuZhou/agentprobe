@@ -82,6 +82,20 @@ program
       console.log(formatCoverage(cov));
     }
 
+    // Compare against baseline
+    if (opts.compareBaseline) {
+      const baseline = loadBaseline(result.name);
+      if (baseline) {
+        const regressions = detectRegressions(result, baseline);
+        console.log(formatRegressions(regressions));
+        if (regressions.length > 0 && config.ci?.fail_on_regression) {
+          process.exit(1);
+        }
+      } else {
+        console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
+      }
+    }
+
     if (opts.output) {
       fs.writeFileSync(opts.output, output);
       console.log(`📝 Results written to ${opts.output}`);
@@ -264,6 +278,79 @@ trace
     const newTrace = loadTrace(newFile);
     const d = diffTraces(oldTrace, newTrace);
     console.log(formatDiff(d));
+  });
+
+// Baseline commands
+const baseline = program
+  .command('baseline')
+  .description('Manage test baselines for regression detection');
+
+baseline
+  .command('save <suite>')
+  .description('Save current test results as baseline')
+  .action(async (suitePath: string) => {
+    if (!fs.existsSync(suitePath)) {
+      console.error(`❌ File not found: ${suitePath}`);
+      process.exit(1);
+    }
+    const result = await runSuite(suitePath);
+    const filePath = saveBaseline(result);
+    console.log(`📊 Baseline saved: ${filePath}`);
+    console.log(`   ${result.total} tests, ${result.passed} passed`);
+  });
+
+baseline
+  .command('compare <suite>')
+  .description('Run tests and compare against saved baseline')
+  .action(async (suitePath: string) => {
+    if (!fs.existsSync(suitePath)) {
+      console.error(`❌ File not found: ${suitePath}`);
+      process.exit(1);
+    }
+    const result = await runSuite(suitePath);
+    const output = report(result, 'console');
+    console.log(output);
+
+    const bl = loadBaseline(result.name);
+    if (!bl) {
+      console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
+      process.exit(0);
+    }
+    const regressions = detectRegressions(result, bl);
+    console.log(formatRegressions(regressions));
+    process.exit(regressions.length > 0 ? 1 : 0);
+  });
+
+// Convert trace format
+program
+  .command('convert <traceFile>')
+  .description('Convert a trace from external format (OpenAI/Anthropic/LangChain/JSONL) to AgentTrace')
+  .option('-f, --from <format>', 'Source format (auto-detect if omitted)')
+  .option('-o, --output <path>', 'Output file (stdout if omitted)')
+  .action((traceFile: string, opts: { from?: string; output?: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(`❌ File not found: ${traceFile}`);
+      process.exit(1);
+    }
+    const raw = fs.readFileSync(traceFile, 'utf-8');
+    let input: any;
+    try {
+      input = JSON.parse(raw);
+    } catch {
+      // Try JSONL
+      input = raw.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
+    }
+
+    const { autoConvert: ac, convertWith } = require('./adapters');
+    const trace = opts.from ? convertWith(opts.from, input) : ac(input);
+    const json = JSON.stringify(trace, null, 2);
+
+    if (opts.output) {
+      fs.writeFileSync(opts.output, json);
+      console.log(`✅ Converted trace saved to ${opts.output}`);
+    } else {
+      console.log(json);
+    }
   });
 
 program.parse();
