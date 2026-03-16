@@ -1736,4 +1736,40 @@ program
     }
   });
 
+// ===== Test Templates Library =====
+const templateCmd = program.command('template').description('Pre-built test template library');
+
+templateCmd
+  .command('list')
+  .description('List all available test templates')
+  .action(() => {
+    const { listTestTemplates } = require('./templates-lib');
+    const templates = listTestTemplates();
+    console.log(chalk.bold('\nAvailable Test Templates:\n'));
+    for (const t of templates) {
+      console.log(`  ${chalk.green(t.name.padEnd(15))} ${chalk.gray(t.category.padEnd(12))} ${t.description}`);
+    }
+    console.log(`\nUsage: agentprobe template use <name> --output <file>`);
+  });
+
+templateCmd
+  .command('use <name>')
+  .description('Generate a test file from a template')
+  .option('-o, --output <file>', 'Output file path')
+  .action((name: string, opts: { output?: string }) => {
+    const { getTemplateContent } = require('./templates-lib');
+    try {
+      const content = getTemplateContent(name);
+      if (opts.output) {
+        fs.writeFileSync(opts.output, content, 'utf-8');
+        console.log(chalk.green(`✅ Template "${name}" written to ${opts.output}`));
+      } else {
+        console.log(content);
+      }
+    } catch (e: any) {
+      console.error(chalk.red(`❌ ${e.message}`));
+      process.exit(1);
+    }
+  });
+
 program.parse();

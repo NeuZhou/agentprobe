@@ -278,3 +278,23 @@ export type { ErrorInfo, ErrorCategory } from './errors';
 // Trace compression
 export { compressTrace, decompressTrace, compressDirectory, decompressDirectory, compressToFile, decompressFromFile, formatCompressionStats } from './compress';
 export type { CompressedArchive, CompressedEntry, CompressionStats } from './compress';
+
+// MCP Server Testing
+export { evaluateMCPExpectations, validateMCPSuite, evaluateMCPSuite, buildMockMCPResult, formatMCPResults } from './mcp-test';
+export type { MCPServerConfig, MCPExpectations, MCPTestCase, MCPTestSuite, MCPToolInfo, MCPToolResult, MCPTestResult, MCPSuiteResult } from './mcp-test';
+
+// Rate Limiter
+export { RateLimiter, createRateLimiter, parseRate } from './rate-limiter';
+export type { RateLimitConfig, RateLimiterOptions } from './rate-limiter';
+
+// Test Templates Library
+export { listTestTemplates, getTestTemplate, getTemplateContent, listTemplatesByCategory, hasTemplate } from './templates-lib';
+export type { TestTemplate } from './templates-lib';
+
+// Enhanced Conversation (tone detection, context maintenance)
+export { detectTone } from './conversation';
+export type { ToneLabel, ConversationExpectations } from './conversation';
+
+// Trace Metadata
+export { tagTrace, filterByMetadata, mergeMetadata, validateMetadata, extractMetadataIndex } from './trace-metadata';
+export type { TraceMetadata, MetadataFilter } from './trace-metadata';

@@ -1,12 +1,79 @@
 import type { AgentTrace, Expectations, AssertionResult } from './types';
 import { evaluate } from './assertions';
 
+// ===== Tone analysis =====
+
+export type ToneLabel = 'friendly' | 'formal' | 'neutral' | 'assertive' | 'empathetic' | 'humorous';
+
+const TONE_SIGNALS: Record<ToneLabel, { positive: string[]; negative: string[] }> = {
+  friendly: {
+    positive: ['hi', 'hello', 'hey', 'glad', 'happy', 'welcome', 'great', 'thanks', 'sure', 'absolutely', '!', '😊', 'pleased'],
+    negative: ['error', 'denied', 'forbidden', 'unauthorized', 'impossible'],
+  },
+  formal: {
+    positive: ['please', 'kindly', 'regarding', 'therefore', 'accordingly', 'sincerely', 'respectfully'],
+    negative: ['hey', 'yeah', 'nah', 'gonna', 'wanna', 'lol', 'haha'],
+  },
+  neutral: {
+    positive: ['the', 'is', 'are', 'this', 'that', 'result', 'output', 'data'],
+    negative: [],
+  },
+  assertive: {
+    positive: ['must', 'should', 'need', 'require', 'important', 'critical', 'essential'],
+    negative: ['maybe', 'perhaps', 'possibly', 'might'],
+  },
+  empathetic: {
+    positive: ['understand', 'sorry', 'appreciate', 'feel', 'help', 'concern', 'care'],
+    negative: ['irrelevant', 'not my problem', 'deal with it'],
+  },
+  humorous: {
+    positive: ['haha', 'lol', 'funny', 'joke', '😄', '😂', 'laugh'],
+    negative: [],
+  },
+};
+
+/**
+ * Detect if text matches a target tone via keyword heuristics.
+ */
+export function detectTone(text: string, target: ToneLabel): { matches: boolean; score: number } {
+  const lower = text.toLowerCase();
+  const signals = TONE_SIGNALS[target];
+  if (!signals) return { matches: false, score: 0 };
+
+  let positiveHits = 0;
+  let negativeHits = 0;
+
+  for (const word of signals.positive) {
+    if (lower.includes(word)) positiveHits++;
+  }
+  for (const word of signals.negative) {
+    if (lower.includes(word)) negativeHits++;
+  }
+
+  const score = signals.positive.length > 0
+    ? (positiveHits - negativeHits) / signals.positive.length
+    : 0;
+
+  return { matches: score > 0.05, score };
+}
+
+// ===== Enhanced conversation types =====
+
+export interface ConversationExpectations extends Expectations {
+  /** Expected tone of the response */
+  tone?: ToneLabel;
+  /** Agent should maintain context from previous turns */
+  context_maintained?: boolean;
+  /** Output length constraints */
+  output_length?: { min?: number; max?: number };
+}
+
 /**
  * A single turn in a multi-turn conversation test.
  */
 export interface ConversationTurn {
   user: string;
-  expect: Expectations;
+  expect: ConversationExpectations;
 }
 
 /**
@@ -124,6 +191,77 @@ export function evaluateConversation(
     }
 
     const assertions = evaluate(turnTrace, turn.expect);
+
+    // Enhanced: tone check
+    if (turn.expect.tone) {
+      const output = turnTrace.steps
+        .filter(s => s.type === 'output')
+        .map(s => s.data.content ?? '')
+        .join('\n');
+      const { matches, score } = detectTone(output, turn.expect.tone);
+      assertions.push({
+        name: `tone: ${turn.expect.tone}`,
+        passed: matches,
+        expected: turn.expect.tone,
+        actual: `score=${score.toFixed(2)}`,
+        message: matches ? undefined : `Response tone does not match "${turn.expect.tone}"`,
+      });
+    }
+
+    // Enhanced: context_maintained check
+    if (turn.expect.context_maintained && i > 0) {
+      // Check that previous user messages' keywords appear in output or tool args
+      const output = turnTrace.steps
+        .filter(s => s.type === 'output')
+        .map(s => s.data.content ?? '')
+        .join('\n')
+        .toLowerCase();
+      const toolArgs = turnTrace.steps
+        .filter(s => s.type === 'tool_call')
+        .map(s => JSON.stringify(s.data.tool_args ?? {}))
+        .join(' ')
+        .toLowerCase();
+      const combined = output + ' ' + toolArgs;
+
+      // Extract significant words from previous turn's user message
+      const prevUser = conversation.turns[i - 1].user.toLowerCase();
+      const keywords = prevUser.split(/\s+/).filter(w => w.length > 3);
+      const contextPresent = keywords.length === 0 || keywords.some(kw => combined.includes(kw));
+
+      assertions.push({
+        name: 'context_maintained',
+        passed: contextPresent,
+        expected: 'references to previous turn',
+        actual: contextPresent ? 'context found' : 'no context from previous turn',
+        message: contextPresent ? undefined : 'Agent does not appear to maintain context from previous turn',
+      });
+    }
+
+    // Enhanced: output_length check
+    if (turn.expect.output_length) {
+      const output = turnTrace.steps
+        .filter(s => s.type === 'output')
+        .map(s => s.data.content ?? '')
+        .join('\n');
+      const len = output.length;
+      if (turn.expect.output_length.min !== undefined) {
+        assertions.push({
+          name: `output_length >= ${turn.expect.output_length.min}`,
+          passed: len >= turn.expect.output_length.min,
+          expected: `>= ${turn.expect.output_length.min}`,
+          actual: `${len}`,
+        });
+      }
+      if (turn.expect.output_length.max !== undefined) {
+        assertions.push({
+          name: `output_length <= ${turn.expect.output_length.max}`,
+          passed: len <= turn.expect.output_length.max,
+          expected: `<= ${turn.expect.output_length.max}`,
+          actual: `${len}`,
+        });
+      }
+    }
+
     const passed = assertions.every(a => a.passed);
     turnResults.push({
       turn: i + 1,
