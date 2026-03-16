@@ -5,6 +5,16 @@ All notable changes to AgentProbe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.6.0] - 2026-03-16
+
+### Added
+- **Agent Sandbox** (`src/sandbox.ts`) — Run agents in isolated sandbox environments with tool whitelists, cost caps, timeouts, and output size limits
+- **Regression Test Generator** (`src/regression-gen.ts`) — Auto-generate regression tests from production traces by detecting intent, tool, and error patterns
+- **Multi-Model Comparison** (`src/model-compare.ts`) — Compare agent behavior across different LLMs with pass rate, latency, cost, and safety scoring
+- **Test Coverage Analyzer** (`src/coverage-analyzer.ts`) — Analyze tool, intent, error path, and safety coverage of your test suite
+- **Config Validator** (`src/config-validator.ts`) — Validate AgentProbe configuration including adapters, hooks, plugins, and key expiration
+- 47 new tests in `tests/round34.test.ts`
+
 ## [3.5.0] - 2026-03-16
 
 ### Added

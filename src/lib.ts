@@ -477,3 +477,51 @@ export type {
   NotificationConfig, NotificationHubConfig, NotificationType,
   SlackNotificationConfig, PagerDutyNotificationConfig, HttpNotificationConfig, EmailNotificationConfig,
 } from './webhooks';
+
+// v3.6.0 - Agent Sandbox
+export {
+  AgentSandbox, validateSandboxConfig, isToolAllowed, estimateCostFromSteps,
+  checkViolations, buildSandboxResult, computeSandboxStats, formatSandboxResult,
+} from './sandbox';
+export type {
+  SandboxConfig, SandboxViolation, SandboxResult, SandboxStats,
+} from './sandbox';
+
+// v3.6.0 - Regression Test Generator
+export {
+  extractIntent, extractToolSequence, extractErrors, normalizeIntent,
+  groupByIntent, groupByToolPattern, findErrorTraces, detectPatterns,
+  generateTestFromPattern, generateRegressionTests, toTestCases, formatRegressionGenResult,
+} from './regression-gen';
+export type {
+  RegressionTestConfig, TracePattern, GeneratedRegressionTest, RegressionGenResult,
+} from './regression-gen';
+
+// v3.6.0 - Multi-Model Comparison
+export {
+  parseModelNames, extractMetrics, buildComparisonMatrix, scoreModel,
+  compareModels, formatComparisonTable, generateComparisonHTML,
+} from './model-compare';
+export type {
+  ModelConfig, ModelMetrics, ComparisonResult, ComparisonCell, ComparisonConfig,
+} from './model-compare';
+
+// v3.6.0 - Test Coverage Analyzer
+export {
+  extractTestedTools, analyzeToolCoverage, extractIntentsFromTraces,
+  analyzeIntentCoverage, analyzeErrorPathCoverage, analyzeSafetyCoverage,
+  analyzeCoverageComplete, formatCoverageAnalysis,
+} from './coverage-analyzer';
+export type {
+  CoverageConfig, ToolCoverageResult, IntentCoverageResult,
+  ErrorPathCoverageResult, SafetyCoverageResult, CoverageAnalysis,
+} from './coverage-analyzer';
+
+// v3.6.0 - Config Validator
+export {
+  validateConfigStructure, validateAdapters, validateHooks, validatePlugins,
+  validateConfig, formatConfigValidation,
+} from './config-validator';
+export type {
+  ConfigValidationIssue, ConfigValidationResult, AdapterKeyInfo, PluginInfo, ConfigShape,
+} from './config-validator';
