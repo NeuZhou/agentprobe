@@ -131,6 +131,9 @@ export interface Expectations {
   custom?: string;
   judge?: JudgeSpec;
   judge_rubric?: JudgeRubricCriterion[] & { threshold?: number };
+  all_of?: Expectations[];
+  any_of?: Expectations[];
+  none_of?: Expectations[];
 }
 
 // ===== Result types =====
@@ -165,7 +168,7 @@ export interface SuiteResult {
   results: TestResult[];
 }
 
-export type ReportFormat = 'console' | 'json' | 'markdown' | 'html';
+export type ReportFormat = 'console' | 'json' | 'markdown' | 'html' | 'junit';
 
 // ===== Runner options =====
 

@@ -31,7 +31,7 @@ const program = new Command();
 program
   .name('agentprobe')
   .description('🔬 Playwright for AI Agents - Test, record, and replay agent behaviors')
-  .version('0.6.0');
+  .version('0.7.0');
 
 // Load config and plugins at startup
 const config = loadConfig();
@@ -405,6 +405,23 @@ trace
     const newTrace = loadTrace(newFile);
     const d = diffTraces(oldTrace, newTrace);
     console.log(formatDiff(d));
+  });
+
+trace
+  .command('merge <traces...>')
+  .description('Merge multiple agent traces into a single timeline')
+  .option('-o, --output <path>', 'Output file', 'merged-trace.json')
+  .action((traceFiles: string[], opts: { output: string }) => {
+    const { mergeTraces } = require('./merge');
+    const traces = traceFiles.map((f: string, i: number) => {
+      if (!fs.existsSync(f)) { console.error(`❌ File not found: ${f}`); process.exit(1); }
+      return { trace: loadTrace(f), name: path.basename(f, '.json') };
+    });
+    const merged = mergeTraces(traces);
+    fs.writeFileSync(opts.output, JSON.stringify(merged, null, 2));
+    console.log(`✅ Merged ${traceFiles.length} traces → ${opts.output}`);
+    console.log(`   Total steps: ${merged.steps.length}`);
+    console.log(`   Agents: ${merged.agents.join(', ')}`);
   });
 
 // Baseline commands

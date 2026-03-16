@@ -2,19 +2,22 @@
   "name": "agentprobe",
   "version": "0.6.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/lib.js",
+  "types": "dist/lib.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/lib.js",
+      "require": "./dist/lib.js",
+      "types": "./dist/lib.d.ts"
     },
     "./assertions": "./dist/assertions.js",
     "./recorder": "./dist/recorder.js",
     "./mocks": "./dist/mocks.js",
     "./types": "./dist/types.js",
-    "./adapters": "./dist/adapters/index.js"
+    "./adapters": "./dist/adapters/index.js",
+    "./compose": "./dist/compose.js",
+    "./merge": "./dist/merge.js",
+    "./reporters/junit": "./dist/reporters/junit.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"

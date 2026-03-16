@@ -296,6 +296,49 @@ graph LR
     CI[CI Gen] --> GH[GitHub Actions]
 ```
 
+## Use as Library
+
+AgentProbe can be used programmatically in your own code:
+
+```typescript
+import { runSuite, evaluate, Recorder, MockToolkit, FaultInjector } from 'agentprobe';
+import type { AgentTrace, TestSuite, Expectations, SuiteResult } from 'agentprobe';
+
+// Run a full test suite
+const results = await runSuite('tests/suite.yaml');
+console.log(`${results.passed}/${results.total} passed`);
+
+// Evaluate a single trace against expectations
+import { loadTrace } from 'agentprobe';
+const trace = loadTrace('traces/agent.json');
+const assertions = evaluate(trace, {
+  tool_called: 'search',
+  max_steps: 10,
+  output_contains: 'found',
+});
+console.log(assertions.filter(a => !a.passed));
+
+// Composed assertions
+import { evaluateComposed } from 'agentprobe';
+const composed = evaluateComposed(trace, {
+  all_of: [{ tool_called: 'search' }, { output_contains: 'result' }],
+  any_of: [{ tool_called: 'web_search' }, { tool_called: 'bing_search' }],
+  none_of: [{ tool_called: 'exec' }],
+});
+
+// Merge multi-agent traces
+import { mergeTraces } from 'agentprobe';
+const merged = mergeTraces([
+  { trace: trace1, name: 'planner' },
+  { trace: trace2, name: 'executor' },
+]);
+
+// JUnit XML for CI
+import { reportJUnit } from 'agentprobe';
+const xml = reportJUnit(results);
+fs.writeFileSync('results.xml', xml);
+```
+
 ## Roadmap
 
 - [ ] **Parallel test execution** — run tests concurrently for faster suites

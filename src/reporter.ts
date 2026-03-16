@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import type { SuiteResult, ReportFormat, TestResult } from './types';
 import { reportHTML } from './reporters/html';
+import { reportJUnit } from './reporters/junit';
 
 export function report(result: SuiteResult, format: ReportFormat = 'console'): string {
   switch (format) {
@@ -10,6 +11,8 @@ export function report(result: SuiteResult, format: ReportFormat = 'console'): s
       return reportMarkdown(result);
     case 'html':
       return reportHTML(result);
+    case 'junit':
+      return reportJUnit(result);
     case 'console':
     default:
       return reportConsole(result);

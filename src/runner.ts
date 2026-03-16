@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import type { TestSuite, TestCase, TestResult, SuiteResult, AgentTrace, RunOptions, HookConfig } from './types';
 import { parseYamlWithValidation } from './yaml-validator';
 import { evaluate } from './assertions';
+import { evaluateComposed } from './compose';
 import { loadTrace } from './recorder';
 import { MockToolkit } from './mocks';
 import { loadFixture, applyFixtureMocks, applyFixtureEnv, restoreEnv } from './fixtures';
@@ -109,6 +110,15 @@ async function runSingleTest(
     }
 
     const assertions = evaluate(trace, test.expect);
+
+    // Composed assertions (all_of, any_of, none_of)
+    if (test.expect.all_of || test.expect.any_of || test.expect.none_of) {
+      assertions.push(...evaluateComposed(trace, {
+        all_of: test.expect.all_of,
+        any_of: test.expect.any_of,
+        none_of: test.expect.none_of,
+      }));
+    }
 
     // Snapshot testing
     if (test.expect.snapshot) {
