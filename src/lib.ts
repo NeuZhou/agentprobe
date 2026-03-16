@@ -58,6 +58,19 @@ export type {
   A2AMessage, MessagePart, TaskArtifact, A2AAdapterConfig, A2ATestCase, A2ATestResult,
 } from './adapters/a2a';
 
+// LLM Providers
+export { callLLM, resolveProvider } from './llm';
+export type { LLMProvider, LLMRequest } from './llm';
+
+// Judge
+export { judgeOutput, judgeWithRubric } from './judge';
+export type { JudgeConfig, JudgeResult, JudgeRubricConfig, RubricResult } from './judge';
+
+// Trace Adapters (new)
+export { convertGemini, detectGemini } from './adapters/gemini';
+export { convertOllama, detectOllama } from './adapters/ollama';
+export { convertOpenAICompatible, detectOpenAICompatible } from './adapters/openai-compatible';
+
 // A2A Security
 export { A2ASecurityScanner, formatSecurityReport } from './security/a2a-scanner';
 export type { SecurityFinding, SecurityReport, A2AScannerConfig } from './security/a2a-scanner';

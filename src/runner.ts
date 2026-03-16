@@ -165,6 +165,14 @@ async function runSingleTestInner(
 
     const assertions = evaluate(trace, test.expect);
 
+    // Resolve async judge assertions if any
+    const judgePromises: Promise<any>[] = (assertions as any).__judgePromises || [];
+    if (judgePromises.length > 0) {
+      const judgeResults = await Promise.all(judgePromises);
+      assertions.push(...judgeResults);
+      delete (assertions as any).__judgePromises;
+    }
+
     // Composed assertions (all_of, any_of, none_of)
     if (test.expect.all_of || test.expect.any_of || test.expect.none_of) {
       assertions.push(

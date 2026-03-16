@@ -4,6 +4,9 @@ import { convertLangChain } from './langchain';
 import { convertAnthropic } from './anthropic';
 import { convertGeneric } from './generic';
 import { detectOpenClaw, convertOpenClaw } from './openclaw';
+import { detectGemini, convertGemini } from './gemini';
+import { detectOllama, convertOllama } from './ollama';
+import { detectOpenAICompatible, convertOpenAICompatible } from './openai-compatible';
 
 export interface TraceAdapter {
   name: string;
@@ -13,7 +16,10 @@ export interface TraceAdapter {
 
 const adapters: TraceAdapter[] = [
   { name: 'openclaw', detect: detectOpenClaw, convert: convertOpenClaw },
+  { name: 'gemini', detect: detectGemini, convert: convertGemini },
+  { name: 'ollama', detect: detectOllama, convert: convertOllama },
   { name: 'openai', detect: detectOpenAI, convert: convertOpenAI },
+  { name: 'openai-compatible', detect: detectOpenAICompatible, convert: convertOpenAICompatible },
   { name: 'langchain', detect: detectLangChain, convert: convertLangChain },
   { name: 'anthropic', detect: detectAnthropic, convert: convertAnthropic },
   { name: 'generic', detect: detectGeneric, convert: convertGeneric },
@@ -55,7 +61,7 @@ export function autoConvert(input: any): AgentTrace {
     }
   }
   throw new Error(
-    'Unable to detect trace format. Supported: openai, langchain, anthropic, generic (JSONL)',
+    'Unable to detect trace format. Supported: openai, openai-compatible, anthropic, gemini, ollama, langchain, generic (JSONL)',
   );
 }
 

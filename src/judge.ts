@@ -65,41 +65,10 @@ function setCache(key: string, value: any): void {
 }
 
 /**
- * Call an OpenAI-compatible API for judging.
- * Supports OPENAI_API_KEY + OPENAI_BASE_URL env vars.
+ * Call any LLM provider for judging — auto-routes by model name.
+ * Supports OpenAI, Anthropic, Gemini, DeepSeek, Ollama, Groq, Kimi.
  */
-async function callLLM(model: string, systemPrompt: string, userPrompt: string): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      'OPENAI_API_KEY env var required for LLM-as-Judge. Set it or use a cached result.',
-    );
-  }
-
-  const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1';
-  const resp = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0,
-    }),
-  });
-
-  if (!resp.ok) {
-    throw new Error(`LLM API error ${resp.status}: ${await resp.text()}`);
-  }
-
-  const data: any = await resp.json();
-  return data.choices[0].message.content;
-}
+import { callLLM } from './llm';
 
 /**
  * Simple judge: evaluate output against a single criterion.

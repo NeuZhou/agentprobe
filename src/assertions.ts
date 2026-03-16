@@ -1,6 +1,7 @@
 import type { AgentTrace, Expectations, AssertionResult, ChainStep } from './types';
 import { calculateCost } from './cost';
 import { evaluateCustomAssertion } from './custom-assertions';
+import { judgeOutput, judgeWithRubric } from './judge';
 
 export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResult[] {
   const results: AssertionResult[] = [];
@@ -312,6 +313,51 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
     for (const ref of expect.custom_assertions) {
       results.push(evaluateCustomAssertion(ref.name, trace, ref.params));
     }
+  }
+
+  // judge — LLM-as-Judge single criterion (async, returns pending result)
+  if (expect.judge) {
+    const judgeSpec = expect.judge;
+    const judgePending = judgeOutput(outputs, {
+      criteria: judgeSpec.criteria,
+      model: judgeSpec.model,
+      threshold: judgeSpec.threshold,
+    }).then((r) => ({
+      name: `judge: "${judgeSpec.criteria}"`,
+      passed: r.passed,
+      expected: `score >= ${judgeSpec.threshold ?? 0.7}`,
+      actual: `score=${r.score} (${r.model}${r.cached ? ', cached' : ''})`,
+      message: r.passed ? undefined : `Judge score ${r.score}: ${r.reasoning}`,
+    })).catch((err: any) => ({
+      name: `judge: "${judgeSpec.criteria}"`,
+      passed: false,
+      message: `Judge error: ${err.message}`,
+    }));
+    (results as any).__judgePromises = (results as any).__judgePromises || [];
+    (results as any).__judgePromises.push(judgePending);
+  }
+
+  // judge_rubric — LLM-as-Judge rubric-based evaluation (async)
+  if (expect.judge_rubric) {
+    const rubric = expect.judge_rubric;
+    const rubricItems = Array.isArray(rubric) ? rubric.filter((r): r is { criterion: string; weight: number } => 'criterion' in r) : [];
+    const threshold = (rubric as any).threshold ?? 0.7;
+    const rubricPending = judgeWithRubric(outputs, {
+      rubric: rubricItems,
+      threshold,
+    }).then((r) => ({
+      name: `judge_rubric (${rubricItems.length} criteria)`,
+      passed: r.passed,
+      expected: `overall >= ${threshold}`,
+      actual: `overall=${r.overallScore.toFixed(3)} (${r.model}${r.cached ? ', cached' : ''})`,
+      message: r.passed ? undefined : `Rubric score ${r.overallScore.toFixed(3)}: ${r.scores.map(s => `${s.criterion}=${s.score}`).join(', ')}`,
+    })).catch((err: any) => ({
+      name: `judge_rubric`,
+      passed: false,
+      message: `Judge rubric error: ${err.message}`,
+    }));
+    (results as any).__judgePromises = (results as any).__judgePromises || [];
+    (results as any).__judgePromises.push(rubricPending);
   }
 
   return results;
