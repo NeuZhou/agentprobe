@@ -6,7 +6,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe.svg?style=flat-square&color=blue)](https://www.npmjs.com/package/@neuzhou/agentprobe)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-166%20passed-brightgreen?style=flat-square)](tests/)
+[![Tests](https://img.shields.io/badge/tests-545%20passed-brightgreen?style=flat-square)](tests/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?style=flat-square)](tsconfig.json)
 
 *Because "it worked in my prompt" is not a test strategy.*
@@ -70,6 +70,7 @@ $ agentprobe run tests/agent.test.yaml
 | **Privacy** | Trace anonymizer — redact API keys, emails, IPs before sharing |
 | **Generation** | Natural language → test YAML, trace → test codegen |
 | **CI/CD** | GitHub Actions template, badge generation, regression baselines |
+| **v1.4+ AI** | AI test suggestions, trace validator, regression manager, budget enforcement, multi-suite |
 
 ## Quick Start
 
