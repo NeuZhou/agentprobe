@@ -9,37 +9,58 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm version](https://img.shields.io/npm/v/agentprobe.svg)](https://www.npmjs.com/package/agentprobe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/neuzhou/agentprobe/agent-test.yml?branch=main)](https://github.com/neuzhou/agentprobe/actions)
+[![Tests](https://img.shields.io/badge/assertions-14+-green.svg)]()
 
 </div>
 
 ---
 
+<!-- 🎬 Demo GIF placeholder
+     Shows: running `agentprobe run tests/example.test.yaml` in terminal
+     Content: colorful output with ✓/✗ results, tool call assertions passing,
+     security test catching a prompt injection, coverage report at the end.
+     Duration: ~8 seconds, terminal recording with asciinema or vhs.
+-->
+
 ## The Problem
 
-AI agents go to production **untested**. You demo it, it works. You ship it, it breaks. Nobody knows why because nobody tested the *behavior* - just the vibes.
+AI agents go to production **untested**. You demo it, it works. You ship it, it breaks. Nobody knows why because nobody tested the *behavior* — just the vibes.
 
 ## The Solution
 
-AgentProbe is **Playwright for AI agents**. Record agent traces, write behavioral tests in YAML, replay and validate - in CI or locally.
+AgentProbe is **Playwright for AI agents**. Record agent traces, write behavioral tests in YAML, replay and validate — in CI or locally.
 
 ```
-✅ Agent uses search tool (12ms)
-✅ Agent does not leak system prompt (3ms)
-❌ Agent stays under token budget (8ms)
-     ↳ max_tokens: expected <= 4000, got 5200
-✅ Agent calls tools in correct order (5ms)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Agent uses search tool (12ms)
+✓ Agent does not leak system prompt (3ms)
+✗ Agent stays under token budget (8ms)
+     ✗ max_tokens: expected <= 4000, got 5200
+✓ Agent calls tools in correct order (5ms)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 3/4 passed (75%) in 28ms
 ```
 
+## Philosophy
+
+Traditional software testing verifies *code paths*. Agent testing must verify *behaviors* — because the same code produces different outputs every time.
+
+AgentProbe treats agent traces like test fixtures. Instead of asserting return values, you assert:
+- **What tools were called** (and in what order)
+- **What the output contains** (or must NOT contain)
+- **Resource budgets** (tokens, cost, steps, time)
+- **Security boundaries** (no prompt injection, no data leaks)
+
+This is **behavioral testing**: you don't test the model, you test the system around it.
+
 ## Features
 
-### 🧪 Core
-- **Assertions** — tool_called, output_contains, max_tokens, tool_sequence, regex, custom JS
+### 🎯 Core
+- **14+ Assertions** — tool_called, output_contains, max_tokens, tool_sequence, regex, cost, custom JS, LLM judge
 - **YAML config** — Write tests in YAML, no code required
 - **Test runner** — Parallel or sequential, with exit codes for CI
 
-### 🧰 Testing
+### 🧪 Testing
 - **Tool mocking** — Mock tool responses like Jest's `jest.fn()`
 - **Fixtures** — Pre-configured test environments in YAML
 - **Snapshot testing** — Like Jest snapshots for agent behavior
@@ -57,30 +78,36 @@ AgentProbe is **Playwright for AI agents**. Record agent traces, write behaviora
 - **Built-in attack patterns** — 30+ prompt injection, exfiltration, privilege escalation tests
 - **Auto-generate** — `agentprobe generate-security` creates a full security suite
 
-### 🚀 CI/CD
+### 🔄 CI/CD
 - **GitHub Actions template** — `agentprobe init --ci github` generates a workflow
-- **Markdown output** — `-f markdown` for PR comments
+- **Regression detection** — `agentprobe baseline compare` catches regressions
+- **Markdown/HTML output** — for PR comments and reports
 
-### 🔧 Developer UX
+### 🛠️ Developer UX
+- **Interactive init** — guided setup with `agentprobe init`
 - **Watch mode** — Re-run on file changes
 - **Trace viewer** — Visual trace inspection in terminal
 - **Trace diff** — Compare two traces to detect behavioral drift
+- **Stats command** — Token usage, cost analysis, tool frequency
 - **Coverage report** — Which tools are tested?
+- **Format adapters** — Import traces from OpenAI, Anthropic, LangChain, OpenClaw
 
 ## Quick Start
 
 ```bash
 npm install -g agentprobe
 
-agentprobe init                           # Scaffold example tests
+agentprobe init                           # Interactive setup
 agentprobe run tests/example.test.yaml    # Run tests
 agentprobe run tests/ --watch             # Watch mode
 agentprobe run tests/ --tag security      # Filter by tags
 agentprobe run tests/ --coverage          # Coverage report
+agentprobe stats traces/                  # Trace statistics
 agentprobe generate-security              # Generate security tests
 agentprobe init --ci github               # Generate GitHub Actions workflow
 agentprobe trace view trace.json          # Visual trace viewer
 agentprobe trace diff v1.json v2.json     # Compare traces
+agentprobe convert trace.json             # Convert from OpenAI/Anthropic/etc
 ```
 
 ## Write Tests in YAML
@@ -131,23 +158,7 @@ tests:
       output_not_contains: "error"
       output_contains: "unable to"
       tool_not_called: exec
-
-  - name: Agent retries on timeout
-    faults:
-      web_search:
-        type: timeout
-        delay_ms: 30000
-    expect:
-      tool_called: web_search
-      max_duration_ms: 60000
 ```
-
-Fault types:
-- **error** — Throw specified error message
-- **timeout** — Delay then timeout (simulates hung services)
-- **slow** — Delay then return normally (tests patience)
-- **corrupt** — Return garbled/partial response (tests robustness)
-- **probability** — Randomly inject faults (simulates flaky APIs)
 
 ## LLM-as-Judge
 
@@ -173,93 +184,29 @@ tests:
         threshold: 0.7
 ```
 
-Results are cached to avoid re-judging the same output.
-
 ## Security Testing
-
-Generate a comprehensive security test suite automatically:
 
 ```bash
 agentprobe generate-security --output tests/security.yaml
 ```
 
-Generates 30+ tests covering:
-- **Prompt injection** (12 variants) — DAN, system override, encoding tricks
-- **Data exfiltration** (7 variants) — system prompt extraction attempts
-- **Privilege escalation** (5 variants) — shell execution, file access
-- **Harmful content** (5 variants) — malware, phishing, attack requests
+Generates 30+ tests covering prompt injection, data exfiltration, privilege escalation, and harmful content.
 
-## Trace Viewer
+## Trace Statistics
 
 ```bash
-agentprobe trace view trace.json
+agentprobe stats traces/
 ```
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│ Trace: weather-agent-001          │  3.2s │  8 steps │
-├──────────────────────────────────────────────────────────┤
-│ [0.0s] 🧠 LLM Call (gpt-4)                              │
-│ [0.8s] 🔧 Tool: get_weather({"city":"Tokyo"})            │
-│ [1.2s] 📥 Result: {"temp":20,"cond":"rain"}              │
-│ [1.2s] 🧠 LLM Call (gpt-4)                              │
-│ [2.1s] 📤 Output: "It's 20°C and rainy in Tokyo..."     │
-├──────────────────────────────────────────────────────────┤
-│ Tokens: 450 in / 120 out │ Tools: 1 called               │
-└──────────────────────────────────────────────────────────┘
-```
-
-## Trace Diff
-
-Compare traces to detect behavioral drift between versions:
-
-```bash
-agentprobe trace diff trace-v1.json trace-v2.json
-```
-
-```
-  Steps:   8 → 12 (+4)
-  Tokens:  570 → 890 (+56%)
-  Tools:   [get_weather] → [get_weather, web_search]
-  + New tool: web_search
-  ~ Output changed: "20°C and rainy" → "20°C, rainy with 80% humidity"
-  ⚠ Token usage changed significantly
-```
-
-## GitHub Actions
-
-```bash
-agentprobe init --ci github
-```
-
-Generates `.github/workflows/agent-test.yml` that:
-1. Installs AgentProbe
-2. Runs your test suite
-3. Posts results as a PR comment
-
-## Tool Mocking
-
-```yaml
-tests:
-  - name: Weather agent with mocked API
-    agent:
-      command: "node agents/weather.js"
-    input: "What's the weather in Tokyo?"
-    mocks:
-      get_weather: { temp: 20, condition: "cloudy" }
-    expect:
-      tool_called: get_weather
-      output_contains: "20"
-```
-
-```typescript
-import { MockToolkit } from 'agentprobe';
-
-const mocks = new MockToolkit();
-mocks.mock('get_weather', (args) => ({ temp: 72 }));
-mocks.mockOnce('search', { results: [] });
-mocks.mockSequence('fetch', [{ ok: true }, { ok: false }]);
-mocks.mockError('dangerous_tool', 'Permission denied');
+📊 Trace Statistics (5 traces)
+  Total steps:     31
+  Total tokens:    1,200 (avg 240/trace)
+  Total cost:      $0.08
+  Avg duration:    2.3s
+  Tools used:      get_weather(2), web_search(3), read_file(1), write_file(1)
+  Most expensive:  research-agent ($0.04)
+  Slowest:         coding-agent (3.1s)
 ```
 
 ## Assertions
@@ -276,30 +223,37 @@ mocks.mockError('dangerous_tool', 'Permission denied');
 | `max_steps` | Step count budget |
 | `max_tokens` | Token usage budget |
 | `max_duration_ms` | Time budget |
+| `max_cost_usd` | Cost budget |
 | `snapshot` | Behavioral snapshot comparison |
 | `judge` | LLM-as-Judge quality evaluation |
 | `judge_rubric` | Multi-criteria weighted rubric |
 | `custom` | Custom JS expression |
 
-## CLI Reference
-
-```bash
-agentprobe run <suite.yaml>               # Run test suite
-agentprobe run <suite> -f json|markdown    # Output format
-agentprobe run <suite> --watch             # Watch mode
-agentprobe run <suite> --tag <tags>        # Filter by tag
-agentprobe run <suite> --update-snapshots  # Update snapshots
-agentprobe run <suite> --coverage          # Tool coverage
-agentprobe record --script agent.js        # Record trace
-agentprobe replay trace.json              # Inspect trace
-agentprobe trace view trace.json          # Visual trace viewer
-agentprobe trace diff old.json new.json   # Compare traces
-agentprobe generate-security              # Generate security tests
-agentprobe init                           # Scaffold example tests
-agentprobe init --ci github               # Generate CI workflow
-```
-
 ## Comparison
+
+Where AgentProbe fits in the AI testing landscape:
+
+```mermaid
+graph TB
+    subgraph "Model Evaluation"
+        PE[Promptfoo]
+        DE[DeepEval]
+    end
+    subgraph "Observability"
+        LS[LangSmith]
+        LF[LangFuse]
+    end
+    subgraph "Behavioral Testing"
+        AP[🔬 AgentProbe]
+    end
+
+    AP -->|"tests tool calls,<br/>sequences, budgets"| BT[Agent Behavior]
+    PE -->|"tests prompt<br/>quality"| PQ[Prompt Quality]
+    DE -->|"tests output<br/>metrics"| OM[Output Metrics]
+    LS -->|"traces &<br/>monitors"| OB[Production Traces]
+
+    style AP fill:#f96,stroke:#333,stroke-width:3px
+```
 
 | Feature | AgentProbe | Promptfoo | DeepEval | LangSmith |
 |---------|-----------|-----------|----------|-----------|
@@ -309,11 +263,10 @@ agentprobe init --ci github               # Generate CI workflow
 | LLM-as-Judge | ✅ | ✅ | ✅ | ✅ |
 | Security test generation | ✅ | ❌ | ❌ | ❌ |
 | Trace diff | ✅ | ❌ | ❌ | ❌ |
-| Trace viewer | ✅ | ❌ | ❌ | ⚠️ SaaS |
 | Tool mocking | ✅ | ❌ | ❌ | ❌ |
 | Snapshot testing | ✅ | ❌ | ❌ | ❌ |
 | Coverage report | ✅ | ❌ | ❌ | ❌ |
-| GitHub Actions template | ✅ | ❌ | ❌ | ❌ |
+| Stats & cost analysis | ✅ | ❌ | ❌ | ⚠️ SaaS |
 | YAML test definitions | ✅ | ✅ | ❌ | ❌ |
 | Watch mode | ✅ | ❌ | ❌ | ❌ |
 | Free & open source | ✅ | ✅ | ✅ | ❌ |
@@ -329,16 +282,33 @@ graph LR
     B --> J[LLM Judge]
     D --> E[Reporter]
     J --> E
-    E --> G[Console/JSON/Markdown]
+    E --> G[Console/JSON/Markdown/HTML]
 
     I[Agent Code] --> R[Recorder]
     R --> C
 
+    AD[Adapters] -->|OpenAI/Anthropic/LangChain/OpenClaw| C
+
     V[Trace Viewer] --> C
     DF[Trace Diff] --> C
+    ST[Stats] --> C
     S[Security Gen] --> A
     CI[CI Gen] --> GH[GitHub Actions]
 ```
+
+## Roadmap
+
+- [ ] **Parallel test execution** — run tests concurrently for faster suites
+- [ ] **VS Code extension** — inline test results and trace viewer
+- [ ] **Cloud traces** — pull traces from LangSmith, LangFuse, Braintrust
+- [ ] **Agent benchmark suite** — standardized benchmarks for common agent patterns
+- [ ] **Multi-turn conversation testing** — test dialogue flows, not just single turns
+- [ ] **A/B trace comparison** — statistical comparison across trace populations
+- [ ] **Plugin marketplace** — community assertions, adapters, reporters
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, how to add assertions/adapters, and PR guidelines.
 
 ## License
 
