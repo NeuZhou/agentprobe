@@ -128,6 +128,35 @@ export function formatImpact(result: ImpactResult): string {
   }
 
   lines.push(`\n  Unaffected: ${result.unaffectedCount} tests can be skipped`);
+  const totalTests = result.affectedTests.length + result.unaffectedCount;
+  if (totalTests > 0) {
+    const savings = ((result.unaffectedCount / totalTests) * 100).toFixed(0);
+    lines.push(`  Estimated savings: ${savings}% runtime`);
+  }
   lines.push('');
   return lines.join('\n');
+}
+
+/**
+ * Parse a git diff --name-only output into changed file list.
+ */
+export function parseGitDiffOutput(output: string): string[] {
+  return output
+    .trim()
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Compute estimated savings from impact analysis.
+ */
+export function estimateSavings(result: ImpactResult): { runtimePercent: number; costPercent: number } {
+  const total = result.affectedTests.length + result.unaffectedCount;
+  if (total === 0) return { runtimePercent: 0, costPercent: 0 };
+  const skip = result.unaffectedCount / total;
+  return {
+    runtimePercent: Math.round(skip * 100),
+    costPercent: Math.round(skip * 100),
+  };
 }

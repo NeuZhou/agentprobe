@@ -205,8 +205,8 @@ export type {
 } from './types';
 
 // OpenTelemetry integration
-export { traceToOTel, traceToOTLP, OTelExporter } from './otel';
-export type { OTelSpan, OTelExport, OTelExporterConfig } from './otel';
+export { traceToOTel, traceToOTLP, OTelExporter, toJaegerSpans, toZipkinSpans } from './otel';
+export type { OTelSpan, OTelExport, OTelExporterConfig, OTelFormat, OTelMetric, OTelMetricsExport, JaegerSpan, ZipkinSpan } from './otel';
 export { TraceStore } from './trace-store';
 export type { TraceSearchQuery, TraceStoreStats } from './trace-store';
 export { findAffectedSuites, formatWatchEvent, formatWatchSession, startSmartWatch } from './watch';
@@ -221,7 +221,7 @@ export { detectFlaky, formatFlaky } from './flaky';
 export type { FlakyResult, FlakySuiteResult } from './flaky';
 
 // Test impact analysis
-export { analyzeImpact, formatImpact } from './impact';
+export { analyzeImpact, formatImpact, parseGitDiffOutput, estimateSavings } from './impact';
 export type { ImpactResult, ImpactedTest } from './impact';
 
 // Assertion builder
@@ -558,3 +558,22 @@ export {
 export type {
   GuaranteeSpec, BehaviorGuarantee,
 } from './contract';
+
+// v4.1.0 - Git Integration
+export {
+  parseCommitLine, parseDiffStat, parseNumstat,
+  diffSuiteResults, buildCommitResult, generateGitReport, calculateTrend, formatGitReport,
+  parseBisectExpression, bisectSearch, formatBisectResult,
+} from './git-integration';
+export type {
+  CommitTestResult, GitReport, GitTrend, BisectOptions, BisectResult, GitDiffFile, GitDiff,
+} from './git-integration';
+
+// v4.1.0 - Natural Language Assertions
+export {
+  parseNLAssertion, categorizeAssertion, extractKeywords,
+  evaluateNLAssertion, evaluateNLTest, nlResultsToAssertions, formatNLResults,
+} from './nl-assert';
+export type {
+  NLAssertion, NLAssertionCategory, NLTestCase, NLTestSuite, NLEvalResult, NLTestResult,
+} from './nl-assert';

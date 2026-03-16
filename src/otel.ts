@@ -173,6 +173,106 @@ export function traceToOTLP(trace: AgentTrace, serviceName = 'agentprobe'): OTel
 export interface OTelExporterConfig {
   endpoint?: string;
   serviceName?: string;
+  format?: OTelFormat;
+}
+
+export type OTelFormat = 'otlp-grpc' | 'otlp-http' | 'jaeger' | 'zipkin';
+
+// ============================================================
+// Metrics types
+// ============================================================
+
+export interface OTelMetric {
+  name: string;
+  description: string;
+  unit: string;
+  value: number;
+  type: 'gauge' | 'counter' | 'histogram';
+  attributes: Record<string, string | number | boolean>;
+  timestamp: number;
+}
+
+export interface OTelMetricsExport {
+  resourceMetrics: Array<{
+    resource: { attributes: Record<string, string> };
+    scopeMetrics: Array<{
+      scope: { name: string; version: string };
+      metrics: OTelMetric[];
+    }>;
+  }>;
+}
+
+// ============================================================
+// Jaeger / Zipkin format types
+// ============================================================
+
+export interface JaegerSpan {
+  traceID: string;
+  spanID: string;
+  parentSpanID?: string;
+  operationName: string;
+  startTime: number; // microseconds
+  duration: number;  // microseconds
+  tags: Array<{ key: string; type: string; value: string | number | boolean }>;
+  process: { serviceName: string; tags: Array<{ key: string; value: string }> };
+}
+
+export interface ZipkinSpan {
+  traceId: string;
+  id: string;
+  parentId?: string;
+  name: string;
+  timestamp: number; // microseconds
+  duration: number;  // microseconds
+  kind: 'CLIENT' | 'SERVER' | 'PRODUCER' | 'CONSUMER';
+  localEndpoint: { serviceName: string };
+  tags: Record<string, string>;
+}
+
+// ============================================================
+// Format converters
+// ============================================================
+
+/**
+ * Convert OTel spans to Jaeger format.
+ */
+export function toJaegerSpans(spans: OTelSpan[], serviceName = 'agentprobe'): JaegerSpan[] {
+  return spans.map((span) => ({
+    traceID: span.traceId,
+    spanID: span.spanId,
+    parentSpanID: span.parentSpanId,
+    operationName: span.operationName,
+    startTime: Math.floor(span.startTimeUnixNano / 1000),
+    duration: Math.floor((span.endTimeUnixNano - span.startTimeUnixNano) / 1000),
+    tags: Object.entries(span.attributes).map(([key, value]) => ({
+      key,
+      type: typeof value === 'boolean' ? 'bool' : typeof value === 'number' ? 'float64' : 'string',
+      value,
+    })),
+    process: {
+      serviceName,
+      tags: [{ key: 'service.version', value: '4.1.0' }],
+    },
+  }));
+}
+
+/**
+ * Convert OTel spans to Zipkin format.
+ */
+export function toZipkinSpans(spans: OTelSpan[], serviceName = 'agentprobe'): ZipkinSpan[] {
+  return spans.map((span) => ({
+    traceId: span.traceId,
+    id: span.spanId,
+    parentId: span.parentSpanId,
+    name: span.operationName,
+    timestamp: Math.floor(span.startTimeUnixNano / 1000),
+    duration: Math.floor((span.endTimeUnixNano - span.startTimeUnixNano) / 1000),
+    kind: span.kind === 'CLIENT' ? 'CLIENT' : span.kind === 'SERVER' ? 'SERVER' : 'CLIENT',
+    localEndpoint: { serviceName },
+    tags: Object.fromEntries(
+      Object.entries(span.attributes).map(([k, v]) => [k, String(v)]),
+    ),
+  }));
 }
 
 import type { SuiteResult } from './types';
@@ -185,11 +285,14 @@ import type { SuiteResult } from './types';
 export class OTelExporter {
   private config: OTelExporterConfig;
 
+  private format: OTelFormat;
+
   constructor(config: OTelExporterConfig = {}) {
     this.config = {
       endpoint: config.endpoint ?? 'http://localhost:4318/v1/traces',
       serviceName: config.serviceName ?? 'agentprobe',
     };
+    this.format = config.format ?? 'otlp-http';
   }
 
   get endpoint(): string {
@@ -295,17 +398,118 @@ export class OTelExporter {
           resource: {
             attributes: {
               'service.name': this.config.serviceName!,
-              'service.version': '3.1.0',
+              'service.version': '4.1.0',
             },
           },
           scopeSpans: [
             {
-              scope: { name: 'agentprobe', version: '3.1.0' },
+              scope: { name: 'agentprobe', version: '4.1.0' },
               spans,
             },
           ],
         },
       ],
     };
+  }
+
+  /**
+   * Convert trace to OTel spans (alias for exportTrace).
+   */
+  toOTelSpans(trace: AgentTrace): OTelSpan[] {
+    return this.exportTrace(trace);
+  }
+
+  /**
+   * Export metrics from a SuiteResult.
+   */
+  exportMetrics(suiteResult: SuiteResult): OTelMetricsExport {
+    const now = Date.now();
+    const metrics: OTelMetric[] = [
+      {
+        name: 'agentprobe.tests.total',
+        description: 'Total number of tests',
+        unit: '1',
+        value: suiteResult.total,
+        type: 'gauge',
+        attributes: { 'suite.name': suiteResult.name },
+        timestamp: now,
+      },
+      {
+        name: 'agentprobe.tests.passed',
+        description: 'Number of passed tests',
+        unit: '1',
+        value: suiteResult.passed,
+        type: 'gauge',
+        attributes: { 'suite.name': suiteResult.name },
+        timestamp: now,
+      },
+      {
+        name: 'agentprobe.tests.failed',
+        description: 'Number of failed tests',
+        unit: '1',
+        value: suiteResult.failed,
+        type: 'gauge',
+        attributes: { 'suite.name': suiteResult.name },
+        timestamp: now,
+      },
+      {
+        name: 'agentprobe.tests.duration',
+        description: 'Suite duration',
+        unit: 'ms',
+        value: suiteResult.duration_ms,
+        type: 'gauge',
+        attributes: { 'suite.name': suiteResult.name },
+        timestamp: now,
+      },
+      {
+        name: 'agentprobe.tests.pass_rate',
+        description: 'Pass rate',
+        unit: '%',
+        value: suiteResult.total > 0 ? (suiteResult.passed / suiteResult.total) * 100 : 0,
+        type: 'gauge',
+        attributes: { 'suite.name': suiteResult.name },
+        timestamp: now,
+      },
+    ];
+
+    return {
+      resourceMetrics: [
+        {
+          resource: {
+            attributes: {
+              'service.name': this.config.serviceName!,
+              'service.version': '4.1.0',
+            },
+          },
+          scopeMetrics: [
+            {
+              scope: { name: 'agentprobe', version: '4.1.0' },
+              metrics,
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  /**
+   * Convert spans to Jaeger format.
+   */
+  toJaeger(spans: OTelSpan[]): JaegerSpan[] {
+    return toJaegerSpans(spans, this.config.serviceName);
+  }
+
+  /**
+   * Convert spans to Zipkin format.
+   */
+  toZipkin(spans: OTelSpan[]): ZipkinSpan[] {
+    return toZipkinSpans(spans, this.config.serviceName);
+  }
+
+  /**
+   * Get the configured format.
+   */
+  getFormat(): OTelFormat {
+    return this.format;
   }
 }
