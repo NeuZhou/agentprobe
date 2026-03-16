@@ -57,6 +57,12 @@ export interface ExtendedConfig {
     fail_on_regression?: boolean;
     post_comment?: boolean;
   };
+  budgets?: {
+    per_test?: number;
+    per_suite?: number;
+    per_day?: number;
+    alert_threshold?: number;
+  };
 }
 
 const CONFIG_FILES = [

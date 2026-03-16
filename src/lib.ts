@@ -150,6 +150,29 @@ export type { WatchOptions, WatchSummary } from './watcher';
 export { getProfile, listProfiles } from './config-file';
 export type { ProfileConfig } from './config-file';
 
+// Test suggestions
+export { suggestTests, formatSuggestions } from './suggest';
+export type { TestSuggestion } from './suggest';
+
+// Trace validation
+export { validateTraceFormat, validateTraceFile, formatTraceValidation } from './trace-validator';
+export type { TraceValidationResult, TraceValidationMessage } from './trace-validator';
+
+// Regression manager
+export {
+  addRegressionSnapshot,
+  loadRegressionSnapshot,
+  listRegressionSnapshots,
+  compareRegressionSnapshots,
+  formatRegressionComparison,
+  formatSnapshotList,
+} from './regression-manager';
+export type { RegressionSnapshot, RegressionComparison } from './regression-manager';
+
+// Budget enforcement
+export { checkBudget, getDailyCost, recordCost, formatBudgetCheck } from './budget';
+export type { BudgetConfig, BudgetCheck } from './budget';
+
 // Types - re-export everything
 export type {
   AgentTrace,

@@ -61,8 +61,8 @@ if (config.plugins?.length) {
 }
 
 program
-  .command('run <suite>')
-  .description('Run a test suite from a YAML file')
+  .command('run <suite...>')
+  .description('Run test suite(s) from YAML file(s) — supports globs and --recursive')
   .option('-f, --format <format>', 'Output format: console, json, markdown', 'console')
   .option('-o, --output <path>', 'Write results to file')
   .option('-w, --watch', 'Watch mode: re-run tests on file change')
@@ -75,9 +75,10 @@ program
   .option('--badge <path>', 'Generate a shields.io-style badge SVG')
   .option('--profile <name>', 'Use an environment profile from .agentproberc.yml')
   .option('--trace-dir <dir>', 'Watch trace directory (with --watch)')
+  .option('-r, --recursive', 'Find all .yaml/.yml files recursively in directories')
   .action(
     async (
-      suitePath: string,
+      suiteArgs: string[],
       opts: {
         format: string;
         output?: string;
@@ -91,8 +92,35 @@ program
         badge?: string;
         profile?: string;
         traceDir?: string;
+        recursive?: boolean;
       },
     ) => {
+      // Resolve suite paths from args (support globs and --recursive)
+      const { glob } = require('glob');
+      let suitePaths: string[] = [];
+      for (const arg of suiteArgs) {
+        if (fs.existsSync(arg) && fs.statSync(arg).isDirectory()) {
+          // Directory: find YAML files
+          const pattern = opts.recursive
+            ? path.join(arg, '**/*.{yaml,yml}').replace(/\\/g, '/')
+            : path.join(arg, '*.{yaml,yml}').replace(/\\/g, '/');
+          suitePaths.push(...glob.sync(pattern));
+        } else if (arg.includes('*')) {
+          // Glob pattern
+          suitePaths.push(...glob.sync(arg.replace(/\\/g, '/')));
+        } else {
+          suitePaths.push(arg);
+        }
+      }
+
+      if (suitePaths.length === 0) {
+        console.error(chalk.red(`❌ No suite files found matching: ${suiteArgs.join(', ')}`));
+        process.exit(1);
+      }
+
+      // For single suite, preserve original behavior
+      const suitePath = suitePaths[0];
+
       if (!fs.existsSync(suitePath)) {
         console.error(chalk.red(`❌ File not found: ${suitePath}`));
         const dir = path.dirname(suitePath) || '.';
@@ -168,46 +196,75 @@ program
         process.exit(1);
       }
 
-      const result = await runSuite(suitePath, {
-        updateSnapshots: opts.updateSnapshots,
-        tags: opts.tag,
-        envFile: opts.envFile,
-      });
-      const output = report(result, opts.format as ReportFormat);
-      console.log(output);
+      // Multi-suite support
+      let totalFailed = 0;
+      for (const sp of suitePaths) {
+        if (suitePaths.length > 1) {
+          console.log(chalk.bold(`\n📂 Suite: ${sp}`));
+        }
 
-      if (opts.coverage) {
-        const cov = analyzeCoverage(result, opts.tools);
-        console.log(formatCoverage(cov));
-      }
-
-      // Compare against baseline
-      if (opts.compareBaseline) {
-        const baseline = loadBaseline(result.name);
-        if (baseline) {
-          const regressions = detectRegressions(result, baseline);
-          console.log(formatRegressions(regressions));
-          if (regressions.length > 0 && config.ci?.fail_on_regression) {
-            process.exit(1);
+        // Validate each suite
+        if (sp !== suitePath) {
+          try {
+            const rawYaml = fs.readFileSync(sp, 'utf-8');
+            const YAML = require('yaml');
+            const parsed = YAML.parse(rawYaml);
+            const validation = validateSuite(parsed);
+            if (!validation.valid) {
+              console.error(chalk.red(`❌ Suite validation failed for ${sp}:\n`));
+              console.error(formatValidationErrors(validation.errors));
+              totalFailed++;
+              continue;
+            }
+          } catch (e: any) {
+            console.error(chalk.red(`❌ Failed to parse ${sp}: ${e.message}`));
+            totalFailed++;
+            continue;
           }
-        } else {
-          console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
+        }
+
+        const result = await runSuite(sp, {
+          updateSnapshots: opts.updateSnapshots,
+          tags: opts.tag,
+          envFile: opts.envFile,
+        });
+        const output = report(result, opts.format as ReportFormat);
+        console.log(output);
+        totalFailed += result.failed;
+
+        if (opts.coverage) {
+          const cov = analyzeCoverage(result, opts.tools);
+          console.log(formatCoverage(cov));
+        }
+
+        // Compare against baseline
+        if (opts.compareBaseline) {
+          const baseline = loadBaseline(result.name);
+          if (baseline) {
+            const regressions = detectRegressions(result, baseline);
+            console.log(formatRegressions(regressions));
+            if (regressions.length > 0 && config.ci?.fail_on_regression) {
+              process.exit(1);
+            }
+          } else {
+            console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
+          }
+        }
+
+        // Generate badge (only for last suite or single)
+        if (opts.badge && sp === suitePaths[suitePaths.length - 1]) {
+          const badgeSvg = generateBadge(result.passed, result.total);
+          fs.writeFileSync(opts.badge, badgeSvg);
+          console.log(`🏷️  Badge saved to ${opts.badge}`);
+        }
+
+        if (opts.output && suitePaths.length === 1) {
+          fs.writeFileSync(opts.output, output);
+          console.log(`📝 Results written to ${opts.output}`);
         }
       }
 
-      // Generate badge
-      if (opts.badge) {
-        const badgeSvg = generateBadge(result.passed, result.total);
-        fs.writeFileSync(opts.badge, badgeSvg);
-        console.log(`🏷️  Badge saved to ${opts.badge}`);
-      }
-
-      if (opts.output) {
-        fs.writeFileSync(opts.output, output);
-        console.log(`📝 Results written to ${opts.output}`);
-      }
-
-      process.exit(result.failed > 0 ? 1 : 0);
+      process.exit(totalFailed > 0 ? 1 : 0);
     },
   );
 
@@ -909,6 +966,15 @@ import type { DepTestCase } from './deps';
 import { runExplorer } from './explorer';
 import { compareTraces, formatComparison } from './trace-compare';
 import { loadExtendedConfig, getProfile, listProfiles } from './config-file';
+import { suggestTests, formatSuggestions } from './suggest';
+import { validateTraceFormat, formatTraceValidation } from './trace-validator';
+import {
+  addRegressionSnapshot,
+  listRegressionSnapshots,
+  compareRegressionSnapshots,
+  formatRegressionComparison,
+  formatSnapshotList,
+} from './regression-manager';
 
 // ===== Interactive Test Explorer =====
 program
@@ -1044,6 +1110,80 @@ program
       model: opts.model,
     });
     console.log(formatSearchResults(result, { query }));
+  });
+
+// ===== Suggest command =====
+program
+  .command('suggest <traceFile>')
+  .description('Analyze a trace and suggest tests the user should write')
+  .action((traceFile: string) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const t = loadTrace(traceFile);
+    const suggestions = suggestTests(t);
+    console.log(formatSuggestions(suggestions));
+  });
+
+// ===== Trace validate command =====
+trace
+  .command('validate <traceFile>')
+  .description('Validate trace file format with detailed diagnostics')
+  .action((traceFile: string) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const raw = fs.readFileSync(traceFile, 'utf-8');
+    let parsed: any;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e: any) {
+      console.error(chalk.red(`✗ Invalid JSON: ${e.message}`));
+      process.exit(1);
+    }
+    const result = validateTraceFormat(parsed);
+    console.log(formatTraceValidation(result));
+    if (!result.valid) process.exit(1);
+  });
+
+// ===== Regression suite manager =====
+const regression = program.command('regression').description('Track test results over time and detect regressions');
+
+regression
+  .command('add <suite>')
+  .description('Run a suite and save results with a label')
+  .requiredOption('--label <label>', 'Label for this snapshot')
+  .action(async (suitePath: string, opts: { label: string }) => {
+    if (!fs.existsSync(suitePath)) {
+      console.error(chalk.red(`❌ File not found: ${suitePath}`));
+      process.exit(1);
+    }
+    const result = await runSuite(suitePath);
+    const filePath = addRegressionSnapshot(result, opts.label, suitePath);
+    console.log(chalk.green(`📸 Snapshot saved: ${filePath}`));
+    console.log(`   Label: ${opts.label} | ${result.passed}/${result.total} passed`);
+  });
+
+regression
+  .command('compare <labelA> <labelB>')
+  .description('Compare two labeled snapshots')
+  .action((labelA: string, labelB: string) => {
+    const cmp = compareRegressionSnapshots(labelA, labelB);
+    if (!cmp) {
+      console.error(chalk.red('❌ Could not load one or both snapshots'));
+      process.exit(1);
+    }
+    console.log(formatRegressionComparison(cmp));
+  });
+
+regression
+  .command('list')
+  .description('List all regression snapshots')
+  .action(() => {
+    const snapshots = listRegressionSnapshots();
+    console.log(formatSnapshotList(snapshots));
   });
 
 program.parse();
