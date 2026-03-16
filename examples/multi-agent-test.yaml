@@ -1,0 +1,59 @@
+# Multi-Agent Test Suite
+# Tests orchestration between multiple agents: handoff, delegation, and coordination.
+
+name: Multi-Agent Orchestration Tests
+config:
+  timeout_ms: 60000
+
+tests:
+  - name: Coordinator delegates to specialist
+    input: "Research quantum computing and write a blog post about it"
+    trace: traces/multi-agent.json
+    tags: [multi-agent, orchestration]
+    expect:
+      tool_called: [delegate_to_researcher, delegate_to_writer]
+      tool_sequence: [delegate_to_researcher, delegate_to_writer]
+      max_steps: 30
+      max_cost_usd: 0.50
+
+  - name: Agents share context correctly
+    input: "Find the latest stock price for AAPL and analyze the trend"
+    trace: traces/context-sharing.json
+    tags: [multi-agent, context]
+    expect:
+      tool_called: [lookup_stock, analyze_trend]
+      output_contains: "AAPL"
+      max_steps: 20
+
+  - name: Error recovery across agents
+    input: "Translate this document to French, then summarize"
+    trace: traces/error-recovery.json
+    tags: [multi-agent, resilience]
+    expect:
+      max_steps: 25
+      output_not_contains: "error"
+
+  - name: Parallel agent execution
+    input: "Check weather in Tokyo, London, and New York simultaneously"
+    trace: traces/parallel-agents.json
+    tags: [multi-agent, parallel]
+    expect:
+      tool_called: web_search
+      output_contains: ["Tokyo", "London", "New York"]
+      max_cost_usd: 0.30
+
+conversations:
+  - name: Multi-turn agent handoff
+    turns:
+      - user: "I need help planning a trip to Japan"
+        expect:
+          output_contains: "Japan"
+          tool_called: travel_planner
+      - user: "Book flights for next week"
+        expect:
+          tool_called: flight_search
+          tool_sequence: [travel_planner, flight_search]
+      - user: "Also find hotels in Tokyo"
+        expect:
+          tool_called: hotel_search
+          output_contains: "Tokyo"

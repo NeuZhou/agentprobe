@@ -1,0 +1,46 @@
+# Basic AgentProbe Test
+# Tests fundamental agent behavior: tool usage, output quality, and cost budgets.
+
+name: Basic Agent Tests
+config:
+  timeout_ms: 30000
+
+tests:
+  - name: Agent responds to greeting
+    input: "Hello, how are you?"
+    trace: traces/greeting.json
+    expect:
+      output_contains: "hello"
+      max_steps: 5
+      max_tokens: 500
+
+  - name: Agent uses search tool
+    input: "What is the weather in Tokyo?"
+    trace: traces/weather.json
+    expect:
+      tool_called: web_search
+      output_contains: "Tokyo"
+      max_steps: 10
+      max_cost_usd: 0.05
+
+  - name: Agent respects token budget
+    input: "Write a short summary of quantum computing"
+    trace: traces/summary.json
+    expect:
+      max_tokens: 2000
+      max_cost_usd: 0.10
+      output_contains: "quantum"
+
+  - name: Agent calls tools in correct order
+    input: "Search for recent news about AI and summarize"
+    trace: traces/search-summarize.json
+    expect:
+      tool_sequence: [web_search, summarize]
+      max_steps: 15
+
+  - name: Agent handles empty input gracefully
+    input: ""
+    trace: traces/empty-input.json
+    expect:
+      max_steps: 3
+      output_not_contains: "error"

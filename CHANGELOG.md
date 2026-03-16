@@ -5,6 +5,54 @@ All notable changes to AgentProbe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-03-16
+
+### 🎉 Major Release — Production Grade
+
+AgentProbe 3.0 is the biggest milestone yet. With **1269 tests across 49 test files**, 50+ features, and comprehensive documentation, this release marks AgentProbe as truly production-ready.
+
+### What's New Since 2.0
+
+#### Safety & Compliance
+- **Agent Safety Score** (`safety-score`) — composite scoring for PII protection, tool safety, prompt injection resistance, cost control, error handling, and data hygiene
+- **Canary Testing** (`canary`) — gradual rollout with metric evaluation, promotion criteria, and automatic rollback
+- **Trace Lineage** (`lineage`) — track trace provenance, modifications, and usage across tests and reports
+- **Contract Testing** (`contract`) — verify agent behavior against formal behavioral contracts
+- **Governance Dashboard** (`governance`) — compliance reporting and governance metrics
+- **SLA Monitoring** (`sla`) — define and enforce SLA contracts on agent behavior
+
+#### Testing Capabilities
+- **Intelligent Test Retry** — smart retry with exponential/linear/fixed backoff, error classification, deterministic failure skipping (`skip_on: [assertion_failed]`)
+- **Test Execution Hooks** (`hooks`) — programmatic `beforeAll`, `afterAll`, `beforeEach`, `afterEach`, `onFailure` with YAML config support
+- **A/B Testing** (`ab-test`) — compare agent versions with statistical significance testing
+- **Anomaly Detection** (`anomaly`) — detect behavioral anomalies across trace sets
+- **Trace Converters** (`converters`) — convert between trace formats (OpenAI, Anthropic, LangChain, JSONL, OTel)
+- **Trace Enrichment** (`enrich`) — enrich traces with computed metadata
+- **Scheduler** (`scheduler`) — schedule and validate test execution plans
+
+#### Analysis & Profiling
+- **Deep Performance Profiling** — behavioral profiling with p50/p95/p99 breakdowns
+- **Trace Fingerprinting** (`fingerprint`) — identify unique trace patterns
+- **Cost Optimizer** (`cost-optimizer`) — recommendations for reducing agent costs
+- **Benchmark Suite** (`benchmark-suite`) — standardized benchmarking across agent configurations
+
+#### Developer Experience
+- **Themes** (`themes`) — customizable console output themes
+- **Progress Indicators** (`progress`) — real-time progress for long test runs
+- **Rate Limiter** (`rate-limiter`) — built-in rate limiting for live agent tests
+- **Middleware** (`middleware`) — composable middleware pipeline for trace processing
+
+#### Documentation & Examples
+- Complete API reference documentation (`docs/api-reference.md`)
+- Example files for basic, security, multi-agent, CI pipeline, and MCP server testing
+- Updated README with v3.0 highlights, expanded CLI reference, and updated architecture diagram
+
+### Stats
+- **1269 tests** across **49 test files** (up from 781 in v2.0)
+- **50+ features** across **10 categories** (up from 40+ in v2.0)
+- **95% code coverage**
+- **15 error codes** with structured diagnostics
+
 ## [2.4.0] - 2026-03-16
 
 ### Added

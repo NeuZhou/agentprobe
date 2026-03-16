@@ -8,7 +8,7 @@ Test, record, and replay agent behaviors with deterministic precision.
 
 [![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe.svg?style=flat-square&color=blue)](https://www.npmjs.com/package/@neuzhou/agentprobe)
 [![CI](https://img.shields.io/github/actions/workflow/status/neuzhou/agentprobe/ci.yml?style=flat-square&label=CI)](https://github.com/neuzhou/agentprobe/actions)
-[![Tests](https://img.shields.io/badge/tests-781%20passed-brightgreen?style=flat-square)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1269%20passed-brightgreen?style=flat-square)](tests/)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen?style=flat-square)](tests/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue?style=flat-square)](tsconfig.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
@@ -20,6 +20,24 @@ Test, record, and replay agent behaviors with deterministic precision.
 </div>
 
 ---
+
+## 🚀 What's New in v3.0
+
+AgentProbe 3.0 is the biggest milestone yet — production-grade, battle-tested with **1269+ tests**.
+
+- **Agent Safety Score** — composite PII protection, prompt injection resistance, tool safety, and cost control scoring
+- **Canary Testing** — gradual rollout with metric evaluation, auto-promotion, and automatic rollback
+- **Trace Lineage** — provenance tracking across tests, modifications, and reports
+- **Intelligent Test Retry** — exponential/linear/fixed backoff with error classification and deterministic failure skipping
+- **Test Execution Hooks** — `beforeAll`, `afterAll`, `beforeEach`, `afterEach`, `onFailure` with YAML config
+- **A/B Testing** — compare agent versions with statistical significance
+- **Contract Testing** — verify agent behavior against formal contracts
+- **Anomaly Detection** — detect behavioral anomalies across trace sets
+- **Governance Dashboard** — compliance and governance reporting
+- **Trace Converters** — convert between trace formats (OpenAI, Anthropic, LangChain, JSONL, OTel)
+- **Performance Profiling** — deep behavioral profiling with p50/p95/p99 breakdowns
+- **SLA Monitoring** — define and enforce SLA contracts on agent behavior
+- **50+ features** across 10 categories, up from 40+ in v2.0
 
 ## Why AgentProbe?
 
@@ -78,7 +96,7 @@ $ agentprobe run tests/agent.test.yaml
 
 ## Feature Matrix
 
-AgentProbe ships with 40+ features across 10 categories:
+AgentProbe ships with 50+ features across 10 categories:
 
 | Category | Features |
 |---|---|
@@ -92,7 +110,8 @@ AgentProbe ships with 40+ features across 10 categories:
 | **Analysis** | Cost estimation, performance profiling (p50/p95/p99), trace diff, trace timeline, tool coverage, stats aggregation |
 | **Generation** | Natural language → YAML tests, trace → test codegen, OpenAPI → tests, security suite generation |
 | **CI/CD** | GitHub Actions template, regression baselines, badge generation, webhook notifications, test prioritization |
-| **Advanced** | Plugin marketplace, config files, fault injection, LLM-as-Judge, mutation testing, compliance framework, OTel export, flaky detection, impact analysis |
+| **Safety & Compliance** | Agent safety score, canary testing, governance dashboard, SLA monitoring, contract testing |
+| **Advanced** | Plugin marketplace, config files, fault injection, LLM-as-Judge, mutation testing, compliance framework, OTel export, flaky detection, impact analysis, trace lineage, anomaly detection, A/B testing |
 
 ## Architecture
 
@@ -109,6 +128,7 @@ graph TD
     G --> G2[Composed: all_of, any_of, none_of]
     G --> G3[LLM Judge: rubric scoring]
     G --> G4[Weighted Scoring]
+    G --> G5[Safety Score]
     G --> H[Reporter]
     H --> H1[Console / JSON / HTML / JUnit]
 
@@ -129,6 +149,12 @@ graph TD
     M --> O[Profile / Stats / Diff]
     M --> P[Security / Compliance]
     M --> Q[Golden / Baseline]
+    M --> R[Canary / A-B Test]
+    M --> S[Governance / SLA]
+
+    T[Hooks] --> B
+    U[Trace Lineage] --> D
+    V[Converters] --> L
 ```
 
 ## Code Examples
@@ -301,10 +327,22 @@ agentprobe trace view <trace>       Visual trace inspection
 agentprobe trace diff <a> <b>       Compare two traces
 agentprobe trace anonymize <trace>  Redact sensitive data
 agentprobe trace timeline <trace>   Gantt-style timeline
+agentprobe trace convert <trace>    Convert between trace formats
 agentprobe golden record/verify     Golden test management
 agentprobe baseline save/compare    Regression baselines
 agentprobe compliance <traces/>     Run compliance checks
 agentprobe simulate                 Generate synthetic traces
+agentprobe safety-score <traces/>   Compute agent safety scores
+agentprobe canary                   Canary testing with rollout
+agentprobe ab-test <a> <b>          A/B test comparison
+agentprobe contract <contract>      Contract verification
+agentprobe governance <traces/>     Governance dashboard
+agentprobe sla <config>             SLA monitoring
+agentprobe anomaly <traces/>        Anomaly detection
+agentprobe lineage <trace>          Trace provenance tracking
+agentprobe enrich <traces/>         Enrich traces with metadata
+agentprobe health                   Project health check
+agentprobe portal <results>         Generate HTML dashboard
 ```
 
 See [docs/cli-reference.md](docs/cli-reference.md) for full details.
@@ -315,6 +353,7 @@ See [docs/cli-reference.md](docs/cli-reference.md) for full details.
 |---|---|
 | [Getting Started](docs/getting-started.md) | Installation, first test, core concepts |
 | [Assertions](docs/assertions.md) | All assertion types with examples |
+| [API Reference](docs/api-reference.md) | Programmatic SDK API |
 | [Adapters](docs/adapters.md) | Trace format adapters |
 | [CLI Reference](docs/cli-reference.md) | All CLI commands |
 | [Configuration](docs/configuration.md) | Config files, profiles, plugins |
