@@ -258,3 +258,23 @@ export type { PerfChange, PerfRegressionResult, PerfCheckOptions } from './perf-
 // Enhanced anonymization
 export { anonymizeWithReport, anonymizeReversible, deanonymize, formatAnonymizationReport } from './anonymize';
 export type { AnonymizationReport, AnonymizationRedaction, AnonymizationMapping } from './anonymize';
+
+// SDK — High-level programmatic API
+export { AgentProbe } from './sdk';
+export type { AgentProbeOptions, AdapterType, TestOptions, RecordOptions, DiffResult, BatchTestResult } from './sdk';
+
+// Streaming progress
+export { ProgressTracker, renderProgressBar, formatEntry, formatProgress, fromSuiteResult } from './progress';
+export type { TestStatus, ProgressEntry, ProgressState, ProgressOptions, ProgressCallback } from './progress';
+
+// Snapshot update
+export { planSnapshotUpdate, formatUpdatePlan, applySnapshotUpdate, hasOutdatedSnapshots } from './snapshot-update';
+export type { SnapshotDiff, SnapshotUpdatePlan, SnapshotFileUpdate } from './snapshot-update';
+
+// Error catalog
+export { AgentProbeError, getError, getAllErrors, getErrorsByCategory, formatError, formatErrorCatalog } from './errors';
+export type { ErrorInfo, ErrorCategory } from './errors';
+
+// Trace compression
+export { compressTrace, decompressTrace, compressDirectory, decompressDirectory, compressToFile, decompressFromFile, formatCompressionStats } from './compress';
+export type { CompressedArchive, CompressedEntry, CompressionStats } from './compress';
