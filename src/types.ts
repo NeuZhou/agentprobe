@@ -112,6 +112,9 @@ export interface TestCase {
   retry_delay_ms?: number;
   depends_on?: string | string[];
   env?: Record<string, string>;
+  template?: string;
+  template_params?: Record<string, any>;
+  replay_overrides?: Record<string, any>;
   expect: Expectations;
 }
 

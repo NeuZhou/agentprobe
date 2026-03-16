@@ -10,7 +10,7 @@ import { startWatch } from './watcher';
 import { analyzeCoverage, formatCoverage } from './coverage';
 import { generateSecurityTests, securityTestsToYaml } from './security';
 import { generateCI } from './ci';
-import { formatTraceView } from './viewer';
+import { formatTraceView, formatTraceTimeline } from './viewer';
 import { diffTraces, formatDiff } from './diff';
 import { loadTrace } from './recorder';
 import type { ReportFormat, AgentTrace } from './types';
@@ -452,6 +452,18 @@ trace
   });
 
 trace
+  .command('timeline <traceFile>')
+  .description('Gantt-style timeline visualization of a trace')
+  .action((traceFile: string) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(`❌ File not found: ${traceFile}`);
+      process.exit(1);
+    }
+    const t = loadTrace(traceFile);
+    console.log(formatTraceTimeline(t));
+  });
+
+trace
   .command('diff <oldTrace> <newTrace>')
   .description('Compare two traces to detect behavioral drift')
   .action((oldFile: string, newFile: string) => {
@@ -670,6 +682,89 @@ program
       console.error(chalk.red(`❌ Failed to parse ${file}: ${e.message}`));
       process.exit(1);
     }
+  });
+
+// ===== Golden test commands =====
+const golden = program.command('golden').description('Golden test pattern — record and verify reference runs');
+
+golden
+  .command('record <suite>')
+  .description('Record golden snapshots from test traces')
+  .option('-o, --output <dir>', 'Output directory for golden files', 'golden/')
+  .action(async (suitePath: string, opts: { output: string }) => {
+    if (!fs.existsSync(suitePath)) {
+      console.error(chalk.red(`❌ File not found: ${suitePath}`));
+      process.exit(1);
+    }
+    const { recordGolden, saveGolden: saveG } = require('./golden');
+    const result = await runSuite(suitePath);
+    let recorded = 0;
+    for (const test of result.results) {
+      if (test.trace) {
+        const snap = recordGolden(test.trace);
+        const filePath = saveG(snap, opts.output, test.name);
+        console.log(chalk.green(`  ✅ ${test.name} → ${filePath}`));
+        recorded++;
+      }
+    }
+    console.log(chalk.green(`\n🏆 Recorded ${recorded} golden snapshots to ${opts.output}`));
+  });
+
+golden
+  .command('verify <suite>')
+  .description('Verify test results against golden snapshots')
+  .option('-g, --golden <dir>', 'Golden directory', 'golden/')
+  .option('--token-tolerance <pct>', 'Token tolerance fraction (default 0.3)', parseFloat)
+  .option('--exact-sequence', 'Require exact tool sequence match')
+  .action(async (suitePath: string, opts: { golden: string; tokenTolerance?: number; exactSequence?: boolean }) => {
+    if (!fs.existsSync(suitePath)) {
+      console.error(chalk.red(`❌ File not found: ${suitePath}`));
+      process.exit(1);
+    }
+    const { loadGolden: loadG, verifyGolden: verifyG } = require('./golden');
+    const result = await runSuite(suitePath);
+    let passed = 0;
+    let failed = 0;
+    for (const test of result.results) {
+      if (!test.trace) continue;
+      const g = loadG(opts.golden, test.name);
+      if (!g) {
+        console.log(chalk.yellow(`  ⏭️  ${test.name} — no golden found`));
+        continue;
+      }
+      const assertions = verifyG(test.trace, g, {
+        token_tolerance: opts.tokenTolerance,
+        exact_sequence: opts.exactSequence,
+      });
+      const allPass = assertions.every((a: any) => a.passed);
+      if (allPass) {
+        console.log(chalk.green(`  ✅ ${test.name}`));
+        passed++;
+      } else {
+        console.log(chalk.red(`  ❌ ${test.name}`));
+        for (const a of assertions) {
+          if (!a.passed) console.log(chalk.red(`     ✗ ${a.name}: ${a.message}`));
+        }
+        failed++;
+      }
+    }
+    console.log(`\n${passed} passed, ${failed} failed`);
+    process.exit(failed > 0 ? 1 : 0);
+  });
+
+// ===== Templates command =====
+program
+  .command('templates')
+  .description('List available assertion templates')
+  .action(() => {
+    const { listTemplates } = require('./templates');
+    const templates = listTemplates();
+    console.log(chalk.bold('\n📋 Available Assertion Templates\n'));
+    for (const t of templates) {
+      console.log(`  ${chalk.cyan(t.name.padEnd(20))} ${t.description}`);
+    }
+    console.log(chalk.gray(`\nUse in tests: template: <name>`));
+    console.log('');
   });
 
 program.parse();

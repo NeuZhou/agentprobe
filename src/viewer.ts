@@ -72,3 +72,96 @@ export function formatTraceView(trace: AgentTrace): string {
 
   return lines.join('\n');
 }
+
+/**
+ * Format a Gantt-style timeline visualization of a trace.
+ */
+export function formatTraceTimeline(trace: AgentTrace): string {
+  const lines: string[] = [];
+  const steps = trace.steps;
+
+  if (steps.length === 0) return 'No steps to display.';
+
+  // Calculate total duration and build timeline entries
+  interface TimelineEntry {
+    label: string;
+    start_ms: number;
+    end_ms: number;
+  }
+
+  const entries: TimelineEntry[] = [];
+  let elapsed = 0;
+
+  for (const step of steps) {
+    const dur = step.duration_ms ?? 0;
+    let label: string;
+
+    if (step.type === 'llm_call') {
+      label = `LLM Call${step.data.model ? ` (${step.data.model})` : ''}`;
+    } else if (step.type === 'tool_call') {
+      label = step.data.tool_name ?? 'tool';
+    } else if (step.type === 'tool_result') {
+      elapsed += dur;
+      continue; // merge with tool_call
+    } else if (step.type === 'output') {
+      label = 'Output';
+    } else if (step.type === 'thought') {
+      label = 'Thinking';
+    } else {
+      label = step.type;
+    }
+
+    entries.push({ label, start_ms: elapsed, end_ms: elapsed + dur });
+    elapsed += dur;
+  }
+
+  if (entries.length === 0) return 'No timeline entries.';
+
+  const totalMs = elapsed || 1;
+  const chartWidth = 50;
+  const labelWidth = Math.min(20, Math.max(...entries.map((e) => e.label.length)));
+
+  // Header with time scale
+  const intervals = 5;
+  const intervalMs = totalMs / intervals;
+
+  let header = ' '.repeat(labelWidth + 2);
+  for (let i = 0; i <= intervals; i++) {
+    const ms = Math.round(intervalMs * i);
+    const label = ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+    header += label.padEnd(Math.floor(chartWidth / intervals));
+  }
+  lines.push(header);
+
+  let ruler = ' '.repeat(labelWidth + 2);
+  for (let i = 0; i <= intervals; i++) {
+    ruler += '|' + (i < intervals ? '·'.repeat(Math.floor(chartWidth / intervals) - 1) : '');
+  }
+  lines.push(ruler);
+
+  // Entries
+  for (const entry of entries) {
+    const startFrac = entry.start_ms / totalMs;
+    const endFrac = entry.end_ms / totalMs;
+    const startCol = Math.floor(startFrac * chartWidth);
+    const endCol = Math.max(startCol + 1, Math.floor(endFrac * chartWidth));
+
+    const bar =
+      '░'.repeat(startCol) +
+      '█'.repeat(endCol - startCol) +
+      '░'.repeat(Math.max(0, chartWidth - endCol));
+
+    const label = entry.label.padEnd(labelWidth).slice(0, labelWidth);
+    const dur = entry.end_ms - entry.start_ms;
+    const durStr = dur >= 1000 ? `${(dur / 1000).toFixed(1)}s` : `${dur}ms`;
+
+    lines.push(`${label}  ${bar} ${durStr}`);
+  }
+
+  // Summary
+  lines.push('');
+  const totalStr = totalMs >= 1000 ? `${(totalMs / 1000).toFixed(1)}s` : `${totalMs}ms`;
+  lines.push(`Total: ${totalStr} | ${entries.length} operations`);
+
+  return lines.join('\n');
+}

@@ -64,6 +64,22 @@ export {
 } from './validate';
 export type { ValidationError, ValidationResult } from './validate';
 
+// Replay
+export { replayTrace, formatReplayResult } from './replay';
+export type { ReplayOverride, ReplayConfig, ReplayResult } from './replay';
+
+// Templates
+export { expandTemplate, registerTemplate, listTemplates, isTemplate } from './templates';
+
+// Multi-Agent Orchestration
+export { evaluateOrchestration } from './orchestration';
+
+// Golden Tests
+export { recordGolden, saveGolden, loadGolden, verifyGolden } from './golden';
+
+// Viewer
+export { formatTraceTimeline } from './viewer';
+
 // Types - re-export everything
 export type {
   AgentTrace,

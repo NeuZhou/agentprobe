@@ -21,6 +21,8 @@ import { matchSnapshot, SnapshotConfig } from './snapshots';
 import { withRetry } from './retry';
 import { buildExecutionPlan, shouldSkip, type DepTestCase } from './deps';
 import { parseEnvFile, resolveEnvRecord, applyEnv, restoreProcessEnv } from './env';
+import { expandTemplate } from './templates';
+import { replayTrace } from './replay';
 
 function runHook(hook: HookConfig | undefined): void {
   if (!hook?.command) return;
@@ -68,6 +70,15 @@ async function runSingleTest(
 ): Promise<TestResult> {
   const testStart = Date.now();
   try {
+    // Expand template if specified
+    if (test.template) {
+      const templateExpect = expandTemplate(test.template, {
+        params: test.template_params,
+      });
+      // Merge template expectations with explicit ones (explicit wins)
+      test = { ...test, expect: { ...templateExpect, ...test.expect } };
+    }
+
     const toolkit = new MockToolkit();
 
     // Apply fixture mocks if specified
@@ -107,6 +118,12 @@ async function runSingleTest(
         );
       }
       trace = loadTrace(tracePath);
+
+      // Apply replay overrides if specified
+      if (test.replay_overrides) {
+        const result = replayTrace({ trace, overrides: test.replay_overrides });
+        trace = result.trace;
+      }
     } else if (test.agent) {
       trace = await executeAgent(test, toolkit, suiteDir);
     } else {

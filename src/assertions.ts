@@ -99,11 +99,19 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
 
   // max_steps
   if (expect.max_steps != null) {
+    const passed = trace.steps.length <= expect.max_steps;
     results.push({
       name: `max_steps: ${expect.max_steps}`,
-      passed: trace.steps.length <= expect.max_steps,
+      passed,
       expected: `<= ${expect.max_steps}`,
       actual: trace.steps.length,
+      message: passed
+        ? undefined
+        : `Agent took ${trace.steps.length} steps, exceeding the limit of ${expect.max_steps}.\n` +
+          `  Breakdown: ${trace.steps.filter((s) => s.type === 'llm_call').length} LLM calls, ` +
+          `${trace.steps.filter((s) => s.type === 'tool_call').length} tool calls, ` +
+          `${trace.steps.filter((s) => s.type === 'output').length} outputs\n` +
+          `  Suggestion: Agent may be stuck in a loop or making unnecessary calls`,
     });
   }
 
@@ -113,22 +121,37 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
       const t = s.data.tokens;
       return sum + (t?.input ?? 0) + (t?.output ?? 0);
     }, 0);
+    const passed = total <= expect.max_tokens;
+    const inputTotal = trace.steps.reduce((s, st) => s + (st.data.tokens?.input ?? 0), 0);
+    const outputTotal = trace.steps.reduce((s, st) => s + (st.data.tokens?.output ?? 0), 0);
     results.push({
       name: `max_tokens: ${expect.max_tokens}`,
-      passed: total <= expect.max_tokens,
+      passed,
       expected: `<= ${expect.max_tokens}`,
       actual: total,
+      message: passed
+        ? undefined
+        : `Token usage ${total} exceeds limit of ${expect.max_tokens}.\n` +
+          `  Input tokens: ${inputTotal}, Output tokens: ${outputTotal}\n` +
+          `  Suggestion: Consider reducing context size or using a more concise prompt`,
     });
   }
 
   // max_duration_ms
   if (expect.max_duration_ms != null) {
     const total = trace.steps.reduce((sum, s) => sum + (s.duration_ms ?? 0), 0);
+    const passed = total <= expect.max_duration_ms;
+    const slowest = [...trace.steps].sort((a, b) => (b.duration_ms ?? 0) - (a.duration_ms ?? 0))[0];
     results.push({
       name: `max_duration_ms: ${expect.max_duration_ms}`,
-      passed: total <= expect.max_duration_ms,
+      passed,
       expected: `<= ${expect.max_duration_ms}ms`,
       actual: `${total}ms`,
+      message: passed
+        ? undefined
+        : `Total duration ${total}ms exceeds limit of ${expect.max_duration_ms}ms.\n` +
+          `  Slowest step: ${slowest?.type}${slowest?.data.tool_name ? ` (${slowest.data.tool_name})` : ''} at ${slowest?.duration_ms ?? 0}ms\n` +
+          `  Suggestion: Check for slow tool calls or consider parallelizing operations`,
     });
   }
 
@@ -140,11 +163,52 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
       if (call === seq[idx]) idx++;
       if (idx === seq.length) break;
     }
+    const passed = idx === seq.length;
+    let message: string | undefined;
+    if (!passed) {
+      // Build detailed explanation
+      const lines: string[] = [];
+      lines.push(`Expected: ${seq.join(' → ')}`);
+      lines.push(`Actual:   ${toolCalls.join(' → ')}`);
+
+      // Find where the sequence breaks
+      const positions = new Map<string, number[]>();
+      toolCalls.forEach((t, i) => {
+        if (!positions.has(t)) positions.set(t, []);
+        positions.get(t)!.push(i);
+      });
+
+      for (let i = 0; i < seq.length; i++) {
+        const tool = seq[i];
+        const pos = positions.get(tool);
+        if (!pos || pos.length === 0) {
+          lines.push(`Issue: '${tool}' was never called`);
+        } else if (i > 0) {
+          const prevTool = seq[i - 1];
+          const prevPos = positions.get(prevTool);
+          if (prevPos && pos[0] < prevPos[0]) {
+            lines.push(
+              `Issue: '${tool}' was called at step ${pos[0]} but '${prevTool}' was called at step ${prevPos[0]}`,
+            );
+          }
+        }
+      }
+
+      // Add contextual suggestion
+      const missing = seq.filter((t) => !toolCalls.includes(t));
+      if (missing.length > 0) {
+        lines.push(`Suggestion: Tools never called: ${missing.join(', ')}`);
+      } else {
+        lines.push(`Suggestion: Check if the agent is calling tools in the correct order`);
+      }
+      message = lines.join('\n  ');
+    }
     results.push({
       name: `tool_sequence: [${seq.join(' → ')}]`,
-      passed: idx === seq.length,
+      passed,
       expected: seq,
       actual: toolCalls,
+      message,
     });
   }
 
@@ -170,6 +234,12 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
           passed: match,
           expected: expectedArgs,
           actual: step.data.tool_args,
+          message: match
+            ? undefined
+            : `Tool "${toolName}" was called with unexpected arguments.\n` +
+              `  Expected (partial): ${JSON.stringify(expectedArgs)}\n` +
+              `  Actual: ${JSON.stringify(step.data.tool_args)}\n` +
+              `  Suggestion: Verify the agent is passing the correct parameters to "${toolName}"`,
         });
       }
     }
