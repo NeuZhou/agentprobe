@@ -663,3 +663,18 @@ export {
   resolveDefaults, resolveSecurityPatterns, findConfigFile,
 } from './config';
 export type { AgentProbeConfig as FullConfig, AdapterSection, DefaultsSection, SecuritySection, ResolvedDefaults } from './config';
+
+// v4.9.0 - Performance Regression Tracker (enhanced)
+export { PerfRegressionTracker } from './perf-regression';
+export type { PerfMetrics, ThresholdConfig, PerfRecord, PerfComparison, PerfAlert } from './perf-regression';
+
+// v4.9.0 - Snapshot Manager (enhanced)
+export { SnapshotManager } from './snapshot';
+export type { AgentResponse, SnapshotData, SnapshotDiff as SnapshotManagerDiff } from './snapshot';
+
+// v4.9.0 - Tag Filtering
+export { TagFilter, parseTagArgs, extractTags, groupByTag, formatTagStats } from './tags';
+
+// v4.9.0 - Parallel Test Runner
+export { ParallelRunner, renderParallelProgress, estimateConcurrency } from './parallel';
+export type { ParallelConfig, ParallelProgress, TestExecutor } from './parallel';
