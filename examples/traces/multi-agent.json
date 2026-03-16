@@ -1,0 +1,126 @@
+{
+  "id": "multi-agent-001",
+  "timestamp": "2026-03-16T11:00:00Z",
+  "steps": [
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T11:00:00.000Z",
+      "data": {
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "system", "content": "You are an orchestrator agent. Delegate research tasks to the researcher and writing tasks to the writer." },
+          { "role": "user", "content": "Research the latest AI trends in 2026 and write a summary report." }
+        ],
+        "tokens": { "input": 60, "output": 40 }
+      },
+      "duration_ms": 450
+    },
+    {
+      "type": "thought",
+      "timestamp": "2026-03-16T11:00:00.450Z",
+      "data": {
+        "content": "I need to delegate research first, then use the results to write a report."
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:00:00.450Z",
+      "data": {
+        "tool_name": "delegate_to_researcher",
+        "tool_args": { "task": "Find the top 5 AI trends in 2026", "scope": "academic papers, tech news, industry reports" }
+      },
+      "duration_ms": 3200
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:00:03.650Z",
+      "data": {
+        "tool_name": "delegate_to_researcher",
+        "tool_result": {
+          "agent": "researcher",
+          "findings": [
+            { "trend": "Agentic AI", "description": "AI agents that autonomously plan and execute multi-step tasks" },
+            { "trend": "Multimodal Foundation Models", "description": "Models that process text, image, audio, and video natively" },
+            { "trend": "AI Safety & Alignment", "description": "Growing focus on constitutional AI and RLHF improvements" },
+            { "trend": "Small Language Models", "description": "Efficient models under 10B parameters for edge deployment" },
+            { "trend": "AI-Native Development Tools", "description": "IDEs and testing tools built specifically for AI-powered software" }
+          ],
+          "sources_consulted": 12
+        }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T11:00:03.650Z",
+      "data": {
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "assistant", "content": "Research complete. Now I'll delegate the writing task with these findings." }
+        ],
+        "tokens": { "input": 180, "output": 30 }
+      },
+      "duration_ms": 300
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:00:03.950Z",
+      "data": {
+        "tool_name": "delegate_to_writer",
+        "tool_args": {
+          "task": "Write a summary report on AI trends in 2026",
+          "context": "Top 5 trends: Agentic AI, Multimodal Models, AI Safety, Small LMs, AI-Native Dev Tools",
+          "format": "markdown",
+          "length": "500 words"
+        }
+      },
+      "duration_ms": 4500
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:00:08.450Z",
+      "data": {
+        "tool_name": "delegate_to_writer",
+        "tool_result": {
+          "agent": "writer",
+          "document": "# AI Trends Report 2026\n\n## Executive Summary\nThe AI landscape in 2026 is defined by five major trends...\n\n## 1. Agentic AI\nAI agents that autonomously plan and execute multi-step tasks are transforming enterprise workflows...\n\n## 2. Multimodal Foundation Models\nModels that natively process text, image, audio, and video are becoming the new baseline...\n\n## 3. AI Safety & Alignment\nWith growing deployment, constitutional AI and improved RLHF techniques are critical...\n\n## 4. Small Language Models\nEfficient models under 10B parameters enable edge deployment and reduce costs...\n\n## 5. AI-Native Development Tools\nA new generation of IDEs and testing frameworks built specifically for AI software...",
+          "word_count": 487
+        }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:00:08.450Z",
+      "data": {
+        "tool_name": "write_document",
+        "tool_args": { "path": "reports/ai-trends-2026.md", "content": "# AI Trends Report 2026..." }
+      },
+      "duration_ms": 50
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:00:08.500Z",
+      "data": {
+        "tool_name": "write_document",
+        "tool_result": { "success": true, "path": "reports/ai-trends-2026.md" }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "output",
+      "timestamp": "2026-03-16T11:00:08.500Z",
+      "data": {
+        "content": "I've completed the AI Trends 2026 report. The researcher analyzed 12 sources and identified 5 key trends: Agentic AI, Multimodal Foundation Models, AI Safety & Alignment, Small Language Models, and AI-Native Development Tools. The writer produced a 487-word summary report saved to reports/ai-trends-2026.md."
+      },
+      "duration_ms": 0
+    }
+  ],
+  "metadata": {
+    "agent": "orchestrator",
+    "version": "2.0",
+    "total_tokens": 310,
+    "sub_agents": ["researcher", "writer"]
+  }
+}

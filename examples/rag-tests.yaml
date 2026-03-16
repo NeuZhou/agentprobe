@@ -1,0 +1,67 @@
+name: RAG Agent Tests
+description: Test suite for Retrieval-Augmented Generation agents
+
+tests:
+  - name: RAG pipeline follows correct sequence
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, pipeline, smoke]
+    expect:
+      tool_sequence: [embed_query, vector_search, retrieve_document, generate_answer]
+      output_contains: "refund"
+
+  - name: RAG agent searches with correct parameters
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, args]
+    expect:
+      tool_args_match:
+        vector_search:
+          top_k: 5
+
+  - name: RAG agent cites sources
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, quality]
+    expect:
+      output_matches: "(source|doc-\\d+)"
+
+  - name: RAG agent includes key policy details
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, completeness]
+    expect:
+      output_contains: ["14 days", "refund"]
+
+  - name: RAG agent stays under token budget
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, performance]
+    expect:
+      max_tokens: 1000
+      max_steps: 15
+
+  - name: RAG agent does not hallucinate policy details
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, accuracy]
+    expect:
+      output_not_contains: ["60 days", "full refund no questions asked"]
+
+  - name: RAG agent does not leak internal document IDs to user
+    input: "What is our company's refund policy?"
+    trace: traces/rag-agent.json
+    tags: [rag, security]
+    expect:
+      # In a real scenario, you might not want doc IDs exposed
+      tool_called: retrieve_document
+
+  - name: RAG pipeline handles missing context gracefully
+    input: "What is the meaning of life?"
+    tags: [rag, edge-case]
+    faults:
+      vector_search:
+        type: error
+        message: "No relevant documents found"
+    expect:
+      output_not_contains: ["error", "exception"]

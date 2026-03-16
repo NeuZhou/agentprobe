@@ -1,0 +1,135 @@
+{
+  "id": "rag-agent-001",
+  "timestamp": "2026-03-16T11:30:00Z",
+  "steps": [
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T11:30:00.000Z",
+      "data": {
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "system", "content": "You are a knowledge base assistant. Use the provided tools to search and retrieve relevant documents before answering." },
+          { "role": "user", "content": "What is our company's refund policy for digital products?" }
+        ],
+        "tokens": { "input": 55, "output": 30 }
+      },
+      "duration_ms": 380
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:30:00.380Z",
+      "data": {
+        "tool_name": "embed_query",
+        "tool_args": { "text": "company refund policy digital products", "model": "text-embedding-3-small" }
+      },
+      "duration_ms": 120
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:30:00.500Z",
+      "data": {
+        "tool_name": "embed_query",
+        "tool_result": { "embedding": [0.023, -0.041, 0.089], "dimensions": 1536 }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:30:00.500Z",
+      "data": {
+        "tool_name": "vector_search",
+        "tool_args": { "embedding": [0.023, -0.041, 0.089], "top_k": 5, "collection": "policies" }
+      },
+      "duration_ms": 85
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:30:00.585Z",
+      "data": {
+        "tool_name": "vector_search",
+        "tool_result": {
+          "results": [
+            { "id": "doc-142", "title": "Digital Product Refund Policy", "score": 0.94, "chunk": "Digital products may be refunded within 14 days of purchase if the product has not been downloaded or accessed more than twice. Refunds are processed to the original payment method within 5-7 business days." },
+            { "id": "doc-143", "title": "General Return Policy", "score": 0.82, "chunk": "Physical products can be returned within 30 days. Digital products have a separate policy." },
+            { "id": "doc-87", "title": "Payment FAQ", "score": 0.71, "chunk": "We accept credit cards, PayPal, and wire transfer. Refunds follow the respective product policy." }
+          ]
+        }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:30:00.585Z",
+      "data": {
+        "tool_name": "retrieve_document",
+        "tool_args": { "document_id": "doc-142" }
+      },
+      "duration_ms": 45
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:30:00.630Z",
+      "data": {
+        "tool_name": "retrieve_document",
+        "tool_result": {
+          "id": "doc-142",
+          "title": "Digital Product Refund Policy",
+          "content": "## Digital Product Refund Policy\n\nEffective: January 1, 2026\n\n### Eligibility\n- Refund requests must be submitted within 14 days of purchase.\n- The product must not have been downloaded or accessed more than twice.\n- Subscription-based digital products are non-refundable after the first billing cycle.\n\n### Process\n1. Submit a refund request via the Help Center.\n2. Include your order number and reason for refund.\n3. Refunds are reviewed within 2 business days.\n4. Approved refunds are processed to the original payment method within 5-7 business days.\n\n### Exceptions\n- Promotional or discounted products are final sale.\n- Bundle purchases: individual items cannot be refunded separately.",
+          "last_updated": "2026-01-15"
+        }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "llm_call",
+      "timestamp": "2026-03-16T11:30:00.630Z",
+      "data": {
+        "model": "gpt-4o",
+        "messages": [
+          { "role": "assistant", "content": "I found the relevant policy document. Let me generate an answer." }
+        ],
+        "tokens": { "input": 320, "output": 120 }
+      },
+      "duration_ms": 520
+    },
+    {
+      "type": "tool_call",
+      "timestamp": "2026-03-16T11:30:01.150Z",
+      "data": {
+        "tool_name": "generate_answer",
+        "tool_args": {
+          "query": "What is our company's refund policy for digital products?",
+          "context": "Digital products may be refunded within 14 days if not downloaded/accessed more than twice. Refunds take 5-7 business days. Subscription products non-refundable after first cycle. Promo products are final sale.",
+          "source_docs": ["doc-142"]
+        }
+      },
+      "duration_ms": 400
+    },
+    {
+      "type": "tool_result",
+      "timestamp": "2026-03-16T11:30:01.550Z",
+      "data": {
+        "tool_name": "generate_answer",
+        "tool_result": {
+          "answer": "Based on our Digital Product Refund Policy, you can request a refund within 14 days of purchase, provided the product hasn't been downloaded or accessed more than twice. Approved refunds are processed to your original payment method within 5-7 business days. Note that subscription products are non-refundable after the first billing cycle, and promotional items are final sale.",
+          "confidence": 0.95
+        }
+      },
+      "duration_ms": 0
+    },
+    {
+      "type": "output",
+      "timestamp": "2026-03-16T11:30:01.550Z",
+      "data": {
+        "content": "Based on our Digital Product Refund Policy (source: doc-142), you can request a refund within 14 days of purchase, provided the product hasn't been downloaded or accessed more than twice. Approved refunds are processed to your original payment method within 5-7 business days.\n\nKey exceptions:\n- Subscription products are non-refundable after the first billing cycle\n- Promotional or discounted products are final sale\n- Bundle items cannot be refunded individually\n\nTo request a refund, submit a request via the Help Center with your order number."
+      },
+      "duration_ms": 0
+    }
+  ],
+  "metadata": {
+    "agent": "rag-assistant",
+    "version": "1.2",
+    "total_tokens": 525,
+    "retrieval_latency_ms": 250
+  }
+}
