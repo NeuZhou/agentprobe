@@ -1859,4 +1859,50 @@ if (traceEnrichParent) {
     });
 }
 
+// === Agent Safety Score ===
+import { computeSafetyScore, formatSafetyScore, loadTracesFromDir } from './safety-score';
+program
+  .command('safety-score <dir>')
+  .description('Compute an overall safety score for an agent from traces')
+  .option('-b, --budget <usd>', 'Budget in USD', '1.0')
+  .action((dir: string, opts: { budget: string }) => {
+    const traces = loadTracesFromDir(dir);
+    if (traces.length === 0) {
+      console.error(chalk.yellow('No traces found in ' + dir));
+      process.exit(1);
+    }
+    const result = computeSafetyScore(traces, parseFloat(opts.budget));
+    console.log(formatSafetyScore(result));
+    process.exit(result.overall >= 50 ? 0 : 1);
+  });
+
+// === Canary Testing ===
+import { loadCanaryConfig, createCanaryState, formatCanaryState } from './canary';
+program
+  .command('canary <configFile>')
+  .description('Show canary testing configuration and state')
+  .action((configFile: string) => {
+    if (!fs.existsSync(configFile)) {
+      console.error(chalk.red(`❌ File not found: ${configFile}`));
+      process.exit(1);
+    }
+    const config = loadCanaryConfig(configFile);
+    const state = createCanaryState(config);
+    console.log(formatCanaryState(state));
+  });
+
+// === Trace Lineage ===
+import { loadTraceLineage, formatLineage } from './lineage';
+program
+  .command('lineage <traceFile>')
+  .description('Show trace provenance and lineage')
+  .action((traceFile: string) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const lineage = loadTraceLineage(traceFile);
+    console.log(formatLineage(lineage));
+  });
+
 program.parse();

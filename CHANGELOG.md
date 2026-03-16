@@ -5,6 +5,16 @@ All notable changes to AgentProbe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-03-16
+
+### Added
+- **Agent Safety Score** (`safety-score`) — compute PII protection, tool safety, prompt injection resistance, cost control, error handling, and data hygiene scores from traces
+- **Canary Testing** (`canary`) — gradual rollout with metric evaluation, promotion, and automatic rollback
+- **Trace Lineage** (`lineage`) — track trace provenance, modifications, and usage across tests/reports
+- **Intelligent Test Retry** — smart retry with exponential/linear/fixed backoff, error classification, skip deterministic failures (`skip_on: [assertion_failed]`)
+- **Test Execution Hooks** (`hooks`) — programmatic `beforeAll`, `afterAll`, `beforeEach`, `afterEach`, `onFailure` with YAML config support
+- 35+ new tests covering all new features
+
 ## [2.0.0] - 2026-03-16
 
 ### 🎉 Major Release — Production Ready
