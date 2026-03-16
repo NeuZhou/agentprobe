@@ -347,8 +347,18 @@ export { loadProfiles, resolveProfile, validateProfile, applyProfile, formatProf
 export type { EnvironmentProfile, ProfilesConfig } from './profiles';
 
 // Enhanced Plugin System
-export { registerPlugin, unregisterPlugin, getRegisteredPlugins, getPlugin, clearAllPlugins, runPluginHook, watchPlugin, unwatchPlugin } from './plugins';
+export { registerPlugin, unregisterPlugin, getRegisteredPlugins, getPlugin, clearAllPlugins, runPluginHook, watchPlugin, unwatchPlugin, PluginManager } from './plugins';
 export type { AgentProbePlugin, PluginHooks } from './plugins';
+
+// Built-in Plugins
+export { createCostTrackerPlugin, CostTracker } from './plugins/cost-tracker';
+export type { CostTrackerConfig, CostRecord } from './plugins/cost-tracker';
+export { createRetryPlugin, SmartRetryTracker } from './plugins/retry';
+export type { SmartRetryConfig, RetryRecord } from './plugins/retry';
+export { createCachePlugin, LLMCache } from './plugins/cache';
+export type { CacheConfig, CacheEntry, CacheStats } from './plugins/cache';
+export { createCoveragePlugin, CoverageTracker } from './plugins/coverage';
+export type { CoverageMetric, CoverageReport } from './plugins/coverage';
 
 // v2.6.0 — Benchmark Suite
 export { getStandardBenchmark, loadBenchmarkSuite, scoreBenchmark, formatBenchmarkReport, listBenchmarkSuiteNames } from './benchmark-suite';

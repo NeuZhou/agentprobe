@@ -252,6 +252,60 @@ export function getPlugin(name: string): AgentProbePlugin | undefined {
   return registeredPlugins.get(name);
 }
 
+// ===== Plugin Manager (OOP wrapper) =====
+
+export class PluginManager {
+  private baseDir?: string;
+
+  constructor(baseDir?: string) {
+    this.baseDir = baseDir;
+  }
+
+  register(plugin: AgentProbePlugin): void {
+    registerPlugin(plugin);
+  }
+
+  loadFromFile(pluginPath: string): AgentProbePlugin {
+    return loadPlugin(pluginPath, this.baseDir);
+  }
+
+  loadFromPackage(name: string): AgentProbePlugin {
+    // npm packages follow the convention agentprobe-plugin-*
+    const packageName = name.startsWith('agentprobe-plugin-') ? name : `agentprobe-plugin-${name}`;
+    try {
+      const mod = require(packageName);
+      const plugin: AgentProbePlugin = mod.default ?? mod;
+      if (!plugin.name) plugin.name = name;
+      this.register(plugin);
+      return plugin;
+    } catch (err: any) {
+      throw new Error(`Failed to load plugin package "${packageName}": ${err.message}`);
+    }
+  }
+
+  unregister(name: string): boolean {
+    return unregisterPlugin(name);
+  }
+
+  get(name: string): AgentProbePlugin | undefined {
+    return getPlugin(name);
+  }
+
+  getAll(): AgentProbePlugin[] {
+    return getRegisteredPlugins();
+  }
+
+  getHooks(hookName: keyof PluginHooks): Function[] {
+    return pluginHooks
+      .map((h) => (h as any)[hookName])
+      .filter((fn): fn is Function => typeof fn === 'function');
+  }
+
+  clear(): void {
+    clearAllPlugins();
+  }
+}
+
 /**
  * Clear all registered plugins and watchers (for testing).
  */
