@@ -2673,4 +2673,59 @@ program
     }
   });
 
+// ─── MCP Server ──────────────────────────────────────────────────────
+import { AgentProbeMCPServer } from './mcp-server';
+import { generateMCPConfig, formatMCPConfig, listMCPClients } from './mcp-config';
+import type { MCPClientType } from './mcp-config';
+
+const mcp = program.command('mcp').description('MCP (Model Context Protocol) server - expose AgentProbe as tools for AI agents');
+
+mcp
+  .command('serve')
+  .description('Start MCP server (JSON-RPC over stdio)')
+  .option('--debug', 'Enable debug logging to stderr')
+  .option('--cwd <dir>', 'Working directory for file resolution')
+  .action((opts: any) => {
+    const server = new AgentProbeMCPServer({
+      cwd: opts.cwd,
+      debug: opts.debug,
+    });
+    server.start();
+  });
+
+mcp
+  .command('config')
+  .description('Generate MCP client configuration')
+  .option('--client <type>', 'Client type: claude, cursor, openclaw, generic', 'claude')
+  .option('--name <name>', 'Server name in config', 'agentprobe')
+  .option('--command <cmd>', 'Custom command path')
+  .action((opts: any) => {
+    const client = opts.client as MCPClientType;
+    const supported = listMCPClients();
+    if (!supported.includes(client)) {
+      console.error(chalk.red(`Unknown client: ${client}. Supported: ${supported.join(', ')}`));
+      process.exit(1);
+    }
+    const config = generateMCPConfig(client, { name: opts.name, command: opts.command });
+    console.log(formatMCPConfig(config));
+  });
+
+mcp
+  .command('tools')
+  .description('List available MCP tools')
+  .action(() => {
+    const server = new AgentProbeMCPServer();
+    const tools = server.getTools();
+    console.log(chalk.cyan(`\n🔧 AgentProbe MCP Tools (${tools.length})`));
+    console.log('='.repeat(40));
+    for (const tool of tools) {
+      console.log(`  ${chalk.green(tool.name)}`);
+      console.log(`    ${tool.description}`);
+      const required = tool.inputSchema.required ?? [];
+      if (required.length > 0) {
+        console.log(`    Required: ${required.join(', ')}`);
+      }
+    }
+  });
+
 program.parse();

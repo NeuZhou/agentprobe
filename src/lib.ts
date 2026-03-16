@@ -290,6 +290,18 @@ export type { ErrorInfo, ErrorCategory } from './errors';
 export { compressTrace, decompressTrace, compressDirectory, decompressDirectory, compressToFile, decompressFromFile, formatCompressionStats } from './compress';
 export type { CompressedArchive, CompressedEntry, CompressionStats } from './compress';
 
+// MCP Server
+export { AgentProbeMCPServer, startMCPServer } from './mcp-server';
+export type { MCPToolDefinition, MCPServerOptions } from './mcp-server';
+
+// MCP Protocol
+export { ErrorCodes, encodeMessage, parseMessages, createRequest, createResponse, createErrorResponse, createNotification, validateRequest, isNotification, isResponse } from './mcp-protocol';
+export type { JSONRPCRequest, JSONRPCResponse, JSONRPCNotification, JSONRPCError, JSONRPCMessage } from './mcp-protocol';
+
+// MCP Config
+export { generateMCPConfig, generateClaudeConfig, generateCursorConfig, generateOpenClawConfig, formatMCPConfig, listMCPClients } from './mcp-config';
+export type { MCPClientType, MCPConfigOptions, MCPClientConfig } from './mcp-config';
+
 // MCP Server Testing
 export { evaluateMCPExpectations, validateMCPSuite, evaluateMCPSuite, buildMockMCPResult, formatMCPResults, analyzeMCPSecurity, formatMCPSecurity, isDangerousTool } from './mcp-test';
 export type { MCPServerConfig, MCPExpectations, MCPTestCase, MCPTestSuite, MCPToolInfo, MCPToolResult, MCPTestResult, MCPSuiteResult, MCPSecurityCheck, MCPSecurityCheckItem, MCPSecurityReport } from './mcp-test';
