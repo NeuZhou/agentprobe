@@ -846,6 +846,117 @@ program
   });
 
 import { searchTraces, formatSearchResults } from './search';
+import { diffRuns, formatRunDiff } from './reporters/diff';
+import { searchPlugins, installPlugin, formatMarketplace } from './marketplace';
+import { exportTrace, listExportFormats } from './export';
+import type { ExportFormat } from './export';
+import { generateDependencyGraph, formatDependencyGraph } from './deps';
+import type { DepTestCase } from './deps';
+
+// ===== Diff command (compare two run results) =====
+program
+  .command('diff <oldReport> <newReport>')
+  .description('Compare two test run JSON reports side-by-side')
+  .action((oldFile: string, newFile: string) => {
+    if (!fs.existsSync(oldFile)) {
+      console.error(chalk.red(`❌ File not found: ${oldFile}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(newFile)) {
+      console.error(chalk.red(`❌ File not found: ${newFile}`));
+      process.exit(1);
+    }
+    const oldRun = JSON.parse(fs.readFileSync(oldFile, 'utf-8'));
+    const newRun = JSON.parse(fs.readFileSync(newFile, 'utf-8'));
+    const d = diffRuns(oldRun, newRun);
+    console.log(formatRunDiff(d));
+  });
+
+// ===== Plugin marketplace =====
+const plugin = program.command('plugin').description('Plugin marketplace — list and install community plugins');
+
+plugin
+  .command('list')
+  .description('Search for agentprobe plugins on npm')
+  .option('-q, --query <query>', 'Filter plugins by name')
+  .action((opts: { query?: string }) => {
+    const result = searchPlugins(opts.query);
+    console.log(formatMarketplace(result));
+  });
+
+plugin
+  .command('install <name>')
+  .description('Install a community plugin')
+  .option('-g, --global', 'Install globally')
+  .action((name: string, opts: { global?: boolean }) => {
+    const result = installPlugin(name, { global: opts.global });
+    if (result.success) {
+      console.log(chalk.green(`✅ ${result.message}`));
+    } else {
+      console.error(chalk.red(`❌ ${result.message}`));
+      process.exit(1);
+    }
+  });
+
+// ===== Trace export =====
+trace
+  .command('export <traceFile>')
+  .description('Export a trace to OpenTelemetry, LangSmith, or CSV format')
+  .requiredOption('--format <format>', 'Export format: opentelemetry, langsmith, csv')
+  .option('-o, --output <path>', 'Output file (stdout if omitted)')
+  .option('--service-name <name>', 'Service name for OpenTelemetry export')
+  .action((traceFile: string, opts: { format: string; output?: string; serviceName?: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const formats = listExportFormats();
+    if (!formats.includes(opts.format)) {
+      console.error(chalk.red(`❌ Unknown format: ${opts.format}. Supported: ${formats.join(', ')}`));
+      process.exit(1);
+    }
+    const t = loadTrace(traceFile);
+    const output = exportTrace(t, {
+      format: opts.format as ExportFormat,
+      serviceName: opts.serviceName,
+    });
+    if (opts.output) {
+      const dir = path.dirname(opts.output);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(opts.output, output);
+      console.log(chalk.green(`✅ Exported to ${opts.output} (${opts.format})`));
+    } else {
+      console.log(output);
+    }
+  });
+
+// ===== Dependencies graph =====
+program
+  .command('deps <suiteFile>')
+  .description('Show test dependency graph')
+  .option('--graph', 'Output Mermaid diagram')
+  .option('-o, --output <path>', 'Write diagram to file')
+  .action((suiteFile: string, opts: { graph?: boolean; output?: string }) => {
+    if (!fs.existsSync(suiteFile)) {
+      console.error(chalk.red(`❌ File not found: ${suiteFile}`));
+      process.exit(1);
+    }
+    const raw = fs.readFileSync(suiteFile, 'utf-8');
+    const suite = YAML.parse(raw);
+    const tests: DepTestCase[] = suite.tests ?? [];
+
+    if (opts.graph) {
+      const mermaid = generateDependencyGraph(tests);
+      if (opts.output) {
+        fs.writeFileSync(opts.output, mermaid);
+        console.log(chalk.green(`✅ Dependency graph → ${opts.output}`));
+      } else {
+        console.log(mermaid);
+      }
+    } else {
+      console.log(formatDependencyGraph(tests));
+    }
+  });
 
 // ===== Search command =====
 program

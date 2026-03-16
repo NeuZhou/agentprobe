@@ -84,6 +84,67 @@ export function buildExecutionPlan(tests: DepTestCase[]): ExecutionPlan {
 /**
  * Check if a test should be skipped because a dependency failed.
  */
+/**
+ * Generate a Mermaid diagram of test dependencies.
+ */
+export function generateDependencyGraph(tests: DepTestCase[]): string {
+  const lines: string[] = ['graph TD'];
+
+  // Add all nodes
+  for (const test of tests) {
+    const id = sanitizeMermaidId(test.id ?? test.name);
+    const label = test.name.replace(/"/g, "'");
+    lines.push(`  ${id}["${label}"]`);
+  }
+
+  // Add edges
+  for (const test of tests) {
+    const testId = sanitizeMermaidId(test.id ?? test.name);
+    if (test.depends_on) {
+      const deps = Array.isArray(test.depends_on) ? test.depends_on : [test.depends_on];
+      for (const dep of deps) {
+        const depId = sanitizeMermaidId(dep);
+        lines.push(`  ${depId} --> ${testId}`);
+      }
+    }
+  }
+
+  return lines.join('\n');
+}
+
+function sanitizeMermaidId(id: string): string {
+  return id.replace(/[^a-zA-Z0-9_]/g, '_');
+}
+
+/**
+ * Format dependency graph info for terminal display.
+ */
+export function formatDependencyGraph(tests: DepTestCase[]): string {
+  const plan = buildExecutionPlan(tests);
+  const lines: string[] = ['📊 Test Dependency Graph\n'];
+
+  for (let i = 0; i < plan.groups.length; i++) {
+    lines.push(`  Group ${i + 1} (parallel):`);
+    for (const test of plan.groups[i]) {
+      const deps = test.depends_on
+        ? Array.isArray(test.depends_on) ? test.depends_on : [test.depends_on]
+        : [];
+      const depStr = deps.length > 0 ? ` ← depends on: ${deps.join(', ')}` : '';
+      lines.push(`    • ${test.id ?? test.name}${depStr}`);
+    }
+  }
+
+  lines.push('\n  Mermaid diagram:');
+  lines.push('  ```mermaid');
+  lines.push('  ' + generateDependencyGraph(tests).split('\n').join('\n  '));
+  lines.push('  ```');
+
+  return lines.join('\n');
+}
+
+/**
+ * Check if a test should be skipped because a dependency failed.
+ */
 export function shouldSkip(
   test: DepTestCase,
   completedResults: Map<string, boolean>,

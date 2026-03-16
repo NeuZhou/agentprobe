@@ -112,6 +112,25 @@ export type { SearchOptions, SearchMatch, SearchResult } from './search';
 export { sampleTraces, sampleFiles } from './sampling';
 export type { SamplingOptions } from './sampling';
 
+// Config file support
+export { loadExtendedConfig, getDefaultAdapter, getAdapterConfig, resolveOutputDir } from './config-file';
+export type { ExtendedConfig, AdapterConfig } from './config-file';
+
+// Diff reporter
+export { diffRuns, formatRunDiff } from './reporters/diff';
+export type { RunDiff } from './reporters/diff';
+
+// Plugin marketplace
+export { searchPlugins, installPlugin, uninstallPlugin, formatMarketplace } from './marketplace';
+export type { MarketplacePlugin, MarketplaceSearchResult } from './marketplace';
+
+// Trace export
+export { exportTrace, listExportFormats } from './export';
+export type { ExportFormat, ExportOptions } from './export';
+
+// Dependencies graph
+export { generateDependencyGraph, formatDependencyGraph } from './deps';
+
 // Types - re-export everything
 export type {
   AgentTrace,

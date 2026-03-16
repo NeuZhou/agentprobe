@@ -3,6 +3,16 @@
 All notable changes to AgentProbe will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+
+## [1.2.0] - 2026-03-16
+
+### Added
+- **Config File Support** (`src/config-file.ts`): Load `.agentproberc.yml` / `agentprobe.config.ts` with adapter settings, parallel, timeout, reporter, output_dir, and env_file options
+- **Diff Reporter** (`src/reporters/diff.ts`): Compare two test run JSON reports side-by-side showing regressions, improvements, new passes/failures (`agentprobe diff`)
+- **Plugin Marketplace** (`src/marketplace.ts`): List/install community plugins via `agentprobe plugin list` and `agentprobe plugin install <name>` with npm-based discovery
+- **Trace Export** (`src/export.ts`): Export traces to OpenTelemetry, LangSmith, and CSV formats (`agentprobe trace export --format <fmt>`)
+- **Dependency Graph** (enhanced `src/deps.ts`): Generate Mermaid diagrams of test dependencies (`agentprobe deps --graph`)
+- 38 new tests covering all new features (448 total)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.1.0] - 2026-03-16
