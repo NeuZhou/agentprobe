@@ -600,3 +600,22 @@ export {
 export type {
   SnapshotRecord, SnapshotStatus, ApprovalState, ApprovalSummary, SnapshotFieldDiff,
 } from './snapshot-approval';
+
+// v4.3.0 - Fluent Assertion Builder
+export {
+  AssertionBuilder,
+} from './assertion-builder';
+export type {
+  AssertionTarget, AssertionCheck, AssertionCheckResult, BuiltAssertion,
+} from './assertion-builder';
+export type { AssertionResult as FluentAssertionResult } from './assertion-builder';
+
+// v4.3.0 - Test Generator from Docs
+export {
+  generateFromDocs, generateFromOpenAPIFile, generateFromOpenAPISpec,
+  generateFromMarkdown, generateFromMarkdownFile, parseMarkdownEndpoints,
+  formatDocGenStats,
+} from './doc-gen';
+export type {
+  DocGenOptions, DocGenResult, DocGenStats, MarkdownEndpoint,
+} from './doc-gen';

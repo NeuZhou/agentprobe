@@ -2639,4 +2639,38 @@ snapshotCmd
     }
   });
 
+// ─── gen-from-docs ───────────────────────────────────────────────────
+import { generateFromDocs, formatDocGenStats } from './doc-gen';
+
+program
+  .command('gen-from-docs')
+  .description('Generate test suites from API documentation')
+  .argument('<file>', 'Path to OpenAPI spec (YAML/JSON) or Markdown API docs')
+  .option('--agent <name>', 'Agent module name', 'default-agent')
+  .option('--output <file>', 'Output file path')
+  .option('--no-happy-path', 'Skip happy path tests')
+  .option('--no-error-handling', 'Skip error handling tests')
+  .option('--no-edge-cases', 'Skip edge case tests')
+  .option('--security', 'Include security tests')
+  .option('--max-per-endpoint <n>', 'Max tests per endpoint', '5')
+  .option('--tags <tags>', 'Filter by tags (comma-separated)')
+  .action(async (file: string, opts: any) => {
+    const result = generateFromDocs(file, {
+      agent: opts.agent,
+      includeHappyPath: opts.happyPath !== false,
+      includeErrorHandling: opts.errorHandling !== false,
+      includeEdgeCases: opts.edgeCases !== false,
+      includeSecurity: opts.security ?? false,
+      maxTestsPerEndpoint: parseInt(opts.maxPerEndpoint, 10),
+      tags: opts.tags ? opts.tags.split(',') : [],
+    });
+    console.log(chalk.green(formatDocGenStats(result.stats)));
+    if (opts.output) {
+      fs.writeFileSync(opts.output, result.yaml, 'utf-8');
+      console.log(chalk.cyan(`Written to ${opts.output}`));
+    } else {
+      console.log(result.yaml);
+    }
+  });
+
 program.parse();
