@@ -1,6 +1,6 @@
 {
   "name": "@neuzhou/agentprobe",
-  "version": "4.4.0",
+  "version": "4.5.0",
   "description": "🔬 Playwright for AI Agents - Test, record, and replay agent behaviors",
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
@@ -64,7 +64,12 @@
     "./orchestrator": "./dist/orchestrator.js",
     "./mcp-server": "./dist/mcp-server.js",
     "./mcp-protocol": "./dist/mcp-protocol.js",
-    "./mcp-config": "./dist/mcp-config.js"
+    "./mcp-config": "./dist/mcp-config.js",
+    "./playground": "./dist/playground.js",
+    "./reporters/json": "./dist/reporters/json.js",
+    "./reporters/markdown": "./dist/reporters/markdown.js",
+    "./reporters/github": "./dist/reporters/github.js",
+    "./fixtures": "./dist/fixtures.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"

@@ -2,6 +2,17 @@
 
 All notable changes to AgentProbe are documented here.
 
+## [4.5.0] - 2026-03-17
+
+### Added
+- **Agent Playground** (`src/playground.ts`) — Interactive test playground with session management, message sending, tool calling, recording to YAML, and replay with assertions
+- **Test Reporter Plugins** — Multiple output formats:
+  - `reporters/json.ts` — Structured JSON report with token/cost/summary metadata
+  - `reporters/markdown.ts` — Detailed Markdown report with summary tables, failures, and cost breakdown
+  - `reporters/github.ts` — GitHub Actions annotations (`::error`, `::warning`, `::notice`) with step summary for `GITHUB_STEP_SUMMARY`
+- **Fixture Manager** (`src/fixtures.ts`) — `FixtureManager` class for reusable test setup/teardown with built-in fixtures: `mockLLM`, `mockTools`, `traceCapture`, `costTracker`
+- 47 new tests covering all v4.5.0 features
+
 ## [4.3.0] - 2026-03-16
 
 ### Changed

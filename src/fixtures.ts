@@ -85,3 +85,138 @@ export function restoreEnv(original: Record<string, string | undefined>): void {
     }
   }
 }
+
+// ─── Fixture Manager (v4.5.0) ────────────────────────────────────────
+
+export interface FixtureDefinition {
+  name: string;
+  setup: () => any;
+  teardown?: (ctx: any) => void;
+}
+
+/**
+ * Reusable test setup/teardown manager.
+ *
+ * Built-in fixtures: mockLLM, mockTools, traceCapture, costTracker
+ */
+export class FixtureManager {
+  private fixtures = new Map<string, FixtureDefinition>();
+  private activeContexts = new Map<string, any>();
+
+  constructor() {
+    this.registerBuiltins();
+  }
+
+  /**
+   * Define a named fixture with setup and optional teardown.
+   */
+  define(name: string, setup: () => any, teardown?: (ctx: any) => void): void {
+    this.fixtures.set(name, { name, setup, teardown });
+  }
+
+  /**
+   * Use (activate) a fixture — runs setup, returns context.
+   */
+  use(name: string): any {
+    const fixture = this.fixtures.get(name);
+    if (!fixture) {
+      throw new Error(`Fixture "${name}" not found. Available: ${this.list().join(', ')}`);
+    }
+    const ctx = fixture.setup();
+    this.activeContexts.set(name, ctx);
+    return ctx;
+  }
+
+  /**
+   * Teardown a specific fixture.
+   */
+  teardown(name: string): void {
+    const fixture = this.fixtures.get(name);
+    const ctx = this.activeContexts.get(name);
+    if (fixture?.teardown && ctx !== undefined) {
+      fixture.teardown(ctx);
+    }
+    this.activeContexts.delete(name);
+  }
+
+  /**
+   * Teardown all active fixtures.
+   */
+  teardownAll(): void {
+    for (const name of this.activeContexts.keys()) {
+      this.teardown(name);
+    }
+  }
+
+  /**
+   * Check if a fixture is defined.
+   */
+  has(name: string): boolean {
+    return this.fixtures.has(name);
+  }
+
+  /**
+   * List all defined fixture names.
+   */
+  list(): string[] {
+    return Array.from(this.fixtures.keys());
+  }
+
+  /**
+   * Get currently active fixture names.
+   */
+  active(): string[] {
+    return Array.from(this.activeContexts.keys());
+  }
+
+  private registerBuiltins(): void {
+    // mockLLM — provides a mock LLM that returns canned responses
+    this.define('mockLLM', () => {
+      const responses: string[] = [];
+      return {
+        responses,
+        addResponse(text: string) { responses.push(text); },
+        getResponse() { return responses.shift() ?? 'Mock LLM response'; },
+      };
+    });
+
+    // mockTools — provides a tool mock registry
+    this.define('mockTools', () => {
+      const mocks = new Map<string, any>();
+      return {
+        mock(name: string, response: any) { mocks.set(name, response); },
+        call(name: string) { return mocks.get(name) ?? { error: 'Not mocked' }; },
+        mocks,
+      };
+    });
+
+    // traceCapture — captures trace steps
+    this.define('traceCapture', () => {
+      const steps: any[] = [];
+      return {
+        steps,
+        capture(step: any) { steps.push(step); },
+        clear() { steps.length = 0; },
+        count() { return steps.length; },
+      };
+    });
+
+    // costTracker — tracks token usage and cost
+    this.define('costTracker', () => {
+      let totalInput = 0;
+      let totalOutput = 0;
+      let totalCost = 0;
+      return {
+        record(input: number, output: number, cost: number) {
+          totalInput += input;
+          totalOutput += output;
+          totalCost += cost;
+        },
+        get inputTokens() { return totalInput; },
+        get outputTokens() { return totalOutput; },
+        get cost() { return totalCost; },
+        reset() { totalInput = 0; totalOutput = 0; totalCost = 0; },
+      };
+    });
+  }
+}

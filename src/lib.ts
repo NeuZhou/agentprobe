@@ -622,6 +622,25 @@ export type {
 } from './assertion-builder';
 export type { AssertionResult as FluentAssertionResult } from './assertion-builder';
 
+// v4.5.0 - Agent Playground
+export { AgentPlayground, formatTranscript, getSessionStats } from './playground';
+export type {
+  PlaygroundConfig, PlaygroundMode, PlaygroundSession, PlaygroundMessage,
+  PlaygroundToolDef, PlaygroundToolCall, SessionAssertion,
+  ReplayOptions, ReplayAssertion, ReplayResult as PlaygroundReplayResult,
+} from './playground';
+
+// v4.5.0 - Fixture Manager
+export { FixtureManager } from './fixtures';
+export type { FixtureDefinition } from './fixtures';
+
+// v4.5.0 - Reporter Plugins
+export { reportJSON as reportJSONDetailed } from './reporters/json';
+export type { JSONReport, JSONTestEntry } from './reporters/json';
+export { reportMarkdownDetailed } from './reporters/markdown';
+export { reportGitHub, formatAnnotation, generateStepSummary, parseAnnotations } from './reporters/github';
+export type { GitHubAnnotation } from './reporters/github';
+
 // v4.3.0 - Test Generator from Docs
 export {
   generateFromDocs, generateFromOpenAPIFile, generateFromOpenAPISpec,
