@@ -193,8 +193,13 @@ export type ReportFormat = 'console' | 'json' | 'markdown' | 'html' | 'junit';
 export interface RunOptions {
   updateSnapshots?: boolean;
   tags?: string[];
+  group?: string;
   coverage?: boolean;
   declaredTools?: string[];
   envFile?: string;
   badge?: string;
+}
+
+export interface TestSuiteGroups {
+  [groupName: string]: string[];
 }

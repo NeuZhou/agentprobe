@@ -41,8 +41,13 @@ import { parseMatrixOptions, loadMatrixTests, buildMatrixResult, formatMatrix } 
 import { loadPerfReport, detectPerfChanges, formatPerfChanges } from './perf-regression';
 import { deterministicReplay, formatDeterministicReplay } from './replay';
 import { loadOpenAPISpec, generateFromOpenAPI, formatOpenAPITests } from './openapi';
-import { visualizeTrace, traceToMermaid, traceToText, traceToHtml } from './viz';
+import { visualizeTrace } from './viz';
 import type { VizFormat } from './viz';
+
+import { runABTest, formatABTest } from './ab-test';
+import { loadTraces, buildFingerprint, formatFingerprint } from './fingerprint';
+import { loadSLAConfig, loadReports, checkSLA, formatSLACheck } from './sla';
+import { enrichTraceDir, formatEnrichment } from './enrich';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -88,6 +93,7 @@ program
   .option('-w, --watch', 'Watch mode: re-run tests on file change')
   .option('-u, --update-snapshots', 'Update snapshot files')
   .option('-t, --tag <tags...>', 'Filter tests by tags')
+  .option('-g, --group <name>', 'Filter tests by group name')
   .option('--coverage', 'Show tool coverage report')
   .option('--tools <tools...>', 'Declared tools for coverage (space-separated)')
   .option('--compare-baseline', 'Compare results against saved baseline')
@@ -105,6 +111,7 @@ program
         watch?: boolean;
         updateSnapshots?: boolean;
         tag?: string[];
+        group?: string;
         coverage?: boolean;
         tools?: string[];
         compareBaseline?: boolean;
@@ -246,6 +253,7 @@ program
         const result = await runSuite(sp, {
           updateSnapshots: opts.updateSnapshots,
           tags: opts.tag,
+          group: opts.group,
           envFile: opts.envFile,
         });
         const output = report(result, opts.format as ReportFormat);
@@ -1771,5 +1779,84 @@ templateCmd
       process.exit(1);
     }
   });
+
+// === A/B Testing ===
+program
+  .command('ab-test')
+  .description('Compare two agent models with statistical significance')
+  .requiredOption('-a, --model-a <model>', 'First model to test')
+  .requiredOption('-b, --model-b <model>', 'Second model to test')
+  .requiredOption('-s, --suite <path>', 'Test suite YAML file')
+  .option('-n, --runs <n>', 'Number of runs per model', '5')
+  .action(async (opts: { modelA: string; modelB: string; suite: string; runs: string }) => {
+    try {
+      const result = await runABTest({
+        modelA: opts.modelA,
+        modelB: opts.modelB,
+        suitePath: opts.suite,
+        runs: parseInt(opts.runs, 10),
+      });
+      console.log(formatABTest(result));
+      process.exit(result.modelA.passRate >= result.modelB.passRate ? 0 : 1);
+    } catch (e: any) {
+      console.error(chalk.red(`Error: ${e.message}`));
+      process.exit(1);
+    }
+  });
+
+// === Agent Fingerprinting ===
+program
+  .command('fingerprint <dir>')
+  .description('Create a behavioral fingerprint from trace files')
+  .action((dir: string) => {
+    try {
+      const traces = loadTraces(dir);
+      if (traces.length === 0) {
+        console.error(chalk.yellow('No traces found in ' + dir));
+        process.exit(1);
+      }
+      const fp = buildFingerprint(traces);
+      console.log(formatFingerprint(fp));
+    } catch (e: any) {
+      console.error(chalk.red(`Error: ${e.message}`));
+      process.exit(1);
+    }
+  });
+
+// === SLA Monitoring ===
+program
+  .command('sla-check')
+  .description('Check reports against SLA thresholds')
+  .requiredOption('-c, --config <path>', 'SLA config YAML file')
+  .requiredOption('-d, --data <dir>', 'Reports directory')
+  .action((opts: { config: string; data: string }) => {
+    try {
+      const slaConfig = loadSLAConfig(opts.config);
+      const reports = loadReports(opts.data);
+      const result = checkSLA(slaConfig, reports);
+      console.log(formatSLACheck(result));
+      process.exit(result.passing ? 0 : 1);
+    } catch (e: any) {
+      console.error(chalk.red(`Error: ${e.message}`));
+      process.exit(1);
+    }
+  });
+
+// === Trace Enrichment (subcommand of existing trace) ===
+const traceEnrichParent = program.commands.find(c => c.name() === 'trace');
+if (traceEnrichParent) {
+  traceEnrichParent
+    .command('enrich <dir>')
+    .description('Auto-enrich traces with computed metadata')
+    .action((dir: string) => {
+      try {
+        const result = enrichTraceDir(dir);
+        console.log(formatEnrichment(result));
+      } catch (e: any) {
+        console.error(chalk.red(`Error: ${e.message}`));
+        process.exit(1);
+      }
+    });
+}
 
 program.parse();

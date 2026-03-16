@@ -5,7 +5,7 @@
  * showing the flow between User, Agent, and Tools.
  */
 
-import type { AgentTrace, TraceStep } from './types';
+import type { AgentTrace } from './types';
 
 export type VizFormat = 'mermaid' | 'text' | 'html';
 

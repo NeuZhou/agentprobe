@@ -292,9 +292,15 @@ export async function runSuite(suitePath: string, options?: RunOptions): Promise
     }
   }
 
-  // Expand parameterized tests, then filter by tags
+  // Expand parameterized tests, then filter by tags and groups
   let tests = expandTests(suite.tests);
   tests = filterByTags(tests, options?.tags);
+  if (options?.group && (suite as any).groups) {
+    const groupIds: string[] = (suite as any).groups[options.group] || [];
+    if (groupIds.length > 0) {
+      tests = tests.filter(t => t.id && groupIds.includes(t.id) || groupIds.includes(t.name));
+    }
+  }
 
   const isParallel = suite.config?.parallel ?? false;
   const maxConcurrency = suite.config?.max_concurrency ?? 4;
