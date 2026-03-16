@@ -6,13 +6,10 @@
 
 **Test, secure, and observe your AI agents with the same rigor you test your UI.**
 
-[![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe?style=flat-square&color=blue)](https://www.npmjs.com/package/@neuzhou/agentprobe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/github/actions/workflow/status/kazhou2024/agentprobe/ci.yml?style=flat-square&label=tests)](https://github.com/neuzhou/agentprobe/actions)
-[![License: MIT](https://img.shields.io/npm/l/@neuzhou/agentprobe?style=flat-square)](./LICENSE)
-[![Downloads](https://img.shields.io/npm/dm/@neuzhou/agentprobe?style=flat-square)](https://www.npmjs.com/package/@neuzhou/agentprobe)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
 
-[Quick Start](#-quick-start) · [Features](#-feature-showcase) · [CLI](#-cli) · [Adapters](#-adapters) · [Docs](./docs/)
+[Quick Start](#-quick-start) · [Features](#-features) · [CLI](#-cli-reference) · [Adapters](#-adapters) · [Roadmap](#-roadmap)
 
 </div>
 
@@ -25,8 +22,6 @@ You test your UI. You test your API. You test your database queries.
 **But who tests your AI agent?**
 
 Your agent decides which tools to call, what data to trust, and how to respond to users. One bad prompt and it leaks PII. One missed tool call and your workflow breaks silently. One jailbreak and your agent says things your company would never approve.
-
-Yet most teams ship agents with nothing more than "it seems to work" and a prayer.
 
 **AgentProbe fixes this.** Define expected behaviors in YAML. Run them against any LLM. Get deterministic pass/fail results. Catch regressions before your users do.
 
@@ -60,7 +55,7 @@ Run it:
 npx agentprobe run tests/hello.test.yaml
 ```
 
-That's it. **4 assertions, 1 YAML file, zero boilerplate.**
+**4 assertions, 1 YAML file, zero boilerplate.**
 
 Or use the programmatic API:
 
@@ -81,29 +76,7 @@ console.log(result.passed ? '✅ Passed' : '❌ Failed');
 
 ---
 
-## 💡 What Makes AgentProbe Different
-
-Most LLM testing tools focus on **prompt evaluation** — feeding inputs and checking outputs. AgentProbe tests the **full agent lifecycle**: tool calls, multi-turn conversations, security boundaries, orchestration flows, and compliance.
-
-| | AgentProbe | promptfoo | deepeval | ragas |
-|---|---|---|---|---|
-| **Focus** | Full agent behavior | Prompt eval | LLM output quality | RAG pipelines |
-| **Tool call testing** | ✅ Mock, fault inject, verify | ❌ | ❌ | ❌ |
-| **Security scanning** | ✅ Injection, jailbreak, PII | ⚠️ Basic | ⚠️ Basic | ❌ |
-| **Chaos testing** | ✅ Fault injection, timeouts | ❌ | ❌ | ❌ |
-| **Multi-agent orchestration** | ✅ End-to-end | ❌ | ❌ | ❌ |
-| **Contract testing** | ✅ Schema + behavioral | ❌ | ❌ | ❌ |
-| **Compliance (GDPR/SOC2/HIPAA)** | ✅ Built-in | ❌ | ❌ | ❌ |
-| **MCP security analysis** | ✅ | ❌ | ❌ | ❌ |
-| **Trace recording & replay** | ✅ | ❌ | ❌ | ❌ |
-| **Performance profiling** | ✅ Latency, cost, bottlenecks | ⚠️ Basic | ⚠️ Basic | ❌ |
-| **Test definition** | YAML + TypeScript | YAML | Python | Python |
-
-**Think of it this way:** promptfoo tests your prompts. deepeval tests your outputs. ragas tests your RAG. **AgentProbe tests your agent.**
-
----
-
-## 🎯 Feature Showcase
+## ✅ Features
 
 ### Behavioral Testing
 
@@ -119,35 +92,28 @@ tests:
         lookup_subscription: { user_id: "{{user_id}}" }
       response_contains: "cancel"
       response_tone: "empathetic"
-      no_tool_called: delete_account    # safety guardrail
+      no_tool_called: delete_account
       max_steps: 4
-
-  - input: "Transfer me to a human"
-    expect:
-      tool_called: escalate_to_human
-      response_not_contains: "I can help with that"
 ```
 
 ### Tool Mocking & Fault Injection
 
-Test how your agent handles the real world — where APIs fail, return garbage, or time out:
+Test how your agent handles the real world — where APIs fail or time out:
 
 ```typescript
 import { MockToolkit, FaultInjector } from '@neuzhou/agentprobe';
 
-// Mock external tools
 const mocks = new MockToolkit();
 mocks.register('search_flights', async (params) => ({
   flights: [{ id: 'FL123', price: 450, airline: 'United' }],
 }));
 
-// Inject faults to test resilience
 const faults = new FaultInjector();
 faults.add({
   tool: 'payment_api',
-  fault: 'timeout',        // also: 'error', 'corrupt', 'partial'
+  fault: 'timeout',
   probability: 0.5,
-  after: 2,                // fail after 2 successful calls
+  after: 2,
 });
 ```
 
@@ -166,15 +132,11 @@ chaos:
     - type: malformed_response
       tool: database_query
       corrupt: truncate_json
-    - type: rate_limit
-      tool: external_api
-      status: 429
-      retry_after: 60
 tests:
   - input: "Look up order #12345"
     expect:
       response_contains: "try again"
-      no_error: true               # agent should handle gracefully
+      no_error: true
 ```
 
 ### Security Scanning
@@ -197,11 +159,6 @@ tests:
       response_not_contains: "123-45-6789"
 ```
 
-```bash
-# Or run the built-in security scanner
-agentprobe security tests/ --depth deep
-```
-
 ### LLM-as-Judge
 
 Use a stronger model to evaluate nuanced quality:
@@ -214,15 +171,13 @@ tests:
         model: gpt-4o
         criteria: "Response should be simple, use analogies, avoid jargon"
         min_score: 0.8
-      response_tone: "friendly"
 ```
 
 ### Contract Testing
 
-Enforce strict behavioral contracts for agent APIs:
+Enforce strict behavioral contracts:
 
 ```yaml
-# contracts/booking-agent.contract.yaml
 contract:
   name: booking-agent-v2
   version: "2.0"
@@ -238,13 +193,9 @@ contract:
     required: [response, confidence]
 ```
 
-```bash
-agentprobe contract verify contracts/booking-agent.contract.yaml
-```
-
 ### Multi-Agent Orchestration Testing
 
-Test complex agent-to-agent workflows end-to-end:
+Test agent-to-agent workflows:
 
 ```typescript
 import { evaluateOrchestration } from '@neuzhou/agentprobe';
@@ -261,42 +212,15 @@ const result = await evaluateOrchestration({
 });
 ```
 
-### Performance Profiling
+### MCP Security Analysis
 
-Find latency bottlenecks and track costs:
-
-```bash
-agentprobe profile tests/ --runs 10
-
-# Output:
-# ┌─────────────────┬──────────┬──────────┬──────────┬─────────┐
-# │ Test             │ P50 (ms) │ P95 (ms) │ P99 (ms) │ Cost $  │
-# ├─────────────────┼──────────┼──────────┼──────────┼─────────┤
-# │ booking-flow     │ 1,240    │ 2,890    │ 4,100    │ $0.032  │
-# │ search-query     │ 890      │ 1,450    │ 2,200    │ $0.018  │
-# │ cancel-order     │ 2,100    │ 3,800    │ 5,500    │ $0.041  │
-# └─────────────────┴──────────┴──────────┴──────────┴─────────┘
-```
-
-### Compliance Testing (GDPR / SOC2 / HIPAA)
-
-Built-in compliance frameworks for regulated industries:
-
-```yaml
-compliance:
-  frameworks: [gdpr, soc2, hipaa]
-  rules:
-    - no_pii_in_logs: true
-    - data_retention_days: 30
-    - audit_trail: required
-    - encryption_at_rest: true
-```
+Analyze Model Context Protocol tool definitions for vulnerabilities:
 
 ```bash
-agentprobe compliance check --framework gdpr --dir tests/
+agentprobe security --mcp-config mcp.json --scan-tools
 ```
 
-### 11+ Assertion Types
+### Assertion Types
 
 | Assertion | Description |
 |---|---|
@@ -316,51 +240,23 @@ agentprobe compliance check --framework gdpr --dir tests/
 | `llm_judge` | LLM evaluates quality |
 | `response_tone` | Tone/sentiment check |
 | `json_schema` | Output matches JSON schema |
-
-### Natural Language Assertions
-
-Write assertions in plain English:
-
-```yaml
-tests:
-  - input: "What's the weather in Tokyo?"
-    expect:
-      natural_language:
-        - "Response mentions the temperature"
-        - "Response does not make up specific numbers without calling a tool"
-        - "Response is concise, under 3 sentences"
-```
-
-### MCP Security Analysis
-
-Analyze Model Context Protocol tool definitions for vulnerabilities:
-
-```bash
-agentprobe security --mcp-config mcp.json --scan-tools
-
-# Output:
-# ⚠️  Tool 'execute_sql' - SQL injection risk (no parameterized queries)
-# ⚠️  Tool 'file_read' - Path traversal risk (no path validation)
-# ✅ Tool 'search_web' - No issues found
-```
+| `natural_language` | Plain English assertions |
 
 ---
 
 ## 🔌 Adapters
 
-AgentProbe works with any LLM provider through its adapter system:
-
 | Provider | Adapter | Status |
 |---|---|---|
 | OpenAI | `openai` | ✅ Stable |
 | Anthropic | `anthropic` | ✅ Stable |
-| Google (Gemini) | `google` | ✅ Stable |
-| AWS Bedrock | `bedrock` | ✅ Stable |
-| Azure OpenAI | `azure` | ✅ Stable |
-| Cohere | `cohere` | ✅ Stable |
+| Google Gemini | `gemini` | ✅ Stable |
 | LangChain | `langchain` | ✅ Stable |
+| Ollama | `ollama` | ✅ Stable |
+| OpenAI-compatible | `openai-compatible` | ✅ Stable |
 | OpenClaw | `openclaw` | ✅ Stable |
 | Generic HTTP | `http` | ✅ Stable |
+| A2A Protocol | `a2a` | ✅ Stable |
 
 ```yaml
 # Switch adapters in one line
@@ -382,7 +278,7 @@ const probe = new AgentProbe({
 
 ---
 
-## ⌨️ CLI
+## ⌨️ CLI Reference
 
 ```bash
 agentprobe run <tests>            # Run test suites
@@ -401,39 +297,14 @@ agentprobe watch tests/           # Watch mode with hot reload
 agentprobe portal -o report.html  # Generate dashboard
 ```
 
-### CI/CD Integration
+### Reporters
 
-```bash
-# Generate CI config
-agentprobe ci github-actions   # GitHub Actions
-agentprobe ci gitlab           # GitLab CI
-agentprobe ci azure-pipelines  # Azure Pipelines
-```
-
----
-
-## 📊 Comparison
-
-| Feature | AgentProbe | promptfoo | deepeval | ragas | giskard |
-|---|:---:|:---:|:---:|:---:|:---:|
-| **Agent behavioral testing** | ✅ | ⚠️ | ❌ | ❌ | ❌ |
-| **Tool call verification** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Tool mocking & fault injection** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Chaos testing** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Security scanning** | ✅ | ⚠️ | ⚠️ | ❌ | ✅ |
-| **MCP security analysis** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Multi-agent orchestration** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Contract testing** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Compliance frameworks** | ✅ | ❌ | ❌ | ❌ | ⚠️ |
-| **LLM-as-Judge** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Trace recording & replay** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **Performance profiling** | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
-| **RAG evaluation** | ⚠️ | ✅ | ✅ | ✅ | ✅ |
-| **Prompt evaluation** | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **YAML test definitions** | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **OpenTelemetry export** | ✅ | ❌ | ❌ | ❌ | ❌ |
-| **CI/CD integration** | ✅ | ✅ | ✅ | ⚠️ | ⚠️ |
-| **Language** | TypeScript | TypeScript | Python | Python | Python |
+- **Console** — Colored terminal output (default)
+- **JSON** — Structured report with metadata
+- **JUnit XML** — CI integration
+- **Markdown** — Summary tables and cost breakdown
+- **HTML** — Interactive dashboard
+- **GitHub Actions** — Annotations and step summary
 
 ---
 
@@ -461,9 +332,9 @@ agentprobe ci azure-pipelines  # Azure Pipelines
 │  └────────┘ └────────┘ └────────┘ └────────────┘  │
 ├─────────────────────────────────────────────────────┤
 │                  Adapter Layer                       │
-│  ┌───────┐ ┌─────────┐ ┌──────┐ ┌───────┐        │
-│  │OpenAI │ │Anthropic│ │Google│ │Bedrock│ ...     │
-│  └───────┘ └─────────┘ └──────┘ └───────┘        │
+│  ┌───────┐ ┌─────────┐ ┌──────┐ ┌──────┐         │
+│  │OpenAI │ │Anthropic│ │Gemini│ │Ollama│ ...      │
+│  └───────┘ └─────────┘ └──────┘ └──────┘         │
 ├─────────────────────────────────────────────────────┤
 │               Reporters & Export                     │
 │  ┌──────┐ ┌─────┐ ┌──────┐ ┌────┐ ┌─────────┐   │
@@ -471,6 +342,23 @@ agentprobe ci azure-pipelines  # Azure Pipelines
 │  └──────┘ └─────┘ └──────┘ └────┘ └─────────┘   │
 └─────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🗺️ Roadmap
+
+Planned features (not yet implemented):
+
+- [ ] AWS Bedrock adapter
+- [ ] Azure OpenAI adapter
+- [ ] Cohere adapter
+- [ ] CrewAI / AutoGen trace format support
+- [ ] VS Code extension
+- [ ] Web-based report portal
+- [ ] npm publish via CI/CD
+- [ ] Comprehensive API reference docs
+
+See [GitHub Issues](https://github.com/neuzhou/agentprobe/issues) for the full list.
 
 ---
 
