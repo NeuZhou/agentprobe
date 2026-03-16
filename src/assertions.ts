@@ -71,7 +71,18 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
 
   // output_matches
   if (expect.output_matches) {
-    const re = new RegExp(expect.output_matches);
+    let re: RegExp;
+    try {
+      re = new RegExp(expect.output_matches);
+    } catch (err: any) {
+      results.push({
+        name: `output_matches: /${expect.output_matches}/`,
+        passed: false,
+        expected: expect.output_matches,
+        message: `Invalid regex: /${expect.output_matches}/ — ${err.message}`,
+      });
+      return results;
+    }
     results.push({
       name: `output_matches: /${expect.output_matches}/`,
       passed: re.test(outputs),
