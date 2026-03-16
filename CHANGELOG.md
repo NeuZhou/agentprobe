@@ -5,6 +5,18 @@ All notable changes to AgentProbe will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-03-16
+
+### Added
+
+- **Agent Fingerprinting (enhanced)**: `AgentFingerprinter` class with `compare()` (0-1 similarity) and `detectDrift()` (behavioral drift detection with severity dimensions)
+- **Test Flake Manager**: `FlakeManager` class to track test results over time, compute flake rates, detect trends (improving/degrading/stable), and generate actionable suggestions. CLI: `agentprobe flake-report`
+- **Trace Timeline Viewer**: `parseTimeline()`, `formatTimelineAscii()`, and `generateTimelineHTML()` for interactive HTML trace visualization with cost breakdown. CLI: `agentprobe timeline-html`
+- **Agent Version Registry**: `VersionRegistry` class to register, track, diff, and rollback agent versions with deep metadata comparison. CLI: `agentprobe registry list|diff`
+- **Webhook Notifications**: Re-exported and consolidated webhook/notification APIs (Slack, Teams, Discord, PagerDuty, email, HTTP)
+- **Fingerprint Compare/Drift CLI**: `agentprobe fingerprint-compare` and `agentprobe fingerprint-drift` commands
+- 44 new tests for all v3.5.0 features
+
 ## [3.0.0] - 2026-03-16
 
 ### 🎉 Major Release — Production Grade

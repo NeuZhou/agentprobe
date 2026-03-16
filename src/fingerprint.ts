@@ -182,6 +182,149 @@ export function loadTraces(dir: string): AgentTrace[] {
   return traces;
 }
 
+// ===== AgentFingerprinter class (v3.5.0) =====
+
+export interface DriftDimension {
+  dimension: string;
+  baseline: number;
+  current: number;
+  delta: number;
+  severity: 'low' | 'medium' | 'high';
+}
+
+export interface DriftReport {
+  drifted: boolean;
+  overall: number; // 0-1 drift score
+  dimensions: DriftDimension[];
+  summary: string;
+}
+
+/**
+ * Compare two fingerprints, returning 0-1 similarity.
+ */
+export function compareFingerprints(fp1: AgentFingerprint, fp2: AgentFingerprint): number {
+  if (fp1.traceCount === 0 || fp2.traceCount === 0) return 0;
+
+  // Tool similarity (Jaccard-like on tool names + cosine on percentages)
+  const tools1 = new Map(fp1.tools.map(t => [t.name, t.percentage]));
+  const tools2 = new Map(fp2.tools.map(t => [t.name, t.percentage]));
+  const allTools = new Set([...tools1.keys(), ...tools2.keys()]);
+
+  let dotProduct = 0;
+  let mag1 = 0;
+  let mag2 = 0;
+  for (const tool of allTools) {
+    const v1 = tools1.get(tool) || 0;
+    const v2 = tools2.get(tool) || 0;
+    dotProduct += v1 * v2;
+    mag1 += v1 * v1;
+    mag2 += v2 * v2;
+  }
+  const toolSim = mag1 > 0 && mag2 > 0 ? dotProduct / (Math.sqrt(mag1) * Math.sqrt(mag2)) : 0;
+
+  // Step count similarity
+  const maxAvg = Math.max(fp1.avgSteps, fp2.avgSteps, 1);
+  const stepSim = 1 - Math.abs(fp1.avgSteps - fp2.avgSteps) / maxAvg;
+
+  // Cost similarity
+  const maxCost = Math.max(fp1.avgCost, fp2.avgCost, 0.001);
+  const costSim = 1 - Math.abs(fp1.avgCost - fp2.avgCost) / maxCost;
+
+  // Error recovery similarity
+  const recSim = 1 - (
+    Math.abs(fp1.errorRecovery.retry - fp2.errorRecovery.retry) +
+    Math.abs(fp1.errorRecovery.fallback - fp2.errorRecovery.fallback) +
+    Math.abs(fp1.errorRecovery.giveUp - fp2.errorRecovery.giveUp)
+  ) / 300;
+
+  // Weighted average
+  return Math.max(0, Math.min(1,
+    toolSim * 0.4 + stepSim * 0.25 + costSim * 0.2 + recSim * 0.15
+  ));
+}
+
+/**
+ * Detect behavioral drift between a baseline fingerprint and current traces.
+ */
+export function detectDrift(
+  baseline: AgentFingerprint,
+  currentTraces: AgentTrace[],
+  threshold = 0.2,
+): DriftReport {
+  const current = buildFingerprint(currentTraces);
+  const similarity = compareFingerprints(baseline, current);
+  const overall = 1 - similarity;
+
+  const dimensions: DriftDimension[] = [];
+
+  // Step count drift
+  const stepDelta = baseline.avgSteps > 0
+    ? Math.abs(current.avgSteps - baseline.avgSteps) / baseline.avgSteps
+    : 0;
+  dimensions.push({
+    dimension: 'step_count',
+    baseline: baseline.avgSteps,
+    current: current.avgSteps,
+    delta: stepDelta,
+    severity: stepDelta > 0.5 ? 'high' : stepDelta > 0.2 ? 'medium' : 'low',
+  });
+
+  // Cost drift
+  const costDelta = baseline.avgCost > 0
+    ? Math.abs(current.avgCost - baseline.avgCost) / baseline.avgCost
+    : 0;
+  dimensions.push({
+    dimension: 'cost',
+    baseline: baseline.avgCost,
+    current: current.avgCost,
+    delta: costDelta,
+    severity: costDelta > 0.5 ? 'high' : costDelta > 0.2 ? 'medium' : 'low',
+  });
+
+  // Tool usage drift
+  const baseTools = new Set(baseline.tools.map(t => t.name));
+  const curTools = new Set(current.tools.map(t => t.name));
+  const newTools = [...curTools].filter(t => !baseTools.has(t));
+  const removedTools = [...baseTools].filter(t => !curTools.has(t));
+  const toolDelta = (newTools.length + removedTools.length) / Math.max(baseTools.size, 1);
+  dimensions.push({
+    dimension: 'tool_usage',
+    baseline: baseTools.size,
+    current: curTools.size,
+    delta: toolDelta,
+    severity: toolDelta > 0.5 ? 'high' : toolDelta > 0.2 ? 'medium' : 'low',
+  });
+
+  const drifted = overall > threshold;
+  const summaryParts: string[] = [];
+  if (drifted) {
+    summaryParts.push(`Drift detected (score: ${(overall * 100).toFixed(1)}%)`);
+    for (const d of dimensions.filter(d => d.severity !== 'low')) {
+      summaryParts.push(`  ${d.dimension}: ${d.severity} (${(d.delta * 100).toFixed(1)}% change)`);
+    }
+    if (newTools.length > 0) summaryParts.push(`  New tools: ${newTools.join(', ')}`);
+    if (removedTools.length > 0) summaryParts.push(`  Removed tools: ${removedTools.join(', ')}`);
+  } else {
+    summaryParts.push(`No significant drift (score: ${(overall * 100).toFixed(1)}%)`);
+  }
+
+  return { drifted, overall, dimensions, summary: summaryParts.join('\n') };
+}
+
+export class AgentFingerprinter {
+  createFingerprint(traces: AgentTrace[]): AgentFingerprint {
+    return buildFingerprint(traces);
+  }
+
+  compare(fp1: AgentFingerprint, fp2: AgentFingerprint): number {
+    return compareFingerprints(fp1, fp2);
+  }
+
+  detectDrift(baseline: AgentFingerprint, current: AgentTrace[]): DriftReport {
+    return detectDrift(baseline, current);
+  }
+}
+
 /**
  * Format fingerprint for console display.
  */

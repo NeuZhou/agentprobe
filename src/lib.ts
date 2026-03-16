@@ -240,9 +240,7 @@ export type { CompliancePolicy, ComplianceConfig, ComplianceViolation, Complianc
 export { simulateTrace, simulateBatch } from './simulator';
 export type { SimulatorOptions, SimulatedTrace } from './simulator';
 
-// Webhook notifications
-export { buildPayload, formatWebhookPayload, sendWebhook, triggerWebhooks } from './webhooks';
-export type { WebhookConfig, WebhooksConfig, WebhookPayload, WebhookFormat, WebhookEvent } from './webhooks';
+// Webhook notifications — see v3.5.0 section below
 
 // Test prioritization
 export { prioritizeTests, loadHistory, saveHistory, updateHistory, formatPrioritization } from './prioritize';
@@ -348,9 +346,7 @@ export type { SimilarityResult } from './similarity';
 export { buildCoverageMap, formatCoverageMap, coverageMapFromFile } from './coverage-map';
 export type { CoverageCategory, CoverageEntry, CoverageMap } from './coverage-map';
 
-// v2.6.0 — Notification Hub (enhanced webhooks)
-export { buildPagerDutyPayload, buildEmailBody, sendNotification, triggerNotifications } from './webhooks';
-export type { NotificationType, EmailNotificationConfig, PagerDutyNotificationConfig, HttpNotificationConfig, SlackNotificationConfig, NotificationConfig, NotificationHubConfig } from './webhooks';
+// v2.6.0 — Notification Hub — see v3.5.0 section below
 
 // v2.8.0 — Agent Debugger
 export {
@@ -437,3 +433,47 @@ export {
   matchesPriorityRule, createSampler,
 } from './recorder';
 export type { SamplingStrategy, PriorityRule, TraceSamplingConfig } from './recorder';
+
+// v3.5.0 - Agent Fingerprinting (enhanced)
+export {
+  buildFingerprint, loadTraces, formatFingerprint,
+  compareFingerprints, detectDrift, AgentFingerprinter,
+} from './fingerprint';
+export type {
+  AgentFingerprint, ToolUsage, ErrorRecovery,
+  DriftDimension, DriftReport,
+} from './fingerprint';
+
+// v3.5.0 - Flake Manager
+export {
+  FlakeManager, formatFlakeReport,
+} from './flake-manager';
+export type {
+  FlakeEntry, FlakeRecord, FlakeReport, FlakeManagerConfig,
+} from './flake-manager';
+
+// v3.5.0 - Trace Timeline Viewer
+export {
+  parseTimeline, formatTimelineAscii, generateTimelineHTML, writeTimelineHTML,
+} from './timeline';
+export type { TimelineEvent, TimelineSummary } from './timeline';
+
+// v3.5.0 - Agent Version Registry
+export {
+  VersionRegistry, formatVersionDiff,
+} from './version-registry';
+export type {
+  AgentMeta, VersionEntry, VersionDiff, DiffChange,
+} from './version-registry';
+
+// v3.5.0 - Webhook Notifications (re-export)
+export {
+  buildPayload, formatWebhookPayload, sendWebhook, triggerWebhooks,
+  buildPagerDutyPayload, buildEmailBody,
+  sendNotification, triggerNotifications,
+} from './webhooks';
+export type {
+  WebhookConfig, WebhookPayload, WebhooksConfig, WebhookFormat, WebhookEvent,
+  NotificationConfig, NotificationHubConfig, NotificationType,
+  SlackNotificationConfig, PagerDutyNotificationConfig, HttpNotificationConfig, EmailNotificationConfig,
+} from './webhooks';

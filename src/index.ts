@@ -2421,4 +2421,100 @@ program
     console.log(formatImpactAnalysis(result));
   });
 
+// ===== v3.5.0 - Flake Manager =====
+import { FlakeManager, formatFlakeReport } from './flake-manager';
+
+program
+  .command('flake-report')
+  .description('Show flaky test report from historical data')
+  .option('--data <path>', 'Path to flake data file', '.agentprobe/flake-data.json')
+  .option('--threshold <n>', 'Flaky threshold (0-1)', '0.05')
+  .action((opts: any) => {
+    const fm = new FlakeManager({ flakyThreshold: parseFloat(opts.threshold), dataPath: opts.data });
+    fm.load();
+    const report = fm.report();
+    console.log(formatFlakeReport(report));
+  });
+
+// ===== v3.5.0 - Trace Timeline HTML =====
+import { generateTimelineHTML } from './timeline';
+
+program
+  .command('timeline-html <traceFile>')
+  .description('Generate interactive HTML timeline from a trace file')
+  .option('--output <path>', 'Output HTML file path', 'timeline.html')
+  .action((traceFile: string, opts: any) => {
+    const raw = fs.readFileSync(traceFile, 'utf-8');
+    const trace = JSON.parse(raw) as AgentTrace;
+    const html = generateTimelineHTML(trace);
+    fs.writeFileSync(opts.output, html, 'utf-8');
+    console.log(chalk.green(`✅ Timeline written to ${opts.output}`));
+  });
+
+// ===== v3.5.0 - Version Registry =====
+import { VersionRegistry, formatVersionDiff } from './version-registry';
+
+const versionReg = program.command('registry').description('Agent version registry');
+
+versionReg
+  .command('list')
+  .description('List registered agents')
+  .option('--data <path>', 'Registry data file', '.agentprobe/version-registry.json')
+  .action((opts: any) => {
+    const reg = new VersionRegistry();
+    reg.load(opts.data);
+    const agents = reg.listAgents();
+    if (agents.length === 0) {
+      console.log('No agents registered.');
+    } else {
+      for (const name of agents) {
+        const history = reg.getHistory(name);
+        console.log(`${name}: ${history.map(e => e.version).join(', ')}`);
+      }
+    }
+  });
+
+versionReg
+  .command('diff <name> <v1> <v2>')
+  .description('Diff two agent versions')
+  .option('--data <path>', 'Registry data file', '.agentprobe/version-registry.json')
+  .action((name: string, v1: string, v2: string, opts: any) => {
+    const reg = new VersionRegistry();
+    reg.load(opts.data);
+    try {
+      const d = reg.diff(name, v1, v2);
+      console.log(formatVersionDiff(d));
+    } catch (e: any) {
+      console.error(chalk.red(e.message));
+      process.exit(1);
+    }
+  });
+
+// ===== v3.5.0 - Fingerprint Compare & Drift =====
+import { compareFingerprints, detectDrift } from './fingerprint';
+
+program
+  .command('fingerprint-compare <dir1> <dir2>')
+  .description('Compare fingerprints from two trace directories')
+  .action((dir1: string, dir2: string) => {
+    const t1 = loadTraces(dir1);
+    const t2 = loadTraces(dir2);
+    const fp1 = buildFingerprint(t1);
+    const fp2 = buildFingerprint(t2);
+    const sim = compareFingerprints(fp1, fp2);
+    console.log(`Similarity: ${(sim * 100).toFixed(1)}%`);
+  });
+
+program
+  .command('fingerprint-drift <baselineDir> <currentDir>')
+  .description('Detect behavioral drift between baseline and current traces')
+  .option('--threshold <n>', 'Drift threshold (0-1)', '0.2')
+  .action((baselineDir: string, currentDir: string, opts: any) => {
+    const baseTraces = loadTraces(baselineDir);
+    const curTraces = loadTraces(currentDir);
+    const baseline = buildFingerprint(baseTraces);
+    const report = detectDrift(baseline, curTraces, parseFloat(opts.threshold));
+    console.log(report.summary);
+  });
+
 program.parse();
