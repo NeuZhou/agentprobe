@@ -1,0 +1,78 @@
+{
+  "name": "agentprobe-vscode",
+  "displayName": "AgentProbe",
+  "description": "Test, record, and replay AI agent behaviors from VSCode",
+  "version": "0.1.0",
+  "publisher": "NeuZhou",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Testing", "Debuggers"],
+  "activationEvents": [
+    "workspaceContains:**/*.agentprobe.yml",
+    "onLanguage:yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentprobe.runTests",
+        "title": "AgentProbe: Run Tests",
+        "icon": "$(play)"
+      },
+      {
+        "command": "agentprobe.viewTrace",
+        "title": "AgentProbe: View Trace",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "agentprobe.generateTest",
+        "title": "AgentProbe: Generate Test",
+        "icon": "$(add)"
+      }
+    ],
+    "views": {
+      "test": [
+        {
+          "id": "agentprobeResults",
+          "name": "AgentProbe Results",
+          "icon": "$(beaker)"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "agentprobe-yaml",
+        "aliases": ["AgentProbe YAML"],
+        "extensions": [".agentprobe.yml", ".agentprobe.yaml"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "agentprobe-yaml",
+        "scopeName": "source.agentprobe",
+        "path": "./syntaxes/agentprobe.tmLanguage.json"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "resourceExtname == .yml || resourceExtname == .yaml",
+          "command": "agentprobe.runTests",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  }
+}

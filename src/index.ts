@@ -39,6 +39,10 @@ import { generatePortal } from './portal';
 import { checkHealth, formatHealth } from './health';
 import { parseMatrixOptions, loadMatrixTests, buildMatrixResult, formatMatrix } from './matrix';
 import { loadPerfReport, detectPerfChanges, formatPerfChanges } from './perf-regression';
+import { deterministicReplay, formatDeterministicReplay } from './replay';
+import { loadOpenAPISpec, generateFromOpenAPI, formatOpenAPITests } from './openapi';
+import { visualizeTrace, traceToMermaid, traceToText, traceToHtml } from './viz';
+import type { VizFormat } from './viz';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -1626,6 +1630,110 @@ program
     });
     console.log(formatPerfChanges(result));
     if (result.regressions > 0) process.exit(1);
+  });
+
+// ===== VSCode Extension Scaffold =====
+program
+  .command('vscode-ext')
+  .description('Generate a VSCode extension project for AgentProbe')
+  .option('-o, --output <dir>', 'Output directory', 'agentprobe-vscode')
+  .action((opts: { output: string }) => {
+    const srcDir = path.join(__dirname, '..', 'src', 'vscode');
+    const outDir = path.resolve(opts.output);
+    if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+
+    // Copy all files from src/vscode template
+    const copyRecursive = (src: string, dest: string) => {
+      if (fs.statSync(src).isDirectory()) {
+        if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+        for (const item of fs.readdirSync(src)) {
+          copyRecursive(path.join(src, item), path.join(dest, item));
+        }
+      } else {
+        fs.copyFileSync(src, dest);
+      }
+    };
+    copyRecursive(srcDir, outDir);
+    console.log(chalk.green(`✅ VSCode extension scaffolded in ${outDir}`));
+    console.log('  Next steps:');
+    console.log(`  cd ${opts.output} && npm install && npm run compile`);
+  });
+
+// ===== Deterministic Replay with Verification =====
+// (extends existing 'replay' command with --verify flag — handled via separate command)
+program
+  .command('replay-verify <traceFile>')
+  .description('Replay a trace deterministically and verify tool calls match')
+  .requiredOption('--actual <traceFile>', 'Actual trace from re-run')
+  .action((traceFile: string, opts: { actual: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(opts.actual)) {
+      console.error(chalk.red(`❌ File not found: ${opts.actual}`));
+      process.exit(1);
+    }
+    const expected = loadTrace(traceFile);
+    const actual = loadTrace(opts.actual);
+    const result = deterministicReplay(expected, actual, { verify: true });
+    console.log(formatDeterministicReplay(result));
+    if (!result.passed) process.exit(1);
+  });
+
+// ===== Generate Tests from OpenAPI =====
+program
+  .command('generate-from-openapi <specFile>')
+  .description('Generate test cases from an OpenAPI spec')
+  .option('-a, --agent <name>', 'Agent module name', 'my-agent')
+  .option('-o, --output <file>', 'Output YAML file')
+  .action((specFile: string, opts: { agent: string; output?: string }) => {
+    if (!fs.existsSync(specFile)) {
+      console.error(chalk.red(`❌ File not found: ${specFile}`));
+      process.exit(1);
+    }
+    const spec = loadOpenAPISpec(specFile);
+    const suite = generateFromOpenAPI(spec, opts.agent);
+    const yaml = formatOpenAPITests(suite);
+
+    if (opts.output) {
+      fs.writeFileSync(opts.output, yaml, 'utf-8');
+      console.log(chalk.green(`✅ Generated ${suite.tests.length} tests → ${opts.output}`));
+    } else {
+      console.log(yaml);
+    }
+  });
+
+// ===== Trace Visualization =====
+program
+  .command('viz <traceFile>')
+  .description('Generate sequence diagrams from traces')
+  .option('-f, --format <format>', 'Output format: mermaid, text, html', 'mermaid')
+  .option('-o, --output <file>', 'Write to file instead of stdout')
+  .option('--no-timings', 'Hide timing information')
+  .option('--tokens', 'Show token counts')
+  .option('--max-steps <n>', 'Limit number of steps')
+  .option('-t, --title <title>', 'Diagram title')
+  .action((traceFile: string, opts: { format: string; output?: string; timings: boolean; tokens: boolean; maxSteps?: string; title?: string }) => {
+    if (!fs.existsSync(traceFile)) {
+      console.error(chalk.red(`❌ File not found: ${traceFile}`));
+      process.exit(1);
+    }
+    const trace = loadTrace(traceFile);
+    const result = visualizeTrace(trace, {
+      format: opts.format as VizFormat,
+      showTimings: opts.timings !== false,
+      showTokens: opts.tokens,
+      maxSteps: opts.maxSteps ? parseInt(opts.maxSteps, 10) : undefined,
+      title: opts.title,
+    });
+
+    if (opts.output) {
+      fs.writeFileSync(opts.output, result, 'utf-8');
+      console.log(chalk.green(`✅ Visualization written to ${opts.output}`));
+    } else {
+      console.log(result);
+    }
   });
 
 program.parse();

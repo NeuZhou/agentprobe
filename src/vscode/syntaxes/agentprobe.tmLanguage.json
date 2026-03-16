@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "AgentProbe YAML",
+  "scopeName": "source.agentprobe",
+  "patterns": [
+    { "include": "source.yaml" },
+    {
+      "match": "\\b(name|input|expect|tool_called|tool_not_called|output_contains|output_matches|max_steps|max_tokens|max_cost_usd|judge|mocks|faults|tags|each|retries|depends_on|template|replay_overrides)\\b(?=\\s*:)",
+      "name": "keyword.other.agentprobe"
+    },
+    {
+      "match": "\\b(tool_sequence|tool_args_match|snapshot|custom|judge_rubric|chain|custom_assertions|all_of|any_of|none_of)\\b(?=\\s*:)",
+      "name": "keyword.other.agentprobe.assertion"
+    },
+    {
+      "match": "\\b(config|hooks|beforeAll|afterAll|beforeEach|afterEach|agent|script|command|module)\\b(?=\\s*:)",
+      "name": "keyword.other.agentprobe.config"
+    }
+  ]
+}
