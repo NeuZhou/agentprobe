@@ -35,6 +35,10 @@ import { validateSuite, formatValidationErrors } from './validate';
 import { generateFromNL, formatGeneratedTestsYaml } from './nlgen';
 import { anonymizeTrace } from './anonymize';
 import { profile as profileTraces, formatProfile } from './profiler';
+import { generatePortal } from './portal';
+import { checkHealth, formatHealth } from './health';
+import { parseMatrixOptions, loadMatrixTests, buildMatrixResult, formatMatrix } from './matrix';
+import { loadPerfReport, detectPerfChanges, formatPerfChanges } from './perf-regression';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -1553,6 +1557,75 @@ program
     }
     const bp = profileBehavior(traces);
     console.log(formatBehaviorProfile(bp));
+  });
+
+// ===== Test Report Portal =====
+program
+  .command('portal <reportsDir>')
+  .description('Generate a static HTML test dashboard')
+  .option('-o, --output <dir>', 'Output directory', 'dashboard')
+  .action((reportsDir: string, opts: { output: string }) => {
+    if (!fs.existsSync(reportsDir)) {
+      console.error(chalk.red(`❌ Directory not found: ${reportsDir}`));
+      process.exit(1);
+    }
+    const outPath = generatePortal({ reportsDir, outputDir: opts.output });
+    console.log(chalk.green(`✅ Dashboard generated → ${outPath}`));
+    console.log(`   Open in browser: file://${path.resolve(outPath)}`);
+  });
+
+// ===== Adapter Health Check =====
+program
+  .command('health')
+  .description('Check connectivity to LLM adapters')
+  .action(async () => {
+    console.log(chalk.bold('Checking adapter health...\n'));
+    const result = await checkHealth();
+    console.log(formatHealth(result));
+  });
+
+// ===== Test Matrix =====
+program
+  .command('matrix <suiteFile>')
+  .description('Run tests across multiple model/temperature configurations')
+  .option('--models <models>', 'Comma-separated model names', 'default')
+  .option('--temps <temps>', 'Comma-separated temperatures', '0')
+  .action((suiteFile: string, opts: { models: string; temps: string }) => {
+    if (!fs.existsSync(suiteFile)) {
+      console.error(chalk.red(`❌ File not found: ${suiteFile}`));
+      process.exit(1);
+    }
+    const { models, temperatures } = parseMatrixOptions(opts);
+    const tests = loadMatrixTests(suiteFile);
+    const result = buildMatrixResult({ suiteFile, models, temperatures }, tests);
+    console.log(formatMatrix(result));
+  });
+
+// ===== Performance Regression Check =====
+program
+  .command('perf-check')
+  .description('Detect performance regressions between two reports')
+  .requiredOption('--baseline <path>', 'Baseline report JSON')
+  .requiredOption('--current <path>', 'Current report JSON')
+  .option('--threshold-ms <ms>', 'Absolute regression threshold (ms)', '100')
+  .option('--threshold-pct <pct>', 'Percentage regression threshold', '20')
+  .action((opts: { baseline: string; current: string; thresholdMs: string; thresholdPct: string }) => {
+    if (!fs.existsSync(opts.baseline)) {
+      console.error(chalk.red(`❌ File not found: ${opts.baseline}`));
+      process.exit(1);
+    }
+    if (!fs.existsSync(opts.current)) {
+      console.error(chalk.red(`❌ File not found: ${opts.current}`));
+      process.exit(1);
+    }
+    const baseline = loadPerfReport(opts.baseline);
+    const current = loadPerfReport(opts.current);
+    const result = detectPerfChanges(baseline, current, {
+      thresholdMs: parseInt(opts.thresholdMs, 10),
+      thresholdPercent: parseInt(opts.thresholdPct, 10),
+    });
+    console.log(formatPerfChanges(result));
+    if (result.regressions > 0) process.exit(1);
   });
 
 program.parse();

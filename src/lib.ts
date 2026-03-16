@@ -238,3 +238,23 @@ export type { PrioritizedTest, PrioritizationResult } from './prioritize';
 // Report comparison
 export { compareReports, formatReportDelta, generateDeltaHTML } from './reporters/compare';
 export type { ReportDelta } from './reporters/compare';
+
+// Portal
+export { generatePortal, buildPortalData, generatePortalHTML, loadReports, computeTrends, computeFlaky, computeSlowest, computeCosts, detectGaps } from './portal';
+export type { PortalOptions, PortalData, TrendPoint, FlakyEntry, SlowestEntry, CostEntry, CoverageGap } from './portal';
+
+// Health check
+export { checkHealth, formatHealth } from './health';
+export type { AdapterHealthResult, HealthCheckResult } from './health';
+
+// Test matrix
+export { generateCombinations, buildMatrixResult, parseMatrixOptions, loadMatrixTests, formatMatrix } from './matrix';
+export type { MatrixConfig, MatrixCell, MatrixResult } from './matrix';
+
+// Performance regression
+export { loadPerfReport, detectPerfChanges, formatPerfChanges, buildDurationMap } from './perf-regression';
+export type { PerfChange, PerfRegressionResult, PerfCheckOptions } from './perf-regression';
+
+// Enhanced anonymization
+export { anonymizeWithReport, anonymizeReversible, deanonymize, formatAnonymizationReport } from './anonymize';
+export type { AnonymizationReport, AnonymizationRedaction, AnonymizationMapping } from './anonymize';
