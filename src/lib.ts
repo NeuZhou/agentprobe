@@ -205,8 +205,16 @@ export type {
 } from './types';
 
 // OpenTelemetry integration
-export { traceToOTel, traceToOTLP } from './otel';
-export type { OTelSpan, OTelExport } from './otel';
+export { traceToOTel, traceToOTLP, OTelExporter } from './otel';
+export type { OTelSpan, OTelExport, OTelExporterConfig } from './otel';
+export { TraceStore } from './trace-store';
+export type { TraceSearchQuery, TraceStoreStats } from './trace-store';
+export { findAffectedSuites, formatWatchEvent, formatWatchSession, startSmartWatch } from './watch';
+export type { SmartWatchOptions, WatchEvent, WatchSession } from './watch';
+export { generateConfig, generateSampleTests, generateProfiles, executeInit, formatInitResult } from './init';
+export type { AdapterChoice, InitOptions, InitResult } from './init';
+export { runDoctor, formatDoctor, checkNodeVersion, checkTypeScript, checkApiKey, checkTestDirectory, checkConfigFile } from './doctor';
+export type { DoctorCheck, DoctorResult, CheckStatus } from './doctor';
 
 // Flaky test detection
 export { detectFlaky, formatFlaky } from './flaky';

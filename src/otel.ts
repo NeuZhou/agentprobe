@@ -152,16 +152,160 @@ export function traceToOTLP(trace: AgentTrace, serviceName = 'agentprobe'): OTel
         resource: {
           attributes: {
             'service.name': serviceName,
-            'service.version': '1.5.0',
+            'service.version': '3.1.0',
           },
         },
         scopeSpans: [
           {
-            scope: { name: 'agentprobe', version: '1.5.0' },
+            scope: { name: 'agentprobe', version: '3.1.0' },
             spans,
           },
         ],
       },
     ],
   };
+}
+
+// ============================================================
+// OTelExporter class — stateful exporter with config
+// ============================================================
+
+export interface OTelExporterConfig {
+  endpoint?: string;
+  serviceName?: string;
+}
+
+import type { SuiteResult } from './types';
+
+/**
+ * Stateful OpenTelemetry exporter.
+ * Maps agent steps → spans, tool calls → child spans.
+ * Adds cost, tokens, model as span attributes.
+ */
+export class OTelExporter {
+  private config: OTelExporterConfig;
+
+  constructor(config: OTelExporterConfig = {}) {
+    this.config = {
+      endpoint: config.endpoint ?? 'http://localhost:4318/v1/traces',
+      serviceName: config.serviceName ?? 'agentprobe',
+    };
+  }
+
+  get endpoint(): string {
+    return this.config.endpoint!;
+  }
+
+  get serviceName(): string {
+    return this.config.serviceName!;
+  }
+
+  /**
+   * Export a single trace as OTel spans.
+   */
+  exportTrace(trace: AgentTrace): OTelSpan[] {
+    return traceToOTel(trace, this.config.serviceName);
+  }
+
+  /**
+   * Export an entire suite result as OTel spans.
+   * Creates a root span for the suite, with child spans per test,
+   * and nested spans for each test's trace steps.
+   */
+  exportSuiteResult(result: SuiteResult): OTelSpan[] {
+    const allSpans: OTelSpan[] = [];
+    const suiteTraceId = Math.abs(
+      result.name.split('').reduce((h, c) => ((h << 5) - h + c.charCodeAt(0)) | 0, 0),
+    )
+      .toString(16)
+      .padStart(32, '0');
+
+    const suiteSpanId = generateSpanId();
+    const suiteStart = Date.now() * 1_000_000;
+    const suiteEnd = suiteStart + result.duration_ms * 1_000_000;
+
+    // Suite root span
+    allSpans.push({
+      traceId: suiteTraceId,
+      spanId: suiteSpanId,
+      operationName: `suite:${result.name}`,
+      startTimeUnixNano: suiteStart,
+      endTimeUnixNano: suiteEnd,
+      attributes: {
+        'agentprobe.suite.name': result.name,
+        'agentprobe.suite.total': result.total,
+        'agentprobe.suite.passed': result.passed,
+        'agentprobe.suite.failed': result.failed,
+        'agentprobe.suite.duration_ms': result.duration_ms,
+      },
+      status: { code: result.failed > 0 ? 'ERROR' : 'OK' },
+      kind: 'SERVER',
+    });
+
+    // Per-test spans
+    for (const testResult of result.results) {
+      const testSpanId = generateSpanId();
+      const testStart = suiteStart;
+      const testEnd = testStart + testResult.duration_ms * 1_000_000;
+
+      allSpans.push({
+        traceId: suiteTraceId,
+        spanId: testSpanId,
+        parentSpanId: suiteSpanId,
+        operationName: `test:${testResult.name}`,
+        startTimeUnixNano: testStart,
+        endTimeUnixNano: testEnd,
+        attributes: {
+          'agentprobe.test.name': testResult.name,
+          'agentprobe.test.passed': testResult.passed,
+          'agentprobe.test.duration_ms': testResult.duration_ms,
+          'agentprobe.test.assertions': testResult.assertions.length,
+        },
+        status: {
+          code: testResult.passed ? 'OK' : 'ERROR',
+          message: testResult.error,
+        },
+        kind: 'INTERNAL',
+      });
+
+      // If test has a trace, add step spans as children
+      if (testResult.trace) {
+        const stepSpans = traceToOTel(testResult.trace, this.config.serviceName);
+        // Re-parent root span under the test span
+        for (const span of stepSpans) {
+          if (!span.parentSpanId) {
+            span.parentSpanId = testSpanId;
+          }
+          span.traceId = suiteTraceId;
+          allSpans.push(span);
+        }
+      }
+    }
+
+    return allSpans;
+  }
+
+  /**
+   * Build OTLP JSON payload from spans.
+   */
+  toOTLP(spans: OTelSpan[]): OTelExport {
+    return {
+      resourceSpans: [
+        {
+          resource: {
+            attributes: {
+              'service.name': this.config.serviceName!,
+              'service.version': '3.1.0',
+            },
+          },
+          scopeSpans: [
+            {
+              scope: { name: 'agentprobe', version: '3.1.0' },
+              spans,
+            },
+          ],
+        },
+      ],
+    };
+  }
 }
