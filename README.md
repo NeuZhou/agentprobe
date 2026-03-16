@@ -339,3 +339,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, architecture overv
 ## License
 
 [MIT](LICENSE) © [Kang Zhou](https://github.com/neuzhou)
+
+## 🔗 Ecosystem
+
+| Project | Description |
+|---------|-------------|
+| [ClawGuard](https://github.com/NeuZhou/clawguard) | 🛡️ AI Agent Security Scanner |
+| [FinClaw](https://github.com/NeuZhou/finclaw) | 📈 AI-Powered Quantitative Finance |
+| [repo2skill](https://github.com/NeuZhou/repo2skill) | ⚡ Convert repos to AI Agent Skills |
