@@ -229,6 +229,10 @@ export type {
 // OpenTelemetry integration
 export { traceToOTel, traceToOTLP, OTelExporter, toJaegerSpans, toZipkinSpans } from './otel';
 export type { OTelSpan, OTelExport, OTelExporterConfig, OTelFormat, OTelMetric, OTelMetricsExport, JaegerSpan, ZipkinSpan } from './otel';
+
+// Enhanced OpenTelemetry (v4.12.0)
+export { AgentProbeExporter, TraceAnalyzer, TraceVisualizer, DistributedTracer } from './otel/index';
+export type { TestResults, AgentProbeExporterConfig, TraceAnalysis, Bottleneck, Anomaly, TraceContext, CorrelatedTrace, AgentTimeline, CrossAgentCall } from './otel/index';
 export { TraceStore } from './trace-store';
 export type { TraceSearchQuery, TraceStoreStats } from './trace-store';
 export { findAffectedSuites, formatWatchEvent, formatWatchSession, startSmartWatch } from './watch';
