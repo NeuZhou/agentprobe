@@ -370,6 +370,29 @@ agentprobe portal -o report.html  # Generate dashboard
 
 ---
 
+## 📚 Examples
+
+The [`examples/`](./examples/) directory contains runnable cookbook examples for every major use case:
+
+| Category | Examples | Description |
+|----------|---------|-------------|
+| **[Quick Start](./examples/quickstart/)** | mock test, programmatic API, security basics | Get running in 2 minutes — no API key needed |
+| **[Security](./examples/security/)** | [prompt injection](./examples/security/prompt-injection.yaml), [data exfil](./examples/security/data-exfil.yaml), [ClawGuard](./examples/security/clawguard-integration.yaml) | Harden your agent against attacks |
+| **[Multi-Agent](./examples/multi-agent/)** | [handoff](./examples/multi-agent/handoff.yaml), [CrewAI](./examples/multi-agent/crewai-test.yaml), [AutoGen](./examples/multi-agent/autogen-test.yaml) | Test agent orchestration and collaboration |
+| **[CI/CD](./examples/ci/)** | [GitHub Actions](./examples/ci/github-actions.yml), [GitLab CI](./examples/ci/gitlab-ci.yml), [pre-commit](./examples/ci/pre-commit-hook.sh) | Integrate into your pipeline |
+| **[Contracts](./examples/contracts/)** | behavioral contracts | Enforce strict agent behavior invariants |
+| **[Chaos](./examples/chaos/)** | tool failures, fault injection | Stress-test agent resilience |
+| **[Compliance](./examples/compliance/)** | GDPR audit | Regulatory compliance verification |
+
+```bash
+# Try it now — no API key required
+npx agentprobe run examples/quickstart/test-mock.yaml
+```
+
+→ See the full [examples README](./examples/README.md) for details.
+
+---
+
 ## 🗺️ Roadmap
 
 Planned features (not yet implemented):

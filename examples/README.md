@@ -18,6 +18,10 @@ Comprehensive examples to get you started with AgentProbe testing.
 | **Compliance** | [gdpr-audit.yaml](compliance/gdpr-audit.yaml) | GDPR compliance verification |
 | **CI** | [github-actions.yml](ci/github-actions.yml) | GitHub Actions workflow integration |
 | **CI** | [gitlab-ci.yml](ci/gitlab-ci.yml) | GitLab CI pipeline integration |
+| **CI** | [pre-commit-hook.sh](ci/pre-commit-hook.sh) | Git pre-commit hook for agent tests |
+| **Security** | [clawguard-integration.yaml](security/clawguard-integration.yaml) | ClawGuard LLM-as-Judge security scanning |
+| **Multi-Agent** | [crewai-test.yaml](multi-agent/crewai-test.yaml) | CrewAI crew collaboration testing |
+| **Multi-Agent** | [autogen-test.yaml](multi-agent/autogen-test.yaml) | AutoGen group chat testing |
 | **Adapters** | [openai.yaml](adapters/openai.yaml) | OpenAI adapter configuration |
 | **Adapters** | [anthropic.yaml](adapters/anthropic.yaml) | Anthropic adapter configuration |
 | **MCP** | [mcp-security-scan.yaml](mcp/mcp-security-scan.yaml) | MCP server security scanning |

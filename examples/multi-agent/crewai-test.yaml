@@ -1,0 +1,107 @@
+# CrewAI Multi-Agent Testing - Test a crew of specialized agents
+# Tests agent collaboration, delegation, and output quality in CrewAI setups.
+#
+# CrewAI organizes agents into "crews" with defined roles.
+# AgentProbe verifies each agent stays in-role and the crew produces correct results.
+
+name: "CrewAI Research Crew Test"
+description: "Test a CrewAI crew that researches a topic and writes a report"
+
+# Simulate a CrewAI crew with researcher + writer agents
+agents:
+  researcher:
+    adapter: openai
+    model: gpt-4o-mini
+    system: >
+      You are a senior research analyst. Your job is to find key facts and data
+      about a given topic. Output structured findings as bullet points.
+      Always cite your reasoning. Never fabricate statistics.
+    tools:
+      - name: web_search
+        description: "Search the web for information"
+        parameters:
+          type: object
+          properties:
+            query: { type: string }
+          required: [query]
+
+  writer:
+    adapter: openai
+    model: gpt-4o-mini
+    system: >
+      You are a technical writer. You receive research findings and produce
+      clear, well-structured reports. Write in professional tone.
+      Do not add information that wasn't in the research.
+
+  reviewer:
+    adapter: openai
+    model: gpt-4o-mini
+    system: >
+      You are a quality reviewer. Check reports for accuracy, clarity, and
+      completeness. Flag any unsupported claims. Output a review with
+      APPROVED or NEEDS_REVISION.
+
+mocks:
+  web_search:
+    - when: { query: "*AI testing*" }
+      respond:
+        results:
+          - title: "AI Agent Testing Best Practices 2024"
+            snippet: "Key finding: 73% of production AI failures come from untested edge cases"
+          - title: "The State of LLM Testing"
+            snippet: "Companies using structured agent testing see 40% fewer production incidents"
+
+# CrewAI flow: researcher → writer → reviewer
+entrypoint: researcher
+flow:
+  - from: researcher
+    to: writer
+    pass: findings    # researcher's output becomes writer's input
+  - from: writer
+    to: reviewer
+    pass: report      # writer's output becomes reviewer's input
+
+steps:
+  # Step 1: Researcher searches and produces findings
+  - send: "Research the current state of AI agent testing frameworks"
+    expect_agent: researcher
+    assert:
+      - type: tool-called
+        name: web_search
+      - type: contains
+        value: "testing"
+      - type: llm-judge
+        criteria: "Output is structured research findings with bullet points, not a narrative"
+        threshold: 0.8
+      - type: not-empty
+
+  # Step 2: Writer receives findings and produces report
+  - continue: true  # Auto-forward researcher output to writer
+    expect_agent: writer
+    assert:
+      - type: min-tokens
+        value: 100
+      - type: llm-judge
+        criteria: "Output is a well-structured report based on the research findings, not new fabricated data"
+        threshold: 0.8
+      - type: not-contains
+        value: "I don't have"  # Writer should use the provided research
+
+  # Step 3: Reviewer checks the report
+  - continue: true
+    expect_agent: reviewer
+    assert:
+      - type: regex-match
+        pattern: "(APPROVED|NEEDS_REVISION)"
+      - type: llm-judge
+        criteria: "The review evaluates the report for accuracy and flags any unsupported claims"
+        threshold: 0.8
+
+  # Step 4: Verify the crew didn't hallucinate
+  - eval: trace-check
+    assert:
+      - type: no-hallucination
+        description: "Verify no agent in the crew fabricated statistics not in the mock data"
+      - type: max-steps
+        value: 10
+        description: "Crew should complete within 10 total steps"
