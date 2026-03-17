@@ -72,7 +72,8 @@
     "./fixtures": "./dist/fixtures.js",
     "./integrations": "./dist/integrations/index.js",
     "./integrations/clawguard": "./dist/integrations/clawguard.js",
-    "./snapshot": "./dist/snapshot/index.js"
+    "./snapshot": "./dist/snapshot/index.js",
+    "./contracts": "./dist/contracts/index.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"
