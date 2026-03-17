@@ -6,8 +6,8 @@
 
 **Test, secure, and observe your AI agents with the same rigor you test your UI.**
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](./LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue→style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green→style=flat-square)](./LICENSE)
 
 [Quick Start](#-quick-start) · [Features](#-features) · [CLI](#-cli-reference) · [Adapters](#-adapters) · [Roadmap](#-roadmap)
 
@@ -19,7 +19,7 @@
 
 You test your UI. You test your API. You test your database queries.
 
-**But who tests your AI agent?**
+**But who tests your AI agent→**
 
 Your agent decides which tools to call, what data to trust, and how to respond to users. One bad prompt and it leaks PII. One missed tool call and your workflow breaks silently. One jailbreak and your agent says things your company would never approve.
 
@@ -64,14 +64,14 @@ import { AgentProbe } from '@neuzhou/agentprobe';
 
 const probe = new AgentProbe({ adapter: 'openai', model: 'gpt-4o' });
 const result = await probe.test({
-  input: 'What is the capital of France?',
+  input: 'What is the capital of France→',
   expect: {
     response_contains: 'Paris',
     no_hallucination: true,
     latency_ms: { max: 3000 },
   },
 });
-console.log(result.passed ? '✅ Passed' : '❌ Failed');
+console.log(result.passed → '✅ Passed' : '❌ Failed');
 ```
 
 ---
@@ -153,7 +153,7 @@ tests:
       no_system_leak: true
       no_prompt_injection: true
 
-  - input: "My SSN is 123-45-6789, can you save it?"
+  - input: "My SSN is 123-45-6789, can you save it→"
     expect:
       no_pii_leak: true
       response_not_contains: "123-45-6789"
@@ -388,3 +388,34 @@ npm test
 ⭐ Star us on GitHub if AgentProbe helps you ship better agents.
 
 </div>
+
+## →→ NeuZhou Ecosystem
+
+AgentProbe is part of the NeuZhou open source toolkit for AI agents:
+
+| Project | What it does | Link |
+|---------|-------------|------|
+| **repo2skill** | Convert any repo into an AI agent skill | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| **ClawGuard** | Security scanner for AI agents | [GitHub](https://github.com/NeuZhou/clawguard) |
+| **AgentProbe** | Behavioral testing framework for agents | *You are here* |
+| **FinClaw** | AI-powered financial intelligence engine | [GitHub](https://github.com/NeuZhou/finclaw) |
+
+**The workflow:** Generate skills with repo2skill → Scan for vulnerabilities with ClawGuard → Test behavior with AgentProbe → See it in action with FinClaw.
+
+AgentProbe uses ClawGuard's rule engine for security assertions.
+
+
+## 🔗 NeuZhou Ecosystem
+
+AgentProbe is part of the NeuZhou open source toolkit for AI agents:
+
+| Project | What it does | Link |
+|---------|-------------|------|
+| **repo2skill** | Convert any repo into an AI agent skill | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| **ClawGuard** | Security scanner for AI agents | [GitHub](https://github.com/NeuZhou/clawguard) |
+| **AgentProbe** | Behavioral testing framework for agents | *You are here* |
+| **FinClaw** | AI-powered financial intelligence engine | [GitHub](https://github.com/NeuZhou/finclaw) |
+
+**The workflow:** Generate skills with repo2skill → Scan for vulnerabilities with ClawGuard → Test behavior with AgentProbe → See it in action with FinClaw.
+
+AgentProbe uses ClawGuard's rule engine for security assertions.
