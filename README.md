@@ -389,22 +389,6 @@ npm test
 
 </div>
 
-## →→ NeuZhou Ecosystem
-
-AgentProbe is part of the NeuZhou open source toolkit for AI agents:
-
-| Project | What it does | Link |
-|---------|-------------|------|
-| **repo2skill** | Convert any repo into an AI agent skill | [GitHub](https://github.com/NeuZhou/repo2skill) |
-| **ClawGuard** | Security scanner for AI agents | [GitHub](https://github.com/NeuZhou/clawguard) |
-| **AgentProbe** | Behavioral testing framework for agents | *You are here* |
-| **FinClaw** | AI-powered financial intelligence engine | [GitHub](https://github.com/NeuZhou/finclaw) |
-
-**The workflow:** Generate skills with repo2skill → Scan for vulnerabilities with ClawGuard → Test behavior with AgentProbe → See it in action with FinClaw.
-
-AgentProbe uses ClawGuard's rule engine for security assertions.
-
-
 ## 🔗 NeuZhou Ecosystem
 
 AgentProbe is part of the NeuZhou open source toolkit for AI agents:
