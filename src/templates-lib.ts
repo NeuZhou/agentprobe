@@ -8,7 +8,7 @@
 export interface TestTemplate {
   name: string;
   description: string;
-  category: 'chatbot' | 'rag' | 'tool-agent' | 'mcp-server' | 'safety' | 'performance';
+  category: 'chatbot' | 'rag' | 'tool-agent' | 'mcp-server' | 'safety' | 'performance' | 'multi-agent';
   content: string;
 }
 

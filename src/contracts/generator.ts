@@ -42,7 +42,7 @@ export function generateContract(
   // Analyze tool usage
   const toolStats = analyzeToolUsage(traces);
   const alwaysCalled = toolStats.filter(t => t.traces === n).map(t => t.name);
-  const neverCalled = new Set<string>();
+  // neverCalled detection reserved for future use
 
   // Analyze timing
   const durations = traces.map(t => t.steps.reduce((s, step) => s + (step.duration_ms ?? 0), 0));
