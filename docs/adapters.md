@@ -16,6 +16,9 @@ AgentProbe connects to any LLM provider through its adapter system. Switch provi
 | OpenClaw | `openclaw` | ✅ Stable |
 | Generic HTTP | `http` | ✅ Stable |
 | Ollama | `ollama` | ✅ Stable |
+| CrewAI | `crewai` | ✅ Stable |
+| AutoGen | `autogen` | ✅ Stable |
+| MCP | `mcp` | ✅ Stable |
 | Custom | `custom` | ✅ Stable |
 
 ## OpenAI
@@ -135,6 +138,71 @@ request_format:
   message_field: "input"
 response_format:
   content_field: "response"
+```
+
+## CrewAI
+
+Convert and test CrewAI multi-agent traces:
+
+```yaml
+adapter: crewai
+```
+
+AgentProbe auto-detects CrewAI trace format from the `crew_id` and `tasks` fields.
+
+**Example trace input:**
+
+```json
+{
+  "crew_id": "content-crew",
+  "tasks": [
+    {
+      "task_id": "research",
+      "agent": "researcher",
+      "tools_used": [{ "name": "web_search", "input": "AI trends" }],
+      "llm_calls": [{ "model": "gpt-4", "tokens": { "input": 100, "output": 200 } }],
+      "output": "Research findings..."
+    }
+  ]
+}
+```
+
+## AutoGen
+
+Convert and test Microsoft AutoGen multi-agent conversation traces:
+
+```yaml
+adapter: autogen
+```
+
+AgentProbe auto-detects AutoGen format from `session_id` and `messages` with `sender` fields.
+
+**Example trace input:**
+
+```json
+{
+  "session_id": "session-1",
+  "messages": [
+    { "sender": "user_proxy", "content": "Find weather in Tokyo", "role": "user" },
+    {
+      "sender": "assistant",
+      "tool_calls": [{ "id": "tc-1", "function": { "name": "get_weather", "arguments": "{\"location\":\"Tokyo\"}" } }],
+      "model": "gpt-4",
+      "usage": { "prompt_tokens": 50, "completion_tokens": 30 }
+    },
+    { "sender": "assistant", "content": "Tokyo is 20°C and sunny.", "role": "assistant" }
+  ]
+}
+```
+
+## MCP (Model Context Protocol)
+
+Test MCP servers and their tool implementations:
+
+```yaml
+adapter: mcp
+mcp_server:
+  command: "node server.js"
 ```
 
 ## Custom Adapter (TypeScript)

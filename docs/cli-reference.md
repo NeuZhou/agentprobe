@@ -103,6 +103,19 @@ agentprobe codegen trace.json                 # Generate YAML tests
 agentprobe codegen trace.json -o tests/       # Output to directory
 ```
 
+## agentprobe convert
+
+Convert between trace formats.
+
+```bash
+agentprobe convert trace.json --from agentprobe --to langsmith
+agentprobe convert trace.json --from crewai --to agentprobe
+agentprobe convert trace.json --from autogen --to opentelemetry
+agentprobe convert trace.json --auto          # Auto-detect source format
+```
+
+**Supported formats:** `agentprobe`, `langsmith`, `opentelemetry`, `arize`, `crewai`, `autogen`
+
 ## agentprobe diff
 
 Compare test runs.
