@@ -12,8 +12,10 @@
 
 import type { AgentTrace, TraceStep } from './types';
 import * as crypto from 'crypto';
+import { convertCrewAI, detectCrewAI } from './adapters/crewai';
+import { convertAutoGen, detectAutoGen } from './adapters/autogen';
 
-export type TraceFormat = 'agentprobe' | 'langsmith' | 'opentelemetry' | 'arize' | 'custom';
+export type TraceFormat = 'agentprobe' | 'langsmith' | 'opentelemetry' | 'arize' | 'crewai' | 'autogen' | 'custom';
 
 // ===== LangSmith format =====
 
@@ -426,6 +428,12 @@ export function convertTrace(
       // Arize → AgentProbe: basic conversion
       agentTrace = fromArize(input as ArizeTrace);
       break;
+    case 'crewai':
+      agentTrace = convertCrewAI(input);
+      break;
+    case 'autogen':
+      agentTrace = convertAutoGen(input);
+      break;
     default:
       throw new Error(`Unsupported source format: ${from}`);
   }
@@ -490,7 +498,7 @@ export function fromArize(arize: ArizeTrace): AgentTrace {
  * List supported formats.
  */
 export function listFormats(): TraceFormat[] {
-  return ['agentprobe', 'langsmith', 'opentelemetry', 'arize', 'custom'];
+  return ['agentprobe', 'langsmith', 'opentelemetry', 'arize', 'crewai', 'autogen', 'custom'];
 }
 
 /**
@@ -501,5 +509,7 @@ export function detectFormat(obj: any): TraceFormat | null {
   if (obj?.runs && Array.isArray(obj.runs)) return 'langsmith';
   if (obj?.resourceSpans) return 'opentelemetry';
   if (obj?.spans && Array.isArray(obj.spans) && obj.spans[0]?.span_kind) return 'arize';
+  if (detectCrewAI(obj)) return 'crewai';
+  if (detectAutoGen(obj)) return 'autogen';
   return null;
 }
