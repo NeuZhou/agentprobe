@@ -7,6 +7,9 @@ import { detectOpenClaw, convertOpenClaw } from './openclaw';
 import { detectGemini, convertGemini } from './gemini';
 import { detectOllama, convertOllama } from './ollama';
 import { detectOpenAICompatible, convertOpenAICompatible } from './openai-compatible';
+import { detectCrewAI, convertCrewAI } from './crewai';
+import { detectAutoGen, convertAutoGen } from './autogen';
+import { detectMCP, convertMCP } from './mcp';
 
 export interface TraceAdapter {
   name: string;
@@ -15,6 +18,9 @@ export interface TraceAdapter {
 }
 
 const adapters: TraceAdapter[] = [
+  { name: 'crewai', detect: detectCrewAI, convert: convertCrewAI },
+  { name: 'autogen', detect: detectAutoGen, convert: convertAutoGen },
+  { name: 'mcp', detect: detectMCP, convert: convertMCP },
   { name: 'openclaw', detect: detectOpenClaw, convert: convertOpenClaw },
   { name: 'gemini', detect: detectGemini, convert: convertGemini },
   { name: 'ollama', detect: detectOllama, convert: convertOllama },
@@ -61,7 +67,7 @@ export function autoConvert(input: any): AgentTrace {
     }
   }
   throw new Error(
-    'Unable to detect trace format. Supported: openai, openai-compatible, anthropic, gemini, ollama, langchain, generic (JSONL)',
+    'Unable to detect trace format. Supported: openai, openai-compatible, anthropic, gemini, ollama, crewai, autogen, mcp, langchain, generic (JSONL)',
   );
 }
 
@@ -83,6 +89,11 @@ export function convertWith(name: string, input: any): AgentTrace {
 export function registerAdapter(adapter: TraceAdapter): void {
   adapters.push(adapter);
 }
+
+// New framework adapters
+export { convertCrewAI, detectCrewAI } from './crewai';
+export { convertAutoGen, detectAutoGen } from './autogen';
+export { convertMCP, detectMCP } from './mcp';
 
 // A2A Protocol support
 export { A2AAdapter, validateAgentCard } from './a2a';

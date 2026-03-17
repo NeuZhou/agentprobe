@@ -402,6 +402,9 @@ Auto-convert traces from other formats.
 | `ollama` | Ollama completions |
 | `openai-compatible` | OpenAI-compatible APIs |
 | `openclaw` | OpenClaw native format |
+| `crewai` | CrewAI multi-agent task traces |
+| `autogen` | Microsoft AutoGen conversation traces |
+| `mcp` | Model Context Protocol tool call traces |
 | `generic` | Generic event logs |
 
 ### Auto-Detection
