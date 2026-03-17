@@ -76,6 +76,8 @@
   },
   "files": [
     "dist/",
+    "!dist/**/*.map",
+    "!dist/vscode/",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
