@@ -69,7 +69,9 @@
     "./reporters/json": "./dist/reporters/json.js",
     "./reporters/markdown": "./dist/reporters/markdown.js",
     "./reporters/github": "./dist/reporters/github.js",
-    "./fixtures": "./dist/fixtures.js"
+    "./fixtures": "./dist/fixtures.js",
+    "./integrations": "./dist/integrations/index.js",
+    "./integrations/clawguard": "./dist/integrations/clawguard.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"
@@ -124,6 +126,14 @@
     "commander": "^12.1.0",
     "glob": "^10.3.10",
     "yaml": "^2.4.1"
+  },
+  "peerDependencies": {
+    "@neuzhou/clawguard": ">=0.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@neuzhou/clawguard": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

@@ -159,6 +159,31 @@ tests:
       response_not_contains: "123-45-6789"
 ```
 
+### 🔒 ClawGuard Security Integration
+
+AgentProbe integrates with [ClawGuard](https://github.com/neuzhou/clawguard) for deep security scanning. ClawGuard is an optional peer dependency — if installed, it powers automated security assertions:
+
+```typescript
+import { ClawGuardIntegration } from '@neuzhou/agentprobe/integrations/clawguard';
+import { registerPlugin } from '@neuzhou/agentprobe';
+
+// Create the integration and register as a plugin
+const clawguard = new ClawGuardIntegration({
+  scanPath: './src',           // Path to scan (default: cwd)
+  failOn: ['critical', 'high'], // Severity threshold
+  rules: './my-rules/',        // Custom rules directory
+});
+
+registerPlugin(clawguard.toPlugin());
+```
+
+The integration:
+- **Auto-detects** ClawGuard installation — skips gracefully if not installed
+- **Runs scans** at suite start and converts findings into AgentProbe assertions
+- **Adds `toPassSecurityScan`** custom assertion for use in test expectations
+
+Install ClawGuard to enable: `npm install -D @neuzhou/clawguard`
+
 ### LLM-as-Judge
 
 Use a stronger model to evaluate nuanced quality:
