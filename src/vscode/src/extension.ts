@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
-import { TestResultTreeProvider, TestResultItem } from './treeProvider';
+import { TestResultTreeProvider } from './treeProvider';
 import { StatusBarManager } from './statusBar';
-import * as cp from 'child_process';
 import * as path from 'path';
 
 let statusBar: StatusBarManager;

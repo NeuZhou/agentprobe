@@ -49,7 +49,6 @@ export function buildFingerprint(traces: AgentTrace[]): AgentFingerprint {
 
   // Tool usage
   const toolCounts: Record<string, number> = {};
-  let totalToolCalls = 0;
   const stepCounts: number[] = [];
   const costs: number[] = [];
 
@@ -57,7 +56,6 @@ export function buildFingerprint(traces: AgentTrace[]): AgentFingerprint {
   let retries = 0;
   let fallbacks = 0;
   let giveUps = 0;
-  let totalErrors = 0;
 
   // Decision pattern tracking
   const patterns: string[][] = [];
@@ -76,7 +74,6 @@ export function buildFingerprint(traces: AgentTrace[]): AgentFingerprint {
         const toolName = step.data.tool_name || 'unknown';
         pattern.push(toolName.charAt(0).toUpperCase() + toolName.slice(1));
         toolCounts[toolName] = (toolCounts[toolName] || 0) + 1;
-        totalToolCalls++;
       } else if (step.type === 'output') pattern.push('Respond');
       else if (step.type === 'llm_call') pattern.push('Analyze');
 
@@ -89,7 +86,6 @@ export function buildFingerprint(traces: AgentTrace[]): AgentFingerprint {
 
       // Track error recovery
       if (step.type === 'tool_result' && step.data.tool_result?.error) {
-        totalErrors++;
         lastToolFailed = true;
       } else if (lastToolFailed) {
         if (step.type === 'tool_call' && step.data.tool_name === trace.steps[trace.steps.indexOf(step) - 2]?.data?.tool_name) {

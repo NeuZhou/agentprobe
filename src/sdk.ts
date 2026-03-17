@@ -140,6 +140,7 @@ export class AgentProbe {
     duration_ms: number;
   }> {
     const start = Date.now();
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { timeout_ms, ...expect } = expectations;
     const assertions = evaluate(trace, expect);
     const passed = assertions.every((a) => a.passed);

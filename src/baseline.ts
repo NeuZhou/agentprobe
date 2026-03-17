@@ -7,7 +7,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { SuiteResult } from './types';
 import type { Baseline } from './regression';
-import { saveBaseline as _saveBaseline, loadBaseline as _loadBaseline } from './regression';
 
 const DEFAULT_DIR = '.agentprobe/baselines';
 void '.agentprobe/baselines/.promoted'; // PROMOTED_FILE - reserved for future use

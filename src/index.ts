@@ -62,16 +62,12 @@ import { loadGovernanceData, generateGovernanceDashboard, formatGovernance } fro
 import { detectAnomalies, formatAnomalies } from './anomaly';
 import { profilePerformance, formatPerformanceProfile } from './behavior-profiler';
 import { generateFromNLMulti, formatGeneratedTestsYaml } from './nlgen';
-import { applyTheme as _applyTheme, formatThemes } from './themes';
-import { parseDuration as _parseDuration, aggregateResults as _aggregateResults, formatLoadTestResult as _formatLoadTestResult } from './load-test';
-import type { LoadTestConfig as _LoadTestConfig } from './load-test';
+import { formatThemes } from './themes';
 import { searchEngine, formatSearchEngineResult } from './search-engine';
 import { collectDashboardMetrics, generateDashboardHTML } from './health-dashboard';
 import { collectDashboardData, renderDashboard, renderCompactDashboard } from './dashboard';
 import { migrate, formatMigrateResult } from './migrate';
 import type { SourceFormat } from './migrate';
-import { createSampler as _createSampler } from './recorder';
-import type { TraceSamplingConfig as _TraceSamplingConfig } from './recorder';
 
 // Read version from package.json
 import * as _pkgPath from 'path';
@@ -150,7 +146,7 @@ program
     ) => {
       // Resolve suite paths from args (support globs and --recursive)
       const { glob } = require('glob');
-      let suitePaths: string[] = [];
+      const suitePaths: string[] = [];
       for (const arg of suiteArgs) {
         if (fs.existsSync(arg) && fs.statSync(arg).isDirectory()) {
           // Directory: find YAML files

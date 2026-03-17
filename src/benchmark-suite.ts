@@ -114,7 +114,6 @@ export function scoreBenchmark(
 
   const categories: BenchmarkCategoryScore[] = [];
   let totalScore = 0;
-  let totalMax = 0;
   let totalTime = 0;
   let totalCost = 0;
 
@@ -136,7 +135,6 @@ export function scoreBenchmark(
     });
 
     totalScore += score;
-    totalMax += 100;
     totalTime += time;
     totalCost += cost;
   }

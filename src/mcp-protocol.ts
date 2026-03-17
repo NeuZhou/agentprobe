@@ -87,6 +87,7 @@ export function parseMessages(buffer: string): { messages: JSONRPCMessage[]; rem
   const messages: JSONRPCMessage[] = [];
   let remaining = buffer;
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const headerEnd = remaining.indexOf('\r\n\r\n');
     if (headerEnd === -1) break;

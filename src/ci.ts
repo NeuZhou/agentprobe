@@ -82,7 +82,7 @@ agent-test:
     paths:
       - results.xml
   variables:
-    OPENAI_API_KEY: \$OPENAI_API_KEY
+    OPENAI_API_KEY: $OPENAI_API_KEY
 `;
 
 const AZURE_PIPELINES_TEMPLATE = (

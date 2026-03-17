@@ -295,10 +295,10 @@ export class PluginManager {
     return getRegisteredPlugins();
   }
 
-  getHooks(hookName: keyof PluginHooks): Function[] {
+  getHooks(hookName: keyof PluginHooks): ((...args: unknown[]) => unknown)[] {
     return pluginHooks
       .map((h) => (h as any)[hookName])
-      .filter((fn): fn is Function => typeof fn === 'function');
+      .filter((fn): fn is (...args: unknown[]) => unknown => typeof fn === 'function');
   }
 
   clear(): void {

@@ -236,7 +236,7 @@ function evalFormat(assertion: NLAssertion, output: string): NLEvalResult {
     bullet: /[-•*]\s/.test(output),
     numbered: /\d+[.)]\s/.test(output),
     list: /[-•*]\s|\d+[.)]\s/.test(output),
-    markdown: /[#*_`\[\]]/.test(output),
+    markdown: /[#*_`[\]]/.test(output),
     json: (() => { try { JSON.parse(output); return true; } catch { return false; } })(),
     table: /\|.*\|/.test(output),
     'code block': /```/.test(output),

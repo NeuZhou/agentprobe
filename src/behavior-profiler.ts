@@ -129,7 +129,6 @@ export function profileBehavior(traces: AgentTrace[]): BehaviorProfile {
     totalCost += cost.total_cost;
 
     let prevWasError = false;
-    let cumulativeCost = 0;
     const halfIdx = Math.floor(trace.steps.length / 2);
 
     for (let i = 0; i < trace.steps.length; i++) {
@@ -170,7 +169,6 @@ export function profileBehavior(traces: AgentTrace[]): BehaviorProfile {
       // Track cost by half
       if (step.data.tokens) {
         const stepCost = (step.data.tokens.input ?? 0) * 0.00001 + (step.data.tokens.output ?? 0) * 0.00003;
-        cumulativeCost += stepCost;
         if (i <= halfIdx) stepCosts.push(stepCost);
       }
     }

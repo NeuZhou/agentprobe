@@ -34,7 +34,7 @@ export interface TestExecutor {
 
 export class ParallelRunner {
   private concurrency: number;
-  // @ts-ignore reserved for future rate-limit enforcement
+  // @ts-expect-error reserved for future rate-limit enforcement
   private _respectRateLimits: boolean;
   private groupByAdapter: boolean;
   private progressCallback?: (state: ParallelProgress) => void;

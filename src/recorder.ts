@@ -366,11 +366,12 @@ export function createSampler(config: TraceSamplingConfig): (trace: AgentTrace) 
       case 'random':
         return rng() < config.rate;
 
-      case 'reservoir':
+      case 'reservoir': {
         // Reservoir sampling: always keep first N, then probabilistically replace
         const capacity = Math.max(1, Math.ceil(counter * config.rate));
         if (counter <= capacity) return true;
         return rng() < capacity / counter;
+      }
 
       case 'priority':
         // Priority strategy: only capture based on rules (already checked above)
