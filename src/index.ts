@@ -2636,6 +2636,39 @@ snapshotCmd
     }
   });
 
+snapshotCmd
+  .command('list')
+  .description('List all golden snapshots')
+  .option('--dir <dir>', 'Snapshot directory', '__snapshots__')
+  .action(async (opts: any) => {
+    const { SnapshotManager } = await import('./snapshot');
+    const mgr = new SnapshotManager(opts.dir);
+    const names = mgr.list();
+    if (names.length === 0) {
+      console.log(chalk.yellow('No snapshots found in ' + opts.dir + '/'));
+    } else {
+      console.log(chalk.bold(`${names.length} snapshot(s):\n`));
+      for (const n of names) {
+        console.log(`  • ${n}`);
+      }
+    }
+  });
+
+snapshotCmd
+  .command('show <name>')
+  .description('Display details of a golden snapshot')
+  .option('--dir <dir>', 'Snapshot directory', '__snapshots__')
+  .action(async (name: string, opts: any) => {
+    const { formatSnapshotDetail } = await import('./snapshot');
+    const snapPath = require('path').join(opts.dir, `${name.replace(/[^a-zA-Z0-9_-]/g, '_')}.snap.json`);
+    if (!require('fs').existsSync(snapPath)) {
+      console.log(chalk.red(`Snapshot "${name}" not found`));
+      process.exit(1);
+    }
+    const data = JSON.parse(require('fs').readFileSync(snapPath, 'utf-8'));
+    console.log(formatSnapshotDetail(data));
+  });
+
 // ─── gen-from-docs ───────────────────────────────────────────────────
 import { generateFromDocs, formatDocGenStats } from './doc-gen';
 

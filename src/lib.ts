@@ -19,7 +19,7 @@
  */
 
 // Core evaluation
-export { evaluate } from './assertions';
+export { evaluate, toMatchSnapshot } from './assertions';
 export { evaluateComposed, evaluateAllOf, evaluateAnyOf, evaluateNoneOf } from './compose';
 
 // Runner
@@ -47,6 +47,17 @@ export {
   formatDetailedBreakdown,
 } from './perf-profiler';
 export type { DetailedLatencyBreakdown, PercentileSet } from './perf-profiler';
+
+// Snapshot testing
+export {
+  SnapshotManager, extractSnapshot, matchSnapshot,
+  diffTraceSnapshots, formatTraceDiff, formatSnapshotDetail,
+} from './snapshot';
+export type {
+  SnapshotData, SnapshotDiff as SnapshotCompareDiff, SnapshotConfig, SnapshotFieldDiff as SnapshotFieldChange,
+  BehaviorSnapshot, AgentResponse,
+  StepDiff, FieldChange, TraceDiffResult, DiffOptions,
+} from './snapshot';
 
 // Security
 export { generateSecurityTests } from './security';
@@ -717,9 +728,7 @@ export type { AgentProbeConfig as FullConfig, AdapterSection, DefaultsSection, S
 export { PerfRegressionTracker } from './perf-regression';
 export type { PerfMetrics, ThresholdConfig, PerfRecord, PerfComparison, PerfAlert } from './perf-regression';
 
-// v4.9.0 - Snapshot Manager (enhanced)
-export { SnapshotManager } from './snapshot';
-export type { AgentResponse, SnapshotData, SnapshotDiff as SnapshotManagerDiff } from './snapshot';
+// v4.9.0 - Snapshot Manager (enhanced) — exports moved to top-level snapshot block
 
 // v4.9.0 - Tag Filtering
 export { TagFilter, parseTagArgs, extractTags, groupByTag, formatTagStats } from './tags';

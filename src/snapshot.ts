@@ -184,6 +184,172 @@ function simpleHash(str: string): string {
   return 'h' + Math.abs(hash).toString(36);
 }
 
+// ===== Trace-level Diff Engine (v5.0) =====
+
+export interface StepDiff {
+  kind: 'added' | 'removed' | 'changed';
+  index: number;
+  expected?: TraceStep;
+  actual?: TraceStep;
+  changes?: FieldChange[];
+}
+
+export interface FieldChange {
+  field: string;
+  expected: any;
+  actual: any;
+}
+
+export interface TraceDiffResult {
+  identical: boolean;
+  stepDiffs: StepDiff[];
+  metadataChanges: FieldChange[];
+  summary: { added: number; removed: number; changed: number };
+}
+
+export interface DiffOptions {
+  /** Field paths to ignore during comparison (e.g. 'duration_ms', 'data.tokens'). */
+  ignorePatterns?: string[];
+}
+
+const DEFAULT_IGNORE = ['duration_ms', 'data.tokens', 'timestamp'];
+
+function deepEqual(a: any, b: any, currentPath = '', ignore: Set<string> = new Set()): boolean {
+  if (a === b) return true;
+  if (a == null || b == null) return a === b;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== 'object') return false;
+
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((v, i) => deepEqual(v, b[i], `${currentPath}[${i}]`, ignore));
+  }
+
+  const keysA = Object.keys(a).filter(k => !ignore.has(currentPath ? `${currentPath}.${k}` : k));
+  const keysB = Object.keys(b).filter(k => !ignore.has(currentPath ? `${currentPath}.${k}` : k));
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every(k => {
+    const p = currentPath ? `${currentPath}.${k}` : k;
+    return deepEqual(a[k], b[k], p, ignore);
+  });
+}
+
+function fieldChanges(expected: Record<string, any>, actual: Record<string, any>, ignore: Set<string>, prefix = ''): FieldChange[] {
+  const changes: FieldChange[] = [];
+  const allKeys = new Set([...Object.keys(expected), ...Object.keys(actual)]);
+  for (const key of allKeys) {
+    const p = prefix ? `${prefix}.${key}` : key;
+    if (ignore.has(p)) continue;
+    if (!deepEqual(expected[key], actual[key], p, ignore)) {
+      changes.push({ field: p, expected: expected[key], actual: actual[key] });
+    }
+  }
+  return changes;
+}
+
+/**
+ * Deep diff two traces step-by-step, producing structured results
+ * that highlight added/removed/changed steps and metadata changes.
+ */
+export function diffTraceSnapshots(
+  expected: AgentTrace,
+  actual: AgentTrace,
+  options: DiffOptions = {},
+): TraceDiffResult {
+  const ignore = new Set([...DEFAULT_IGNORE, ...(options.ignorePatterns ?? [])]);
+  const stepDiffs: StepDiff[] = [];
+  const maxLen = Math.max(expected.steps.length, actual.steps.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const exp = expected.steps[i];
+    const act = actual.steps[i];
+
+    if (!exp) {
+      stepDiffs.push({ kind: 'added', index: i, actual: act });
+    } else if (!act) {
+      stepDiffs.push({ kind: 'removed', index: i, expected: exp });
+    } else {
+      const changes = fieldChanges(
+        { type: exp.type, ...exp.data },
+        { type: act.type, ...act.data },
+        ignore,
+      );
+      if (changes.length > 0) {
+        stepDiffs.push({ kind: 'changed', index: i, expected: exp, actual: act, changes });
+      }
+    }
+  }
+
+  const metadataChanges = fieldChanges(expected.metadata, actual.metadata, ignore);
+
+  return {
+    identical: stepDiffs.length === 0 && metadataChanges.length === 0,
+    stepDiffs,
+    metadataChanges,
+    summary: {
+      added: stepDiffs.filter(d => d.kind === 'added').length,
+      removed: stepDiffs.filter(d => d.kind === 'removed').length,
+      changed: stepDiffs.filter(d => d.kind === 'changed').length,
+    },
+  };
+}
+
+// ===== Snapshot Reporter =====
+
+function stepSummary(step: { type: string; data: Record<string, any> }): string {
+  if (step.data.tool_name) return step.data.tool_name as string;
+  if (step.data.content) return (step.data.content as string).slice(0, 60);
+  return JSON.stringify(step.data).slice(0, 60);
+}
+
+export function formatTraceDiff(diff: TraceDiffResult, name: string): string {
+  if (diff.identical) return `✅ Snapshot "${name}" matches`;
+
+  const lines: string[] = [];
+  lines.push(`❌ Snapshot "${name}" does not match`);
+  lines.push('');
+
+  const { added, removed, changed } = diff.summary;
+  lines.push(`  +${added} added  -${removed} removed  ~${changed} changed`);
+  lines.push('');
+
+  for (const sd of diff.stepDiffs) {
+    switch (sd.kind) {
+      case 'added':
+        lines.push(`  + [${sd.index}] ${sd.actual!.type}: ${stepSummary(sd.actual!)}`);
+        break;
+      case 'removed':
+        lines.push(`  - [${sd.index}] ${sd.expected!.type}: ${stepSummary(sd.expected!)}`);
+        break;
+      case 'changed':
+        lines.push(`  ~ [${sd.index}] ${sd.expected!.type}:`);
+        for (const c of sd.changes ?? []) {
+          lines.push(`      ${c.field}: ${JSON.stringify(c.expected)} → ${JSON.stringify(c.actual)}`);
+        }
+        break;
+    }
+  }
+
+  if (diff.metadataChanges.length > 0) {
+    lines.push('  metadata:');
+    for (const c of diff.metadataChanges) {
+      lines.push(`      ${c.field}: ${JSON.stringify(c.expected)} → ${JSON.stringify(c.actual)}`);
+    }
+  }
+
+  return lines.join('\n');
+}
+
+export function formatSnapshotDetail(data: SnapshotData): string {
+  const lines: string[] = [];
+  lines.push(`Snapshot: ${data.testId}`);
+  lines.push(`  Captured: ${data.timestamp}`);
+  lines.push(`  Steps: ${data.stepCount}`);
+  lines.push(`  Tools: ${data.toolsCalled.join(', ') || '(none)'}`);
+  lines.push(`  Output hash: ${data.outputHash}`);
+  return lines.join('\n');
+}
+
 // ===== Legacy functions (backward compatible) =====
 
 export function extractSnapshot(trace: AgentTrace): BehaviorSnapshot {

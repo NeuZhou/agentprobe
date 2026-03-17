@@ -2,6 +2,7 @@ import type { AgentTrace, Expectations, AssertionResult, ChainStep } from './typ
 import { calculateCost } from './cost';
 import { evaluateCustomAssertion } from './custom-assertions';
 import { judgeOutput, judgeWithRubric } from './judge';
+import { matchSnapshot } from './snapshot';
 
 export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResult[] {
   const results: AssertionResult[] = [];
@@ -360,6 +361,30 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
     (results as any).__judgePromises.push(rubricPending);
   }
 
+  // snapshot — compare trace against golden snapshot
+  if (expect.snapshot) {
+    const snapshotName = typeof expect.snapshot === 'string' ? expect.snapshot : trace.id;
+    const cmp = matchSnapshot(trace, snapshotName, {
+      updateSnapshots: false,
+      snapshotDir: '__snapshots__',
+    });
+    if (cmp.created) {
+      results.push({
+        name: `snapshot: "${snapshotName}"`,
+        passed: true,
+        message: 'Snapshot created (first run)',
+      });
+    } else {
+      results.push({
+        name: `snapshot: "${snapshotName}"`,
+        passed: cmp.match,
+        expected: 'matches golden snapshot',
+        actual: cmp.diff ?? 'match',
+        message: cmp.match ? undefined : `Snapshot mismatch:\n${cmp.diff}`,
+      });
+    }
+  }
+
   return results;
 }
 
@@ -432,4 +457,32 @@ function deepPartialMatch(actual: Record<string, any>, expected: Record<string, 
     }
   }
   return true;
+}
+
+/**
+ * Standalone assertion: compare a trace against a named golden snapshot.
+ * Returns an AssertionResult compatible with AgentProbe's result format.
+ */
+export function toMatchSnapshot(
+  trace: AgentTrace,
+  name: string,
+  options: { snapshotDir?: string; updateSnapshots?: boolean } = {},
+): AssertionResult {
+  const cmp = matchSnapshot(trace, name, {
+    snapshotDir: options.snapshotDir ?? '__snapshots__',
+    updateSnapshots: options.updateSnapshots ?? false,
+  });
+  if (cmp.created) {
+    return { name: `snapshot: ${name}`, passed: true, message: 'Snapshot created (first run)' };
+  }
+  if (cmp.updated) {
+    return { name: `snapshot: ${name}`, passed: true, message: 'Snapshot updated' };
+  }
+  return {
+    name: `snapshot: ${name}`,
+    passed: cmp.match,
+    expected: 'matches golden snapshot',
+    actual: cmp.diff ?? 'match',
+    message: cmp.match ? undefined : `Snapshot mismatch:\n${cmp.diff}`,
+  };
 }
