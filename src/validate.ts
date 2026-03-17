@@ -23,9 +23,12 @@ const KNOWN_ASSERTION_KEYS: readonly string[] = [
   'custom',
   'judge',
   'judge_rubric',
+  'not',
   'all_of',
   'any_of',
   'none_of',
+  'chain',
+  'custom_assertions',
 ] as const;
 
 /** Known top-level test case keys. */
@@ -45,6 +48,10 @@ const KNOWN_TEST_KEYS: readonly string[] = [
   'retry_delay_ms',
   'depends_on',
   'env',
+  'template',
+  'template_params',
+  'timeout_ms',
+  'replay_overrides',
   'expect',
 ] as const;
 
@@ -55,6 +62,7 @@ const KNOWN_SUITE_KEYS: readonly string[] = [
   'config',
   'hooks',
   'tests',
+  'conversations',
 ] as const;
 
 /**
@@ -168,8 +176,12 @@ export function validateSuite(data: any): ValidationResult {
       }
     }
 
-    if (!test.expect || typeof test.expect !== 'object') {
-      errors.push({ path: `${prefix}.expect`, message: 'Test must have an expect block' });
+    if ((!test.expect || typeof test.expect !== 'object') && !test.template) {
+      errors.push({ path: `${prefix}.expect`, message: 'Test must have an expect block (or use a template)' });
+      continue;
+    }
+
+    if (!test.expect) {
       continue;
     }
 
