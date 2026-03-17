@@ -137,6 +137,67 @@ const BUILT_IN_TEMPLATES: Record<string, TemplateDefinition> = {
       custom: params?.custom ?? 'toolCalls.length <= 10',
     }),
   },
+
+  multi_agent_orchestration: {
+    name: 'multi_agent_orchestration',
+    description: 'Multi-agent orchestration: bounded steps, cost, and no dangerous tools',
+    expand: (params) => ({
+      max_steps: params?.max_steps ?? 50,
+      max_cost_usd: params?.max_cost_usd ?? 1.00,
+      max_tokens: params?.max_tokens ?? 20000,
+      tool_not_called: params?.blocked_tools ?? ['exec', 'shell', 'run_command', 'rm', 'delete_file'],
+    }),
+  },
+
+  data_pipeline: {
+    name: 'data_pipeline',
+    description: 'Data pipeline: extract → transform → load, with cost and step budgets',
+    expand: (params) => ({
+      tool_sequence: params?.sequence ?? ['extract', 'transform', 'load'],
+      max_steps: params?.max_steps ?? 30,
+      max_cost_usd: params?.max_cost_usd ?? 0.50,
+      max_tokens: params?.max_tokens ?? 15000,
+    }),
+  },
+
+  customer_support: {
+    name: 'customer_support',
+    description: 'Customer support agent: polite output, reasonable response time, no harmful content',
+    expand: (params) => ({
+      max_duration_ms: params?.max_duration_ms ?? 15000,
+      max_steps: params?.max_steps ?? 10,
+      output_not_contains: params?.forbidden_phrases ?? [
+        'I don\'t care',
+        'That\'s not my problem',
+        'Figure it out yourself',
+        'stupid',
+        'idiot',
+      ],
+      max_tokens: params?.max_tokens ?? 4000,
+    }),
+  },
+
+  code_review: {
+    name: 'code_review',
+    description: 'Code review: read before write, no dangerous file operations',
+    expand: (params) => ({
+      tool_sequence: params?.sequence ?? ['read_file', 'write_file'],
+      tool_not_called: params?.blocked_tools ?? ['exec', 'shell', 'rm', 'delete_file', 'sudo'],
+      max_steps: params?.max_steps ?? 20,
+      max_cost_usd: params?.max_cost_usd ?? 0.30,
+    }),
+  },
+
+  api_integration: {
+    name: 'api_integration',
+    description: 'API integration testing: cost limits, step bounds, timeout enforcement',
+    expand: (params) => ({
+      max_steps: params?.max_steps ?? 15,
+      max_cost_usd: params?.max_cost_usd ?? 0.25,
+      max_duration_ms: params?.max_duration_ms ?? 30000,
+      max_tokens: params?.max_tokens ?? 8000,
+    }),
+  },
 };
 
 // Custom template registry
