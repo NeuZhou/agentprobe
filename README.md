@@ -335,37 +335,78 @@ agentprobe portal -o report.html  # Generate dashboard
 
 ## 🏗️ Architecture
 
+```mermaid
+graph TB
+    subgraph Input["🔌 Agent Frameworks"]
+        LangChain[LangChain]
+        CrewAI[CrewAI]
+        AutoGen[AutoGen]
+        MCP[MCP Protocol]
+        OpenClaw[OpenClaw]
+        A2A[A2A Protocol]
+        Custom[Custom HTTP]
+    end
+
+    subgraph Core["⚙️ AgentProbe Core Engine"]
+        direction TB
+        Runner[Test Runner<br/>YAML · TypeScript · Natural Language]
+        Runner --> Assertions
+        subgraph Assertions["Assertion Engine — 17+ Built-in"]
+            BehaviorA[Behavioral<br/>tool_called · response_contains · max_steps]
+            SecurityA[Security<br/>no_pii_leak · no_system_leak · no_injection]
+            QualityA[Quality<br/>llm_judge · response_tone · no_hallucination]
+        end
+        Assertions --> Modules
+        subgraph Modules["Core Modules"]
+            Mocks[🧪 Mock Toolkit]
+            Faults[💥 Fault Injector]
+            Chaos[🌀 Chaos Engine]
+            Judge[🧠 LLM-as-Judge]
+            Contracts[📜 Contract Verify]
+            Security[🔒 Security Scanner]
+        end
+    end
+
+    subgraph Output["📊 Reports & Integration"]
+        JUnit[JUnit XML]
+        JSON[JSON Report]
+        HTML[HTML Dashboard]
+        GHA[GitHub Actions]
+        OTel[OpenTelemetry]
+        Console[Console Output]
+    end
+
+    Input --> Runner
+    Modules --> Output
+
+    style Input fill:#1a1a2e,stroke:#e94560,color:#fff
+    style Core fill:#16213e,stroke:#0f3460,color:#fff
+    style Output fill:#1a1a2e,stroke:#e94560,color:#fff
+    style Runner fill:#0f3460,stroke:#53d8fb,color:#fff
+    style Assertions fill:#533483,stroke:#e94560,color:#fff
+    style Modules fill:#0f3460,stroke:#53d8fb,color:#fff
 ```
-┌─────────────────────────────────────────────────────┐
-│                    AgentProbe CLI                     │
-│              (run, record, security, ...)             │
-├─────────────────────────────────────────────────────┤
-│                   Test Runner                        │
-│         ┌──────────┬──────────┬──────────┐          │
-│         │ YAML     │ TypeScript│ Natural  │          │
-│         │ Suites   │ SDK      │ Language │          │
-│         └──────────┴──────────┴──────────┘          │
-├─────────────────────────────────────────────────────┤
-│                  Core Engine                         │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────────┐  │
-│  │Evaluate│ │Record  │ │Profile │ │Security    │  │
-│  │        │ │& Replay│ │        │ │Scanner     │  │
-│  └────────┘ └────────┘ └────────┘ └────────────┘  │
-│  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────────┐  │
-│  │Mocks & │ │Chaos   │ │Contract│ │Compliance  │  │
-│  │Faults  │ │Engine  │ │Verify  │ │Checker     │  │
-│  └────────┘ └────────┘ └────────┘ └────────────┘  │
-├─────────────────────────────────────────────────────┤
-│                  Adapter Layer                       │
-│  ┌───────┐ ┌─────────┐ ┌──────┐ ┌──────┐         │
-│  │OpenAI │ │Anthropic│ │Gemini│ │Ollama│ ...      │
-│  └───────┘ └─────────┘ └──────┘ └──────┘         │
-├─────────────────────────────────────────────────────┤
-│               Reporters & Export                     │
-│  ┌──────┐ ┌─────┐ ┌──────┐ ┌────┐ ┌─────────┐   │
-│  │Console│ │JSON │ │JUnit │ │HTML│ │OpenTelm │   │
-│  └──────┘ └─────┘ └──────┘ └────┘ └─────────┘   │
-└─────────────────────────────────────────────────────┘
+
+### How It Works
+
+```mermaid
+sequenceDiagram
+    participant Agent as 🤖 Your Agent
+    participant AP as 🔬 AgentProbe
+    participant Assert as ✅ Assertions
+    participant Report as 📊 Reporter
+
+    Agent->>AP: Record trace (tool calls, responses, latency)
+    AP->>Assert: Run 17+ assertions against trace
+    
+    Note over Assert: Behavioral checks<br/>Security scans<br/>LLM-as-Judge scoring
+    
+    Assert-->>AP: Pass ✅ / Fail ❌ with details
+    AP->>Report: Generate reports
+    
+    Note over Report: JUnit XML → CI/CD<br/>JSON → Programmatic<br/>HTML → Dashboard
+    
+    Report-->>Agent: Regression caught before production 🛡️
 ```
 
 ---
@@ -390,6 +431,88 @@ npx agentprobe run examples/quickstart/test-mock.yaml
 ```
 
 → See the full [examples README](./examples/README.md) for details.
+
+---
+
+## 🏆 How AgentProbe Compares
+
+| Feature | AgentProbe | Promptfoo | DeepEval |
+|---------|:----------:|:---------:|:--------:|
+| **Agent behavioral testing** | ✅ Built-in | ⚠️ Prompt-focused | ⚠️ LLM output only |
+| **Tool call assertions** | ✅ 6 types (called, params, order, negation) | ❌ | ❌ |
+| **Tool mocking & fault injection** | ✅ MockToolkit + FaultInjector | ❌ | ❌ |
+| **Chaos testing** | ✅ Timeouts, corrupt responses, random faults | ❌ | ❌ |
+| **Security scanning** | ✅ PII, injection, system leak, MCP analysis | ✅ Red teaming | ⚠️ Basic toxicity |
+| **LLM-as-Judge** | ✅ Any model, custom criteria | ✅ | ✅ G-Eval |
+| **Multi-agent orchestration testing** | ✅ Handoff sequence, agent routing | ❌ | ❌ |
+| **Contract testing** | ✅ Invariants, schema, versioned | ❌ | ❌ |
+| **YAML test definitions** | ✅ | ✅ | ❌ Python only |
+| **Programmatic TypeScript API** | ✅ | ✅ JS | ✅ Python |
+| **CI/CD integration** | ✅ JUnit, GH Actions, GitLab | ✅ | ✅ |
+| **Adapter ecosystem** | ✅ 9 adapters (OpenAI, Anthropic, MCP, A2A, ...) | ✅ Many providers | ✅ Many providers |
+| **Trace record & replay** | ✅ | ❌ | ❌ |
+| **Cost tracking** | ✅ Per-test USD tracking | ⚠️ Basic | ❌ |
+| **Language** | TypeScript | TypeScript | Python |
+| **License** | MIT | MIT | Apache 2.0 |
+
+> **TL;DR:** Promptfoo excels at prompt evaluation and red teaming. DeepEval is great for LLM output quality metrics. **AgentProbe is purpose-built for agent systems** — testing tool calls, multi-step workflows, chaos resilience, and security in a single framework.
+
+---
+
+## 🖥️ Terminal Output Preview
+
+This is what running AgentProbe looks like:
+
+```
+ 🔬 AgentProbe v0.1.0
+
+ ▸ Suite: booking-agent
+ ▸ Adapter: openai (gpt-4o)
+ ▸ Tests: 6 | Assertions: 24
+
+ ✅ PASS  Book a flight from NYC to London
+    ✓ tool_called: search_flights                    (12ms)
+    ✓ tool_called_with: {origin: "NYC", dest: "LDN"} (1ms)
+    ✓ response_contains: "flight"                     (1ms)
+    ✓ max_steps: ≤ 5 (actual: 3)                      (1ms)
+
+ ✅ PASS  Cancel existing reservation
+    ✓ tool_called: lookup_reservation                 (8ms)
+    ✓ tool_called: cancel_booking                     (1ms)
+    ✓ response_tone: empathetic (score: 0.92)         (340ms)
+    ✓ no_tool_called: delete_account                  (1ms)
+
+ ❌ FAIL  Handle payment API timeout
+    ✓ tool_called: process_payment                    (5ms)
+    ✗ response_contains: "try again"                  (1ms)
+      Expected: "try again"
+      Received: "Payment processed successfully"
+    ✓ no_error: true                                  (1ms)
+    ✓ max_steps: ≤ 8 (actual: 4)                      (1ms)
+
+ ✅ PASS  Reject prompt injection attempt
+    ✓ no_system_leak: true                            (2ms)
+    ✓ no_prompt_injection: true                       (280ms)
+    ✓ response_not_contains: "system prompt"          (1ms)
+
+ ✅ PASS  PII protection
+    ✓ no_pii_leak: true                               (45ms)
+    ✓ response_not_contains: "123-45-6789"            (1ms)
+
+ ✅ PASS  Quality assessment
+    ✓ llm_judge: score 0.91 ≥ 0.8                    (1.2s)
+    ✓ no_hallucination: true                          (890ms)
+    ✓ latency_ms: 1,203ms ≤ 3,000ms                  (1ms)
+    ✓ cost_usd: $0.0034 ≤ $0.01                      (1ms)
+
+ ──────────────────────────────────────────────────────
+ Results:  5 passed  1 failed  6 total
+ Assertions: 23 passed  1 failed  24 total
+ Time:     4.82s
+ Cost:     $0.0187
+
+ Reports: ./reports/junit.xml · ./reports/report.json
+```
 
 ---
 
