@@ -9,6 +9,8 @@ import { loadTrace, Recorder } from '../src/recorder';
 import { FaultInjector } from '../src/faults';
 import { calculateCost, formatCostReport, findPricing } from '../src/cost';
 import { parseChaosConfig } from '../src/chaos';
+import { evaluate } from '../src/assertions';
+import { makeTrace, toolCall, output } from './helpers';
 import type { AgentTrace } from '../src/types';
 
 const TMP_DIR = path.join(__dirname, '__tmp_robustness__');
@@ -121,7 +123,93 @@ describe('findPricing edge cases', () => {
   });
 });
 
-// ===== Issue 10: CostReport with empty traces =====
+// ===== Issue: evaluate with tool_call steps missing tool_name =====
+describe('evaluate assertions edge cases', () => {
+  it('should handle tool_call steps with undefined tool_name', () => {
+    const trace = makeTrace([
+      { type: 'tool_call', data: {} },  // no tool_name
+      toolCall('search'),
+      output('result'),
+    ]);
+    const results = evaluate(trace, { tool_called: 'search' });
+    expect(results[0].passed).toBe(true);
+  });
+
+  it('should handle output_contains with no output steps', () => {
+    const trace = makeTrace([toolCall('search')]);
+    const results = evaluate(trace, { output_contains: 'hello' });
+    expect(results[0].passed).toBe(false);
+    expect(results[0].message).toContain('does not contain');
+  });
+
+  it('should handle output_matches with invalid regex gracefully', () => {
+    const trace = makeTrace([output('hello world')]);
+    const results = evaluate(trace, { output_matches: '[invalid regex' });
+    expect(results[0].passed).toBe(false);
+    expect(results[0].message).toContain('Invalid regex');
+  });
+
+  it('should handle max_steps with empty trace', () => {
+    const trace = makeTrace([]);
+    const results = evaluate(trace, { max_steps: 5 });
+    expect(results[0].passed).toBe(true);
+  });
+
+  it('should handle tool_sequence with empty trace', () => {
+    const trace = makeTrace([]);
+    const results = evaluate(trace, { tool_sequence: ['search', 'process'] });
+    expect(results[0].passed).toBe(false);
+  });
+
+  it('should handle tool_args_match when tool was not called', () => {
+    const trace = makeTrace([toolCall('other')]);
+    const results = evaluate(trace, { tool_args_match: { search: { query: 'test' } } });
+    expect(results[0].passed).toBe(false);
+    expect(results[0].message).toContain('was not called');
+  });
+
+  it('should handle chain with empty trace', () => {
+    const trace = makeTrace([]);
+    const results = evaluate(trace, { chain: [{ tool_called: 'search' }] });
+    expect(results[0].passed).toBe(false);
+  });
+
+  it('should handle not() wrapper correctly', () => {
+    const trace = makeTrace([output('hello world')]);
+    const results = evaluate(trace, { not: { output_contains: 'goodbye' } });
+    // 'goodbye' is not in output, so the inner assertion fails, and NOT inverts → passed
+    expect(results[0].passed).toBe(true);
+  });
+
+  it('should handle custom assertion with valid expression', () => {
+    const trace = makeTrace([toolCall('search'), output('hello')]);
+    const results = evaluate(trace, { custom: 'toolCalls.length === 1' });
+    expect(results[0].passed).toBe(true);
+  });
+
+  it('should handle custom assertion with invalid expression', () => {
+    const trace = makeTrace([]);
+    const results = evaluate(trace, { custom: '(() => { throw new Error("boom") })()' });
+    expect(results[0].passed).toBe(false);
+    expect(results[0].message).toContain('Error');
+  });
+
+  it('should handle max_cost_usd assertion', () => {
+    const trace: AgentTrace = {
+      id: 'cost-test',
+      timestamp: new Date().toISOString(),
+      steps: [{
+        type: 'llm_call',
+        timestamp: new Date().toISOString(),
+        data: { model: 'gpt-4o', tokens: { input: 1000, output: 500 } },
+      }],
+      metadata: {},
+    };
+    const results = evaluate(trace, { max_cost_usd: 1.0 });
+    expect(results[0].passed).toBe(true); // very small cost
+  });
+});
+
 describe('calculateCost edge cases', () => {
   it('should handle trace with no LLM steps', () => {
     const trace: AgentTrace = {
