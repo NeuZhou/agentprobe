@@ -9,6 +9,7 @@ import { loadTrace, Recorder } from '../src/recorder';
 import { FaultInjector } from '../src/faults';
 import { calculateCost, formatCostReport, findPricing } from '../src/cost';
 import { parseChaosConfig } from '../src/chaos';
+import { matchSnapshot, extractSnapshot } from '../src/snapshots';
 import { evaluate } from '../src/assertions';
 import { makeTrace, toolCall, output } from './helpers';
 import type { AgentTrace } from '../src/types';
@@ -248,5 +249,53 @@ describe('calculateCost edge cases', () => {
     expect(formatted).toContain('gpt-4o');
     expect(formatted).toContain('1000');
     expect(formatted).toContain('500');
+  });
+});
+
+// ===== Issue: matchSnapshot created flag bug =====
+describe('matchSnapshot created flag', () => {
+  const snapDir = path.join(TMP_DIR, '__snapshots_test__');
+
+  afterAll(() => {
+    if (fs.existsSync(snapDir)) {
+      for (const f of fs.readdirSync(snapDir)) fs.unlinkSync(path.join(snapDir, f));
+      fs.rmdirSync(snapDir);
+    }
+  });
+
+  it('should report created=true when creating a new snapshot', () => {
+    ensureTmp();
+    const trace = makeTrace([toolCall('search'), output('hello')]);
+    const result = matchSnapshot(trace, 'new-snapshot-test', {
+      updateSnapshots: false,
+      snapshotDir: snapDir,
+    });
+    expect(result.match).toBe(true);
+    expect(result.created).toBe(true);
+  });
+
+  it('should match an existing snapshot', () => {
+    const trace = makeTrace([toolCall('search'), output('hello')]);
+    // First call creates it
+    matchSnapshot(trace, 'existing-snap-test', {
+      updateSnapshots: false,
+      snapshotDir: snapDir,
+    });
+    // Second call should match
+    const result = matchSnapshot(trace, 'existing-snap-test', {
+      updateSnapshots: false,
+      snapshotDir: snapDir,
+    });
+    expect(result.match).toBe(true);
+    expect(result.created).toBeFalsy();
+  });
+
+  it('extractSnapshot should handle empty trace', () => {
+    const trace = makeTrace([]);
+    const snap = extractSnapshot(trace);
+    expect(snap.toolsCalled).toEqual([]);
+    expect(snap.toolCallOrder).toEqual([]);
+    expect(snap.hasOutput).toBe(false);
+    expect(snap.stepCount).toBe(0);
   });
 });

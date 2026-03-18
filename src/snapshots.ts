@@ -55,8 +55,9 @@ export function matchSnapshot(
   }
 
   if (!fs.existsSync(snapFile) || config.updateSnapshots) {
+    const isNew = !fs.existsSync(snapFile);
     fs.writeFileSync(snapFile, JSON.stringify(snap, null, 2));
-    return { match: true, created: !fs.existsSync(snapFile), updated: config.updateSnapshots };
+    return { match: true, created: isNew, updated: !isNew && config.updateSnapshots };
   }
 
   const existing: BehaviorSnapshot = JSON.parse(fs.readFileSync(snapFile, 'utf-8'));
