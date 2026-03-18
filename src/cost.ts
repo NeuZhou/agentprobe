@@ -36,6 +36,12 @@ export interface CostReport {
   total_input_tokens: number;
   total_output_tokens: number;
   total_cost: number;
+  /** Convenience alias for total_input_tokens */
+  input_tokens: number;
+  /** Convenience alias for total_output_tokens */
+  output_tokens: number;
+  /** Sum of input + output tokens */
+  total_tokens: number;
 }
 
 /**
@@ -84,6 +90,9 @@ export function calculateCost(trace: AgentTrace): CostReport {
     total_input_tokens: totalInput,
     total_output_tokens: totalOutput,
     total_cost: totalCost,
+    input_tokens: totalInput,
+    output_tokens: totalOutput,
+    total_tokens: totalInput + totalOutput,
   };
 }
 
