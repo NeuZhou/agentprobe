@@ -13,7 +13,6 @@ import { matchSnapshot, extractSnapshot } from '../src/snapshots';
 import { evaluate } from '../src/assertions';
 import { makeTrace, toolCall, output } from './helpers';
 import type { AgentTrace } from '../src/types';
-
 const TMP_DIR = path.join(__dirname, '__tmp_robustness__');
 
 function ensureTmp() {
@@ -297,5 +296,36 @@ describe('matchSnapshot created flag', () => {
     expect(snap.toolCallOrder).toEqual([]);
     expect(snap.hasOutput).toBe(false);
     expect(snap.stepCount).toBe(0);
+  });
+});
+
+// ===== Recorder tests =====
+describe('Recorder', () => {
+  it('should generate unique trace IDs', () => {
+    const r1 = new Recorder();
+    const r2 = new Recorder();
+    expect(r1.getTrace().id).not.toBe(r2.getTrace().id);
+  });
+
+  it('should add steps with timestamp', () => {
+    const r = new Recorder({ test: true });
+    r.addStep({ type: 'llm_call', data: { model: 'gpt-4' } });
+    r.addStep({ type: 'tool_call', data: { tool_name: 'search' } });
+    const trace = r.getTrace();
+    expect(trace.steps).toHaveLength(2);
+    expect(trace.steps[0].timestamp).toBeTruthy();
+    expect(trace.steps[1].timestamp).toBeTruthy();
+    expect(trace.metadata.test).toBe(true);
+  });
+
+  it('should save and load trace via file', () => {
+    ensureTmp();
+    const r = new Recorder({ source: 'test' });
+    r.addStep({ type: 'output', data: { content: 'hello' } });
+    const p = path.join(TMP_DIR, 'recorder-save.json');
+    r.save(p);
+    const loaded = loadTrace(p);
+    expect(loaded.steps).toHaveLength(1);
+    expect(loaded.steps[0].data.content).toBe('hello');
   });
 });

@@ -82,9 +82,6 @@ export function buildExecutionPlan(tests: DepTestCase[]): ExecutionPlan {
 }
 
 /**
- * Check if a test should be skipped because a dependency failed.
- */
-/**
  * Generate a Mermaid diagram of test dependencies.
  */
 export function generateDependencyGraph(tests: DepTestCase[]): string {

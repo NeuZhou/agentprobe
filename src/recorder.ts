@@ -66,7 +66,7 @@ export class Recorder {
                 type: 'tool_call',
                 data: {
                   tool_name: tc.function.name,
-                  tool_args: JSON.parse(tc.function.arguments || '{}'),
+                  tool_args: safeParseArgs(tc.function.arguments),
                 },
                 duration_ms: Date.now() - start,
               });
@@ -245,7 +245,7 @@ export class Recorder {
                   type: 'tool_call',
                   data: {
                     tool_name: tc.function.name,
-                    tool_args: JSON.parse(tc.function.arguments || '{}'),
+                    tool_args: safeParseArgs(tc.function.arguments),
                   },
                   duration_ms: Date.now() - start,
                 });
@@ -397,4 +397,16 @@ function seededRng(seed: number): () => number {
 export function loadTrace(path: string): AgentTrace {
   const raw = fs.readFileSync(path, 'utf-8');
   return JSON.parse(raw) as AgentTrace;
+}
+
+/**
+ * Safely parse tool call arguments, returning an empty object on failure.
+ */
+function safeParseArgs(args: string | undefined): Record<string, any> {
+  if (!args) return {};
+  try {
+    return JSON.parse(args);
+  } catch {
+    return { raw: args };
+  }
 }
