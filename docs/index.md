@@ -64,4 +64,4 @@ Most LLM testing tools focus on **prompt evaluation**. AgentProbe tests the **fu
 
 ## License
 
-[MIT](https://github.com/neuzhou/agentprobe/blob/main/LICENSE) © [Kang Zhou](https://github.com/neuzhou)
+[MIT](https://github.com/neuzhou/agentprobe/blob/main/LICENSE) © [NeuZhou](https://github.com/neuzhou)

@@ -240,4 +240,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and how t
 
 ## License
 
-[MIT](LICENSE) © [Kang Zhou](https://github.com/neuzhou)
+[MIT](LICENSE) © [NeuZhou](https://github.com/neuzhou)

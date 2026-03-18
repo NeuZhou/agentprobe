@@ -24,7 +24,7 @@ AgentProbe is a behavioral testing framework for AI agents. Write tests in YAML 
 
 ## First Comment Script
 
-Hey everyone! 👋 I'm Kang, and I built AgentProbe because I kept seeing the same problem: AI agents go to production with impressive demos but zero behavioral testing.
+Hey everyone! 👋 I'm NeuZhou, and I built AgentProbe because I kept seeing the same problem: AI agents go to production with impressive demos but zero behavioral testing.
 
 We have Playwright for web apps, Postman for APIs, but nothing for testing agent *decisions* — which tools they call, how they handle failures, whether they resist prompt injection.
 

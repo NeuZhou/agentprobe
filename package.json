@@ -113,7 +113,7 @@
     "security-testing",
     "fault-injection"
   ],
-  "author": "Kang Zhou <neuzhou@outlook.com>",
+  "author": "NeuZhou <neuzhou@outlook.com>",
   "license": "MIT",
   "repository": {
     "type": "git",

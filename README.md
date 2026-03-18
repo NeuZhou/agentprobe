@@ -548,7 +548,7 @@ npm test
 
 ## 📄 License
 
-[MIT](./LICENSE) © [Kang Zhou](https://github.com/neuzhou)
+[MIT](./LICENSE) © [NeuZhou](https://github.com/neuzhou)
 
 ---
 
