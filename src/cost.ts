@@ -99,7 +99,7 @@ export function calculateCost(trace: AgentTrace): CostReport {
 /**
  * Find pricing for a model, fuzzy-matching known models.
  */
-function findPricing(model: string): { input: number; output: number } {
+export function findPricing(model: string): { input: number; output: number } {
   if (PRICING[model]) return PRICING[model];
   // Fuzzy match: try prefix
   const normalized = model.toLowerCase();
