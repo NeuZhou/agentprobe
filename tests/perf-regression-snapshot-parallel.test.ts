@@ -268,9 +268,11 @@ describe('SnapshotManager', () => {
     expect(diff.newBehaviors).toContain('snapshot_not_found');
   });
 
-  it('update re-timestamps existing snapshot', () => {
+  it('update re-timestamps existing snapshot', async () => {
     mgr.capture('u1', makeResponse());
     const before = JSON.parse(fs.readFileSync(path.join(dir, '__snapshots__', 'u1.snap.json'), 'utf-8'));
+    // Ensure at least 1ms passes so the timestamp differs
+    await new Promise((r) => setTimeout(r, 5));
     mgr.update('u1');
     const after = JSON.parse(fs.readFileSync(path.join(dir, '__snapshots__', 'u1.snap.json'), 'utf-8'));
     expect(after.timestamp).not.toBe(before.timestamp);
