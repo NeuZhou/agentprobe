@@ -1,91 +1,39 @@
 # AutoGen Multi-Agent Conversation Testing
 # Tests an AutoGen-style group chat where agents discuss and solve problems together.
-#
-# AutoGen uses conversational patterns where agents take turns.
-# AgentProbe verifies turn order, content quality, and conversation termination.
 
 name: "AutoGen Group Chat Test"
 description: "Test an AutoGen-style multi-agent group chat for code review"
 
-# Define the AutoGen agent group
-agents:
-  user_proxy:
-    adapter: mock
-    role: user_proxy
-    system: >
-      You represent the user. Pass the user's coding task to the group.
-      When the solution is complete and tested, say TERMINATE.
-
-  coder:
-    adapter: openai
-    model: gpt-4o-mini
-    role: assistant
-    system: >
-      You are an expert Python programmer. Write clean, well-documented code.
-      Always include type hints. Explain your approach before writing code.
-
-  critic:
-    adapter: openai
-    model: gpt-4o-mini
-    role: assistant
-    system: >
-      You are a code reviewer. Review code for bugs, security issues,
-      and best practices. Be constructive. Rate code as:
-      APPROVE, REQUEST_CHANGES, or NEEDS_DISCUSSION.
-
-# AutoGen group chat configuration
-group_chat:
-  mode: round_robin          # or: auto (LLM selects next speaker)
-  max_rounds: 6              # Prevent infinite loops
-  termination: "TERMINATE"   # Stop when this word appears
-  speaker_order: [user_proxy, coder, critic]
-
-steps:
-  # Round 1: User proxy sends the task
-  - send: "Write a Python function that validates email addresses using regex"
-    expect_agent: user_proxy
-    assert:
-      - type: not-empty
-
-  # Round 2: Coder writes the solution
-  - continue: true
-    expect_agent: coder
-    assert:
-      - type: contains
-        value: "def"
-      - type: regex-match
-        pattern: "import re|re\\."
-      - type: llm-judge
+tests:
+  - name: Coder writes the solution
+    input: "Write a Python function that validates email addresses using regex"
+    tags: [multi-agent, autogen, coding]
+    expect:
+      output_contains: "def"
+      output_matches: "import re|re\\."
+      judge:
         criteria: "Code includes type hints, handles edge cases, and has docstrings"
         threshold: 0.7
 
-  # Round 3: Critic reviews the code
-  - continue: true
-    expect_agent: critic
-    assert:
-      - type: regex-match
-        pattern: "(APPROVE|REQUEST_CHANGES|NEEDS_DISCUSSION)"
-      - type: llm-judge
+  - name: Critic reviews the code
+    input: "Review the code for bugs, security issues, and best practices"
+    tags: [multi-agent, autogen, review]
+    expect:
+      output_matches: "(APPROVE|REQUEST_CHANGES|NEEDS_DISCUSSION)"
+      judge:
         criteria: "Review is constructive and checks for security, edge cases, and code quality"
         threshold: 0.8
 
-  # Round 4: If changes requested, coder should revise
-  - continue: true
-    expect_agent: coder
-    max_rounds: 2    # Allow up to 2 more rounds for revision
-    assert:
-      - type: not-empty
-      - type: llm-judge
+  - name: Coder revises based on feedback
+    input: "Revise the code based on the reviewer's feedback"
+    tags: [multi-agent, autogen, revision]
+    expect:
+      judge:
         criteria: "If revising, the code addresses the critic's feedback"
         threshold: 0.7
 
-  # Verify conversation terminates properly
-  - eval: conversation-check
-    assert:
-      - type: terminated
-        description: "Conversation should reach TERMINATE within max_rounds"
-      - type: max-steps
-        value: 8
-        description: "Full conversation completes within 8 turns"
-      - type: no-loop
-        description: "Agents don't repeat the same messages in a loop"
+  - name: Conversation completes within step budget
+    input: "Write and review a Python email validator"
+    tags: [multi-agent, autogen, budget]
+    expect:
+      max_steps: 8

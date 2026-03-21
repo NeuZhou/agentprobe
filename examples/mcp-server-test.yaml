@@ -3,6 +3,7 @@
 # Validates tool registration, invocation, error handling, and security.
 
 name: MCP Server Tests
+description: Tests for MCP server tool registration, invocation, error handling, and security
 config:
   timeout_ms: 30000
 

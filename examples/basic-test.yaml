@@ -2,6 +2,7 @@
 # Tests fundamental agent behavior: tool usage, output quality, and cost budgets.
 
 name: Basic Agent Tests
+description: Tests fundamental agent behavior including tool usage, output quality, and cost budgets
 config:
   timeout_ms: 30000
 

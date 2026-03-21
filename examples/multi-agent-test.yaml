@@ -2,6 +2,7 @@
 # Tests orchestration between multiple agents: handoff, delegation, and coordination.
 
 name: Multi-Agent Orchestration Tests
+description: Tests orchestration between multiple agents including handoff, delegation, and coordination
 config:
   timeout_ms: 60000
 

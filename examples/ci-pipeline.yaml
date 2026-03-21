@@ -2,6 +2,7 @@
 # Example GitHub Actions workflow for running AgentProbe in CI/CD.
 
 name: Agent Tests
+description: Example CI/CD workflow for running AgentProbe in GitHub Actions
 on:
   push:
     branches: [main]

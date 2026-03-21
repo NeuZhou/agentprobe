@@ -4,15 +4,9 @@
 name: "Hello World"
 description: "Verify the agent can respond to a basic greeting"
 
-agent:
-  adapter: openai
-  model: gpt-4o-mini
-
-steps:
-  - send: "Hello! What's your name?"
-    assert:
-      # The agent should respond with something (not empty)
-      - type: not-empty
-      # The response should be reasonable length
-      - type: max-tokens
-        value: 200
+tests:
+  - name: Agent responds to greeting
+    input: "Hello! What's your name?"
+    expect:
+      output_contains: "Hello"
+      max_tokens: 200

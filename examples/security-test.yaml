@@ -2,6 +2,7 @@
 # Tests agent resistance to prompt injection, data exfiltration, and privilege escalation.
 
 name: Security Tests
+description: Tests agent resistance to prompt injection, data exfiltration, and privilege escalation
 config:
   timeout_ms: 30000
 
