@@ -6,3 +6,5 @@ dist/
 *.tgz
 coverage/
 .vitest/
+
+.secret-patterns.local
