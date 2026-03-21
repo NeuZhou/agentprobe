@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🔬 AgentProbe
+# AgentProbe
 
 ### Playwright for AI Agents
 
@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social)](https://github.com/NeuZhou/agentprobe/stargazers)
 
-[Quick Start](#-quick-start) · [Features](#-features) · [Comparison](#-how-agentprobe-compares) · [Architecture](#%EF%B8%8F-architecture) · [Roadmap](#%EF%B8%8F-roadmap)
+[Quick Start](#quick-start) · [Features](#features) · [Comparison](#how-agentprobe-compares) · [Architecture](#architecture) · [Roadmap](#roadmap)
 
 </div>
 
@@ -30,7 +30,7 @@ Your agent decides which tools to call, what data to trust, and how to respond t
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 npm install @neuzhou/agentprobe
@@ -79,9 +79,9 @@ console.log(result.passed ? '✅ Passed' : '❌ Failed');
 
 ---
 
-## ✅ Features
+## Features
 
-### 🧪 Behavioral Testing
+### Behavioral Testing
 
 Define complex agent behaviors in simple YAML:
 
@@ -99,7 +99,7 @@ tests:
       max_steps: 4
 ```
 
-### 🔧 Tool Mocking & Fault Injection
+### Tool Mocking & Fault Injection
 
 Test how your agent handles the real world — where APIs fail or time out:
 
@@ -120,7 +120,7 @@ faults.add({
 });
 ```
 
-### 🌪️ Chaos Testing
+### Chaos Testing
 
 Push your agent to its limits:
 
@@ -142,7 +142,7 @@ tests:
       no_error: true
 ```
 
-### 🔒 Security Scanning
+### Security Scanning
 
 Automated detection of prompt injection, jailbreaks, and data leaks:
 
@@ -162,7 +162,7 @@ tests:
       response_not_contains: "123-45-6789"
 ```
 
-### 🛡️ ClawGuard Integration
+### ClawGuard Integration
 
 AgentProbe integrates with [ClawGuard](https://github.com/NeuZhou/clawguard) for deep security scanning:
 
@@ -180,7 +180,7 @@ registerPlugin(clawguard.toPlugin());
 
 Install ClawGuard to enable: `npm install -D @neuzhou/clawguard`
 
-### 🧑‍⚖️ LLM-as-Judge
+### LLM-as-Judge
 
 Use a stronger model to evaluate nuanced quality:
 
@@ -194,7 +194,7 @@ tests:
         min_score: 0.8
 ```
 
-### 📜 Contract Testing
+### Contract Testing
 
 Enforce strict behavioral contracts:
 
@@ -214,7 +214,7 @@ contract:
     required: [response, confidence]
 ```
 
-### 🤖 Multi-Agent Orchestration Testing
+### Multi-Agent Orchestration Testing
 
 Test agent-to-agent workflows:
 
@@ -233,7 +233,7 @@ const result = await evaluateOrchestration({
 });
 ```
 
-### 📋 Assertion Types
+### Assertion Types
 
 | Assertion | Description |
 |---|---|
@@ -257,7 +257,7 @@ const result = await evaluateOrchestration({
 
 ---
 
-## 🔌 Adapters
+## Adapters
 
 | Provider | Adapter | Status |
 |---|---|---|
@@ -291,7 +291,7 @@ const probe = new AgentProbe({
 
 ---
 
-## ⚡ How AgentProbe Compares
+## How AgentProbe Compares
 
 | Feature | AgentProbe | Promptfoo | DeepEval |
 |---------|:----------:|:---------:|:--------:|
@@ -315,7 +315,7 @@ const probe = new AgentProbe({
 
 ---
 
-## 💻 CLI Reference
+## CLI Reference
 
 ```bash
 agentprobe run <tests>            # Run test suites
@@ -345,11 +345,11 @@ agentprobe portal -o report.html  # Generate dashboard
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 graph TB
-    subgraph Input["🔌 Agent Frameworks"]
+    subgraph Input["Agent Frameworks"]
         LangChain[LangChain]
         CrewAI[CrewAI]
         AutoGen[AutoGen]
@@ -359,7 +359,7 @@ graph TB
         Custom[Custom HTTP]
     end
 
-    subgraph Core["⚙️ AgentProbe Core Engine"]
+    subgraph Core["AgentProbe Core Engine"]
         direction TB
         Runner[Test Runner<br/>YAML · TypeScript · Natural Language]
         Runner --> Assertions
@@ -370,16 +370,16 @@ graph TB
         end
         Assertions --> Modules
         subgraph Modules["Core Modules"]
-            Mocks[🔧 Mock Toolkit]
-            Faults[💥 Fault Injector]
-            Chaos[🌪️ Chaos Engine]
-            Judge[🧑‍⚖️ LLM-as-Judge]
-            Contracts[📜 Contract Verify]
-            Security[🛡️ Security Scanner]
+            Mocks[Mock Toolkit]
+            Faults[Fault Injector]
+            Chaos[Chaos Engine]
+            Judge[LLM-as-Judge]
+            Contracts[Contract Verify]
+            Security[Security Scanner]
         end
     end
 
-    subgraph Output["📊 Reports & Integration"]
+    subgraph Output["Reports & Integration"]
         JUnit[JUnit XML]
         JSON[JSON Report]
         HTML[HTML Dashboard]
@@ -403,10 +403,10 @@ graph TB
 
 ```mermaid
 sequenceDiagram
-    participant Agent as 🤖 Your Agent
-    participant AP as 🔬 AgentProbe
-    participant Assert as ✅ Assertions
-    participant Report as 📊 Reporter
+    participant Agent as Your Agent
+    participant AP as AgentProbe
+    participant Assert as Assertions
+    participant Report as Reporter
 
     Agent->>AP: Record trace (tool calls, responses, latency)
     AP->>Assert: Run 17+ assertions against trace
@@ -418,15 +418,15 @@ sequenceDiagram
     
     Note over Report: JUnit XML → CI/CD<br/>JSON → Programmatic<br/>HTML → Dashboard
     
-    Report-->>Agent: Regression caught before production 🛡️
+    Report-->>Agent: Regression caught before production
 ```
 
 ---
 
-## 🖥️ Terminal Output Preview
+## Terminal Output Preview
 
 ```
- 🔬 AgentProbe v0.1.0
+ AgentProbe v0.1.0
 
  ▸ Suite: booking-agent
  ▸ Adapter: openai (gpt-4o)
@@ -474,7 +474,7 @@ sequenceDiagram
 
 ---
 
-## 📚 Examples
+## Examples
 
 The [`examples/`](./examples/) directory contains runnable cookbook examples:
 
@@ -497,7 +497,7 @@ npx agentprobe run examples/quickstart/test-mock.yaml
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 - [x] YAML-based behavioral testing
 - [x] 17+ assertion types
@@ -522,7 +522,7 @@ See [GitHub Issues](https://github.com/NeuZhou/agentprobe/issues) for the full l
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
@@ -535,22 +535,22 @@ npm test
 
 ---
 
-## 📄 License
+## License
 
 [MIT](./LICENSE) © [NeuZhou](https://github.com/NeuZhou)
 
 ---
 
-## 🌐 NeuZhou Ecosystem
+## NeuZhou Ecosystem
 
 AgentProbe is part of the NeuZhou open source toolkit for AI agents:
 
 | Project | What it does | Link |
 |---------|-------------|------|
-| **AgentProbe** | 🔬 Playwright for AI Agents | *You are here* |
-| **ClawGuard** | 🛡️ AI Agent Immune System (285+ patterns) | [GitHub](https://github.com/NeuZhou/clawguard) |
-| **FinClaw** | 📈 AI-native quantitative finance engine | [GitHub](https://github.com/NeuZhou/finclaw) |
-| **repo2skill** | 📦 Convert any GitHub repo into an AI agent skill | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| **AgentProbe** | Playwright for AI Agents | *You are here* |
+| **ClawGuard** | AI Agent Immune System (285+ patterns) | [GitHub](https://github.com/NeuZhou/clawguard) |
+| **FinClaw** | AI-native quantitative finance engine | [GitHub](https://github.com/NeuZhou/finclaw) |
+| **repo2skill** | Convert any GitHub repo into an AI agent skill | [GitHub](https://github.com/NeuZhou/repo2skill) |
 
 **The workflow:** Generate skills with repo2skill → Scan for vulnerabilities with ClawGuard → **Test behavior with AgentProbe** → See it in action with FinClaw.
 
