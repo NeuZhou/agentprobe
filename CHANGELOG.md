@@ -2,6 +2,17 @@
 
 All notable changes to AgentProbe are documented here.
 
+## [1.0.0] - 2026-03-21
+
+### Changed
+- README cleaned up for professional tone
+
+### Fixed
+- Example YAML files updated to current schema format
+- Flaky timestamp test in snapshot parallel tests
+- CostReport missing fields
+- Unsafe JSON.parse in trace parser
+
 ## [0.1.0] - 2026-03-17
 
 ### Initial Release 🎉
