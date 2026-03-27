@@ -6,6 +6,10 @@
 
 ### Playwright for AI Agents — Test, Record, and Replay Agent Behaviors
 
+<p align="center">
+  <img src="assets/hero-agentprobe.png" alt="AgentProbe — Test Every Decision Your Agent Makes" width="800">
+</p>
+
 **Your agent decides which tools to call, what data to trust, and how to respond.**<br>
 **AgentProbe makes sure it does it right.**
 
