@@ -2,12 +2,85 @@ import type { SuiteResult, TestResult } from '../types';
 import { calculateCost } from '../cost';
 
 /**
- * Generate a self-contained HTML test report with Mermaid diagrams,
+ * Render an inline SVG pie chart for pass/fail/skip distribution.
+ */
+function renderPassRatePie(passed: number, failed: number, skipped: number): string {
+  const total = passed + failed + skipped;
+  if (total === 0) return '';
+
+  const cx = 80;
+  const cy = 80;
+  const r = 70;
+  const slices: { value: number; color: string; label: string }[] = [];
+
+  if (passed > 0) slices.push({ value: passed, color: '#3fb950', label: 'Passed' });
+  if (failed > 0) slices.push({ value: failed, color: '#f85149', label: 'Failed' });
+  if (skipped > 0) slices.push({ value: skipped, color: '#d29922', label: 'Skipped' });
+
+  // Single slice = full circle
+  if (slices.length === 1) {
+    const s = slices[0];
+    return `<div class="chart-section">
+      <h3>📊 Pass Rate</h3>
+      <div class="pie-container">
+        <svg width="160" height="160" viewBox="0 0 160 160">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="${s.color}" opacity="0.85"/>
+          <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="#f0f6fc" font-size="22" font-weight="700">${Math.round((s.value / total) * 100)}%</text>
+        </svg>
+        <div class="pie-legend">
+          <div class="pie-legend-item"><div class="pie-color" style="background:${s.color}"></div><span>${s.label}: ${s.value}</span></div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Multi-slice pie using SVG arc paths
+  let startAngle = -Math.PI / 2; // start from top
+  const paths: string[] = [];
+  const legendItems: string[] = [];
+
+  for (const s of slices) {
+    const sliceAngle = (s.value / total) * 2 * Math.PI;
+    const endAngle = startAngle + sliceAngle;
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    paths.push(
+      `<path d="M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${largeArc},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z" fill="${s.color}" opacity="0.85"/>`,
+    );
+    legendItems.push(
+      `<div class="pie-legend-item"><div class="pie-color" style="background:${s.color}"></div><span>${s.label}: ${s.value} (${Math.round((s.value / total) * 100)}%)</span></div>`,
+    );
+    startAngle = endAngle;
+  }
+
+  const pctText = total > 0 ? Math.round((passed / total) * 100) : 0;
+  return `<div class="chart-section">
+    <h3>📊 Pass Rate</h3>
+    <div class="pie-container">
+      <svg width="160" height="160" viewBox="0 0 160 160">
+        ${paths.join('\n        ')}
+        <circle cx="${cx}" cy="${cy}" r="35" fill="#0d1117"/>
+        <text x="${cx}" y="${cy + 4}" text-anchor="middle" fill="#f0f6fc" font-size="20" font-weight="700">${pctText}%</text>
+      </svg>
+      <div class="pie-legend">${legendItems.join('')}</div>
+    </div>
+  </div>`;
+}
+
+/**
+ * Generate a self-contained HTML test report with inline SVG charts,
  * token usage charts, cost breakdown, and timeline visualization.
+ * No external dependencies — works offline.
  */
 export function reportHTML(result: SuiteResult): string {
   const pct = result.total > 0 ? Math.round((result.passed / result.total) * 100) : 0;
   const testRows = result.results.map(renderTestRow).join('\n');
+  const skipped = result.results.filter((r) => r.skipped).length;
 
   // Cost data
   const costData = result.results
@@ -28,12 +101,15 @@ export function reportHTML(result: SuiteResult): string {
     })
     .filter((d) => d.input + d.output > 0);
 
-  // Mermaid flow diagram data
+  // Pass rate pie chart (inline SVG, no external deps)
+  const passRatePie = renderPassRatePie(result.passed, result.failed, skipped);
+
+  // Tool call flow data — rendered as simple text diagrams (no Mermaid dependency)
   const flowDiagrams = result.results
     .filter((r) => r.trace && r.trace.steps.length > 0)
     .map((r) => ({
       name: r.name,
-      mermaid: generateMermaidFlow(r),
+      flow: renderToolFlow(r),
     }));
 
   return `<!DOCTYPE html>
@@ -42,7 +118,6 @@ export function reportHTML(result: SuiteResult): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🔬 AgentProbe Report — ${esc(result.name)}</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#0d1117;--bg-card:#161b22;--border:#30363d;--text:#c9d1d9;--text-muted:#8b949e;--green:#3fb950;--red:#f85149;--blue:#58a6ff;--purple:#bc8cff;--orange:#d29922;--cyan:#39d353}
@@ -120,8 +195,13 @@ h3{font-size:1.1rem;margin:1rem 0 .5rem;color:#f0f6fc}
 .pie-legend-item{display:flex;align-items:center;gap:.5rem;margin:.3rem 0}
 .pie-color{width:12px;height:12px;border-radius:3px;flex-shrink:0}
 
-/* Mermaid */
-.mermaid{background:rgba(255,255,255,.03);border-radius:8px;padding:1rem;margin:.75rem 0;overflow-x:auto}
+/* Flow diagram (self-contained, no Mermaid) */
+.flow-diagram{background:rgba(255,255,255,.03);border-radius:8px;padding:1rem;margin:.75rem 0;overflow-x:auto;display:flex;flex-wrap:wrap;align-items:center;gap:.4rem}
+.flow-node{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border-radius:6px;font-size:.8rem;font-weight:500;white-space:nowrap}
+.flow-node-llm{background:rgba(188,140,255,.2);border:1px solid #bc8cff;color:#bc8cff}
+.flow-node-tool{background:rgba(88,166,255,.2);border:1px solid #58a6ff;color:#58a6ff}
+.flow-node-output{background:rgba(63,185,80,.2);border:1px solid #3fb950;color:#3fb950}
+.flow-arrow{color:var(--text-muted);font-size:.7rem}
 
 /* Step list */
 .step{display:flex;align-items:flex-start;gap:.75rem;padding:.4rem 0;font-size:.85rem}
@@ -157,6 +237,7 @@ footer a{color:var(--blue);text-decoration:none}
     <div class="stat"><div class="stat-value">${result.total}</div><div class="stat-label">Total Tests</div></div>
     <div class="stat"><div class="stat-value pass">${result.passed}</div><div class="stat-label">Passed</div></div>
     <div class="stat"><div class="stat-value fail">${result.failed}</div><div class="stat-label">Failed</div></div>
+    ${skipped > 0 ? `<div class="stat"><div class="stat-value" style="color:var(--orange)">${skipped}</div><div class="stat-label">Skipped</div></div>` : ''}
     <div class="stat"><div class="stat-value" style="color:${pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--orange)' : 'var(--red)'}">${pct}%</div><div class="stat-label">Pass Rate</div></div>
     <div class="stat"><div class="stat-value">${formatDuration(result.duration_ms)}</div><div class="stat-label">Duration</div></div>
     <div class="stat"><div class="stat-value">$${totalCost.toFixed(4)}</div><div class="stat-label">Total Cost</div></div>
@@ -167,13 +248,12 @@ footer a{color:var(--blue);text-decoration:none}
   <h2>📋 Test Results</h2>
   ${testRows}
 
-  ${tokenData.length > 0 || costData.length > 0 ? `
   <h2>📊 Analytics</h2>
   <div class="chart-grid">
+    ${passRatePie}
     ${tokenData.length > 0 ? renderTokenChart(tokenData) : ''}
     ${costData.length > 0 ? renderCostPie(costData) : ''}
   </div>
-  ` : ''}
 
   ${costData.length > 0 ? renderCostTable(costData) : ''}
 
@@ -182,7 +262,7 @@ footer a{color:var(--blue);text-decoration:none}
   ${flowDiagrams.map((fd) => `
     <div class="chart-section">
       <h3>${esc(fd.name)}</h3>
-      <div class="mermaid">${fd.mermaid}</div>
+      <div class="flow-diagram">${fd.flow}</div>
     </div>
   `).join('')}
   ` : ''}
@@ -193,7 +273,6 @@ footer a{color:var(--blue);text-decoration:none}
   <a href="https://github.com/neuzhou/agentprobe">github.com/neuzhou/agentprobe</a>
 </footer>
 <script>
-mermaid.initialize({theme:'dark',themeVariables:{primaryColor:'#58a6ff',primaryTextColor:'#c9d1d9',primaryBorderColor:'#30363d',lineColor:'#8b949e',secondaryColor:'#161b22',tertiaryColor:'#21262d'}});
 document.querySelectorAll('.test-header').forEach(h=>{
   h.addEventListener('click',()=>h.parentElement.classList.toggle('open'));
 });
@@ -375,48 +454,28 @@ function renderCostTable(costData: any[]): string {
 </div>`;
 }
 
-function generateMermaidFlow(test: TestResult): string {
-  if (!test.trace?.steps.length) return 'graph LR\n  empty[No steps]';
+/**
+ * Render a self-contained inline HTML flow diagram for tool calls.
+ * No external JS dependencies — pure HTML/CSS.
+ */
+function renderToolFlow(test: TestResult): string {
+  if (!test.trace?.steps.length) return '<span style="color:var(--text-muted)">No steps</span>';
 
-  const lines: string[] = ['graph LR'];
-  let nodeId = 0;
   const nodes: string[] = [];
-
   for (const step of test.trace.steps) {
-    const id = `n${nodeId++}`;
     if (step.type === 'llm_call') {
-      nodes.push(id);
-      lines.push(`  ${id}[/"🧠 LLM${step.data.model ? '<br/>' + esc(step.data.model) : ''}"/]`);
+      const label = step.data.model ? `🧠 ${esc(step.data.model)}` : '🧠 LLM';
+      nodes.push(`<span class="flow-node flow-node-llm">${label}</span>`);
     } else if (step.type === 'tool_call') {
-      nodes.push(id);
-      lines.push(`  ${id}["🔧 ${esc(step.data.tool_name ?? 'tool')}"]`);
+      nodes.push(`<span class="flow-node flow-node-tool">🔧 ${esc(step.data.tool_name ?? 'tool')}</span>`);
     } else if (step.type === 'output') {
-      nodes.push(id);
-      lines.push(`  ${id}(["💬 Output"])`);
+      nodes.push(`<span class="flow-node flow-node-output">💬 Output</span>`);
     } else {
       continue;
     }
   }
 
-  // Connect sequential nodes
-  for (let i = 1; i < nodes.length; i++) {
-    lines.push(`  ${nodes[i - 1]} --> ${nodes[i]}`);
-  }
-
-  // Style
-  lines.push('  classDef llm fill:#3d1f6e,stroke:#bc8cff,color:#f0f6fc');
-  lines.push('  classDef tool fill:#0d2d5e,stroke:#58a6ff,color:#f0f6fc');
-  lines.push('  classDef output fill:#0d3b1e,stroke:#3fb950,color:#f0f6fc');
-
-  // Apply styles
-  for (let i = 0; i < test.trace.steps.length; i++) {
-    const step = test.trace.steps[i];
-    if (step.type === 'llm_call') lines.push(`  class n${i} llm`);
-    else if (step.type === 'tool_call') lines.push(`  class n${i} tool`);
-    else if (step.type === 'output') lines.push(`  class n${i} output`);
-  }
-
-  return lines.join('\n');
+  return nodes.join('<span class="flow-arrow">→</span>');
 }
 
 function formatDuration(ms: number): string {

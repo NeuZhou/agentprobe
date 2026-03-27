@@ -121,6 +121,9 @@ program
   .option('--badge <path>', 'Generate a shields.io-style badge SVG')
   .option('--profile <name>', 'Use an environment profile from .agentproberc.yml')
   .option('--theme <name>', 'Theme for HTML reports: dark, corporate, minimal')
+  .option('--report <path>', 'Generate self-contained HTML report to file')
+  .option('--baseline <path>', 'Compare results against a baseline JSON file')
+  .option('--update-baseline', 'Save current results as baseline JSON')
   .option('--trace-dir <dir>', 'Watch trace directory (with --watch)')
   .option('-r, --recursive', 'Find all .yaml/.yml files recursively in directories')
   .action(
@@ -142,6 +145,9 @@ program
         traceDir?: string;
         recursive?: boolean;
         theme?: string;
+        report?: string;
+        baseline?: string;
+        updateBaseline?: boolean;
       },
     ) => {
       // Resolve suite paths from args (support globs and --recursive)
@@ -308,6 +314,47 @@ program
           } else {
             console.log('  ℹ️  No baseline found. Run `agentprobe baseline save` first.');
           }
+        }
+
+        // --baseline <path>: compare against a specific baseline file
+        if (opts.baseline) {
+          if (!fs.existsSync(opts.baseline)) {
+            console.error(chalk.red(`❌ Baseline file not found: ${opts.baseline}`));
+            console.error(chalk.yellow(`   Create one with: agentprobe run ${sp} --update-baseline`));
+          } else {
+            const baselineData = JSON.parse(fs.readFileSync(opts.baseline, 'utf-8'));
+            const regressions = detectRegressions(result, baselineData);
+            console.log(formatRegressions(regressions));
+            if (regressions.length > 0) {
+              totalFailed = Math.max(totalFailed, 1);
+            }
+          }
+        }
+
+        // --update-baseline: save current results as baseline
+        if (opts.updateBaseline) {
+          const baselineOut = opts.baseline ?? `${result.name.replace(/[^a-zA-Z0-9_-]/g, '_')}-baseline.json`;
+          const baselinePath = saveBaseline(result, path.dirname(baselineOut));
+          // If explicit path given, also write there
+          if (opts.baseline) {
+            fs.copyFileSync(baselinePath, opts.baseline);
+            console.log(chalk.green(`📊 Baseline saved: ${opts.baseline}`));
+          } else {
+            console.log(chalk.green(`📊 Baseline saved: ${baselinePath}`));
+          }
+          console.log(`   ${result.total} tests, ${result.passed} passed`);
+        }
+
+        // --report <path>: generate self-contained HTML report
+        if (opts.report && sp === suitePaths[suitePaths.length - 1]) {
+          const { reportHTML } = require('./reporters/html');
+          const { applyTheme } = require('./themes');
+          let html = reportHTML(result);
+          if (opts.theme) html = applyTheme(html, opts.theme);
+          const reportDir = path.dirname(opts.report);
+          if (reportDir && !fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
+          fs.writeFileSync(opts.report, html);
+          console.log(chalk.green(`📄 HTML report saved: ${opts.report}`));
         }
 
         // Generate badge (only for last suite or single)

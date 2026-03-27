@@ -1,0 +1,150 @@
+name: 'AgentProbe Test'
+description: 'Run AgentProbe AI agent tests — behavioral testing, regression detection, and HTML reporting for AI agents'
+branding:
+  icon: 'search'
+  color: 'blue'
+
+inputs:
+  test-dir:
+    description: 'Directory containing test files (YAML)'
+    required: false
+    default: 'tests/'
+  report:
+    description: 'Generate self-contained HTML report (true/false or file path)'
+    required: false
+    default: 'true'
+  baseline:
+    description: 'Path to baseline JSON for regression detection'
+    required: false
+    default: ''
+  update-baseline:
+    description: 'Save current results as baseline (true/false)'
+    required: false
+    default: 'false'
+  format:
+    description: 'Console output format: console, json, markdown, junit'
+    required: false
+    default: 'console'
+  node-version:
+    description: 'Node.js version to use'
+    required: false
+    default: '20'
+  tags:
+    description: 'Filter tests by tags (comma-separated)'
+    required: false
+    default: ''
+  coverage:
+    description: 'Show tool coverage report (true/false)'
+    required: false
+    default: 'false'
+  badge:
+    description: 'Path to generate a shields.io-style badge SVG'
+    required: false
+    default: ''
+
+outputs:
+  passed:
+    description: 'Number of tests passed'
+    value: ${{ steps.run-tests.outputs.passed }}
+  failed:
+    description: 'Number of tests failed'
+    value: ${{ steps.run-tests.outputs.failed }}
+  total:
+    description: 'Total number of tests'
+    value: ${{ steps.run-tests.outputs.total }}
+  report-path:
+    description: 'Path to the generated HTML report'
+    value: ${{ steps.run-tests.outputs.report_path }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Install AgentProbe
+      shell: bash
+      run: npm install @neuzhou/agentprobe
+
+    - name: Run AgentProbe Tests
+      id: run-tests
+      shell: bash
+      run: |
+        # Build CLI args
+        ARGS="${{ inputs.test-dir }}"
+        ARGS="$ARGS -f ${{ inputs.format }}"
+
+        # Tags filter
+        if [ -n "${{ inputs.tags }}" ]; then
+          IFS=',' read -ra TAG_ARRAY <<< "${{ inputs.tags }}"
+          for tag in "${TAG_ARRAY[@]}"; do
+            ARGS="$ARGS -t $(echo $tag | tr -d ' ')"
+          done
+        fi
+
+        # Coverage
+        if [ "${{ inputs.coverage }}" = "true" ]; then
+          ARGS="$ARGS --coverage"
+        fi
+
+        # Badge
+        if [ -n "${{ inputs.badge }}" ]; then
+          ARGS="$ARGS --badge ${{ inputs.badge }}"
+        fi
+
+        # HTML report
+        REPORT_PATH=""
+        if [ "${{ inputs.report }}" = "true" ]; then
+          REPORT_PATH="agentprobe-report.html"
+          ARGS="$ARGS --report $REPORT_PATH"
+        elif [ "${{ inputs.report }}" != "false" ] && [ -n "${{ inputs.report }}" ]; then
+          REPORT_PATH="${{ inputs.report }}"
+          ARGS="$ARGS --report $REPORT_PATH"
+        fi
+
+        # Baseline comparison
+        if [ -n "${{ inputs.baseline }}" ]; then
+          ARGS="$ARGS --baseline ${{ inputs.baseline }}"
+        fi
+
+        # Update baseline
+        if [ "${{ inputs.update-baseline }}" = "true" ]; then
+          ARGS="$ARGS --update-baseline"
+        fi
+
+        echo "Running: npx agentprobe run $ARGS"
+        set +e
+        OUTPUT=$(npx agentprobe run $ARGS 2>&1)
+        EXIT_CODE=$?
+        set -e
+
+        echo "$OUTPUT"
+
+        # Parse results from output (best effort)
+        PASSED=$(echo "$OUTPUT" | grep -oP '\d+(?=/\d+ passed)' | head -1 || echo "0")
+        TOTAL=$(echo "$OUTPUT" | grep -oP '(?<=\d/)\d+(?= passed)' | head -1 || echo "0")
+        FAILED=$((TOTAL - PASSED))
+
+        echo "passed=$PASSED" >> $GITHUB_OUTPUT
+        echo "failed=$FAILED" >> $GITHUB_OUTPUT
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+        echo "report_path=$REPORT_PATH" >> $GITHUB_OUTPUT
+
+        exit $EXIT_CODE
+
+    - name: Upload HTML Report
+      if: always() && steps.run-tests.outputs.report_path != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: agentprobe-report
+        path: ${{ steps.run-tests.outputs.report_path }}
+        retention-days: 30
+
+    - name: Upload Badge
+      if: always() && inputs.badge != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: agentprobe-badge
+        path: ${{ inputs.badge }}

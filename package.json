@@ -73,7 +73,8 @@
     "./integrations": "./dist/integrations/index.js",
     "./integrations/clawguard": "./dist/integrations/clawguard.js",
     "./snapshot": "./dist/snapshot/index.js",
-    "./contracts": "./dist/contracts/index.js"
+    "./contracts": "./dist/contracts/index.js",
+    "./regression/detector": "./dist/regression/detector.js"
   },
   "bin": {
     "agentprobe": "dist/index.js"

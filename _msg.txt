@@ -1,8 +1,7 @@
-fix: 4 QA bugs — CLI docs, README assertions, regex, chaos validation
+feat: 3 P0 features — HTML report dashboard, regression detection, GitHub Action
 
-- CLI reference: remove 12 non-existent commands/flags, add real ones
-- README: response_contains -> output_contains (6 occurrences)
-- chatbot-tests.yaml: Python (?i) regex -> JS-compatible alternations
-- chaos command: validate config instead of crashing with TypeError
-- docs/writing-tests.md + security-testing.md: fix assertion names
-- 2,907/2,907 tests pass, zero regressions
+- agentprobe run tests/ --report report.html (self-contained HTML with SVG charts)
+- agentprobe run tests/ --baseline baseline.json (regression detection, CI-friendly)
+- agentprobe run tests/ --update-baseline (save baseline)
+- .github/actions/agentprobe/action.yml (reusable GitHub Action)
+- 2907/2907 tests pass, zero regressions
