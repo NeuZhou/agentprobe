@@ -234,6 +234,45 @@ tests:
         min_score: 0.8
 ```
 
+### 📊 HTML Report Dashboard
+
+Generate self-contained HTML reports with interactive SVG charts:
+
+```bash
+agentprobe run tests/ --report report.html
+```
+
+- Self-contained HTML with SVG charts — no external dependencies
+- Pass/fail/skipped summary + detailed per-test results
+- Share with your team or archive for audit trails
+
+### 🔄 Regression Detection
+
+Compare test runs against saved baselines to catch regressions automatically:
+
+```bash
+# Save a baseline
+agentprobe run tests/ --report baseline.json
+
+# Compare against it
+agentprobe run tests/ --baseline baseline.json
+```
+
+- Compare against saved baselines
+- Detect new failures, latency regressions, tool call changes
+- CI-friendly — exit code 1 on regressions
+
+### 🤖 GitHub Action
+
+Built-in reusable action for CI/CD — add agent testing to your pipeline in 3 lines:
+
+```yaml
+- uses: NeuZhou/agentprobe/.github/actions/agentprobe@master
+  with:
+    test-dir: tests/
+    report: true
+```
+
 ---
 
 ## How AgentProbe Compares
@@ -484,6 +523,9 @@ npx agentprobe run examples/quickstart/test-mock.yaml
 - [x] Trace record & replay
 - [x] ClawGuard integration
 - [x] 80+ CLI commands
+- [x] HTML Report Dashboard
+- [x] Regression Detection with baselines
+- [x] GitHub Action for CI/CD
 - [ ] AWS Bedrock adapter
 - [ ] Azure OpenAI adapter
 - [ ] VS Code extension
