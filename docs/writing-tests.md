@@ -19,7 +19,7 @@ config:
 tests:
   - input: "User message"
     expect:
-      response_contains: "expected text"
+      output_contains: "expected text"
 ```
 
 ## Test Case Fields
@@ -42,13 +42,13 @@ tests:
 ```yaml
 expect:
   # Substring match
-  response_contains: "flight"
+  output_contains: "flight"
 
   # Negative substring match
-  response_not_contains: "error"
+  output_not_contains: "error"
 
   # Regex match
-  response_matches: "\\d+ results found"
+  output_matches: "\\d+ results found"
 
   # JSON schema validation
   json_schema:
@@ -139,14 +139,14 @@ tests:
     turns:
       - input: "I want to book a flight"
         expect:
-          response_contains: "where"
+          output_contains: "where"
       - input: "NYC to London, next Friday"
         expect:
           tool_called: search_flights
       - input: "Book the first option"
         expect:
           tool_called: confirm_booking
-          response_contains: "confirmed"
+          output_contains: "confirmed"
 ```
 
 ## Variables and Templating
@@ -183,9 +183,9 @@ agentprobe run tests/ --grep "booking"
 
 | Assertion | Description |
 |---|---|
-| `response_contains` | Response includes substring |
-| `response_not_contains` | Response excludes substring |
-| `response_matches` | Regex match on response |
+| `output_contains` | Output includes substring |
+| `output_not_contains` | Output excludes substring |
+| `output_matches` | Regex match on output |
 | `tool_called` | Specific tool was invoked |
 | `tool_called_with` | Tool called with expected params |
 | `no_tool_called` | Tool was NOT invoked |

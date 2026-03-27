@@ -1,0 +1,8 @@
+fix: 4 QA bugs — CLI docs, README assertions, regex, chaos validation
+
+- CLI reference: remove 12 non-existent commands/flags, add real ones
+- README: response_contains -> output_contains (6 occurrences)
+- chatbot-tests.yaml: Python (?i) regex -> JS-compatible alternations
+- chaos command: validate config instead of crashing with TypeError
+- docs/writing-tests.md + security-testing.md: fix assertion names
+- 2,907/2,907 tests pass, zero regressions

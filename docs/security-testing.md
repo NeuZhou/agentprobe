@@ -5,8 +5,11 @@ AgentProbe provides automated detection of prompt injection, jailbreaks, PII lea
 ## Quick Start
 
 ```bash
-# Run the built-in security scanner
-agentprobe security tests/ --depth deep
+# Generate a security test suite with built-in attack patterns
+agentprobe generate-security -o tests/security.test.yaml
+
+# Run the generated security tests
+agentprobe run tests/security.test.yaml
 ```
 
 ## Security Assertions in YAML
@@ -110,7 +113,7 @@ tests:
 Analyze Model Context Protocol tool definitions for vulnerabilities:
 
 ```bash
-agentprobe security --mcp-config mcp.json --scan-tools
+agentprobe generate-security --mcp-config mcp.json
 ```
 
 **Example output:**
@@ -137,13 +140,13 @@ agentprobe security --mcp-config mcp.json --scan-tools
 
 ```bash
 # Quick scan — common injection patterns
-agentprobe security tests/ --depth quick
+agentprobe generate-security --depth quick
 
 # Standard scan (default) — comprehensive patterns
-agentprobe security tests/ --depth standard
+agentprobe generate-security --depth standard
 
 # Deep scan — includes encoding attacks, multi-language, adversarial
-agentprobe security tests/ --depth deep
+agentprobe generate-security --depth deep
 ```
 
 ## Automated Security Suite
@@ -151,7 +154,7 @@ agentprobe security tests/ --depth deep
 Generate a security test suite for your agent:
 
 ```bash
-agentprobe security --generate --output tests/security.test.yaml
+agentprobe generate-security -o tests/security.test.yaml
 ```
 
 This creates tests covering:

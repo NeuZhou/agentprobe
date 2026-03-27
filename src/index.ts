@@ -2028,7 +2028,7 @@ program
   });
 
 // === Agent Chaos Testing (v2.7.0) ===
-import { parseChaosConfig, applyAllChaos, formatChaosReport } from './chaos';
+import { parseChaosConfig, applyAllChaos, formatChaosReport, validateChaosConfig } from './chaos';
 program
   .command('chaos <testFile>')
   .description('Run chaos testing against agent traces')
@@ -2043,6 +2043,18 @@ program
     YAML.parse(raw); // validate YAML
     const configFile = opts.config ?? testFile;
     const chaosConfig = parseChaosConfig(configFile);
+
+    // Validate chaos config before accessing nested properties
+    const validation = validateChaosConfig(chaosConfig);
+    if (!validation.valid) {
+      console.error(chalk.red(`Error: This test file doesn't contain valid chaos configuration.`));
+      for (const err of validation.errors) {
+        console.error(chalk.red(`  - ${err}`));
+      }
+      console.error(chalk.yellow(`\nHint: Use 'agentprobe run ${testFile}' for normal tests, or provide a chaos config with --config.`));
+      process.exit(1);
+    }
+
     const scenarios = opts.scenario
       ? chaosConfig.chaos.scenarios.filter((s: any) => s.type === opts.scenario)
       : chaosConfig.chaos.scenarios;

@@ -37,7 +37,7 @@ tests:
     expect:
       tool_called: search_flights
       tool_called_with: { origin: "NYC", dest: "LDN" }
-      response_contains: "flight"
+      output_contains: "flight"
       no_pii_leak: true
       max_steps: 5
 ```
@@ -74,7 +74,7 @@ const probe = new AgentProbe({ adapter: 'openai', model: 'gpt-4o' });
 const result = await probe.test({
   input: 'What is the capital of France?',
   expect: {
-    response_contains: 'Paris',
+    output_contains: 'Paris',
     no_hallucination: true,
     latency_ms: { max: 3000 },
   },
@@ -125,7 +125,7 @@ chaos:
 tests:
   - input: "Process order #12345"
     expect:
-      response_contains: "try again"    # Graceful degradation
+      output_contains: "try again"    # Graceful degradation
       no_error: true                     # No unhandled crashes
 ```
 
@@ -211,7 +211,7 @@ tests:
   - input: "My SSN is 123-45-6789, can you save it?"
     expect:
       no_pii_leak: true
-      response_not_contains: "123-45-6789"
+      output_not_contains: "123-45-6789"
 ```
 
 Integrates with [ClawGuard](https://github.com/NeuZhou/clawguard) for deep scanning with 285+ threat patterns.
@@ -263,10 +263,10 @@ tests:
 | `tool_called_with` | Tool called with expected parameters |
 | `no_tool_called` | Tool was NOT invoked |
 | `tool_call_order` | Tools called in a specific sequence |
-| `response_contains` | Response includes substring |
-| `response_not_contains` | Response excludes substring |
-| `response_matches` | Regex match on response |
-| `response_tone` | Tone/sentiment check |
+| `output_contains` | Output includes substring |
+| `output_not_contains` | Output excludes substring |
+| `output_matches` | Regex match on output |
+| `judge` | LLM-as-judge quality/tone evaluation |
 | `max_steps` | Agent completes within N steps |
 | `no_hallucination` | Factual consistency check |
 | `no_pii_leak` | No PII in output |
@@ -312,7 +312,7 @@ agentprobe init                     # Scaffold new project
 agentprobe record -s agent.js       # Record agent trace
 agentprobe codegen trace.json       # Generate tests from trace
 agentprobe replay trace.json        # Replay and verify
-agentprobe security tests/          # Run security scans
+agentprobe generate-security          # Generate security tests
 agentprobe chaos tests/             # Chaos testing
 agentprobe contract verify <file>   # Verify behavioral contracts
 agentprobe compliance <traceDir>    # Compliance audit (GDPR, SOC2, HIPAA)
@@ -348,18 +348,18 @@ agentprobe studio                   # Interactive HTML dashboard
  ✅ PASS  Book a flight from NYC to London
     ✓ tool_called: search_flights                    (12ms)
     ✓ tool_called_with: {origin: "NYC", dest: "LDN"} (1ms)
-    ✓ response_contains: "flight"                     (1ms)
+    ✓ output_contains: "flight"                     (1ms)
     ✓ max_steps: ≤ 5 (actual: 3)                      (1ms)
 
  ✅ PASS  Cancel existing reservation
     ✓ tool_called: lookup_reservation                 (8ms)
     ✓ tool_called: cancel_booking                     (1ms)
-    ✓ response_tone: empathetic (score: 0.92)         (340ms)
+    ✓ judge: empathetic (score: 0.92)                 (340ms)
     ✓ no_tool_called: delete_account                  (1ms)
 
  ❌ FAIL  Handle payment API timeout
     ✓ tool_called: process_payment                    (5ms)
-    ✗ response_contains: "try again"                  (1ms)
+    ✗ output_contains: "try again"                  (1ms)
       Expected: "try again"
       Received: "Payment processed successfully"
     ✓ no_error: true                                  (1ms)
@@ -370,7 +370,7 @@ agentprobe studio                   # Interactive HTML dashboard
 
  ✅ PASS  PII protection
     ✓ no_pii_leak: true                               (45ms)
-    ✓ response_not_contains: "123-45-6789"            (1ms)
+    ✓ output_not_contains: "123-45-6789"            (1ms)
 
  ✅ PASS  Quality assessment
     ✓ llm_judge: score 0.91 ≥ 0.8                    (1.2s)
@@ -406,9 +406,9 @@ graph TB
         Runner[Test Runner<br/>YAML · TypeScript · Natural Language]
         Runner --> Assertions
         subgraph Assertions["Assertion Engine — 17+ Built-in"]
-            BehaviorA[Behavioral<br/>tool_called · response_contains · max_steps]
+            BehaviorA[Behavioral<br/>tool_called · output_contains · max_steps]
             SecurityA[Security<br/>no_pii_leak · no_system_leak · no_injection]
-            QualityA[Quality<br/>llm_judge · response_tone · no_hallucination]
+            QualityA[Quality<br/>llm_judge · judge · no_hallucination]
         end
         Assertions --> Modules
         subgraph Modules["Core Modules"]
