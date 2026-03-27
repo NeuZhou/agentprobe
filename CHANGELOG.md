@@ -2,7 +2,7 @@
 
 All notable changes to AgentProbe are documented here.
 
-## [1.0.0] - 2026-03-21
+## [0.1.1] - 2026-03-21
 
 ### Changed
 - README cleaned up for professional tone
