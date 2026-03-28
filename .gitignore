@@ -8,3 +8,9 @@ coverage/
 .vitest/
 
 .secret-patterns.local
+
+# Generated / cache
+.agentprobe-cache/
+promo/
+traces/
+examples/*.html

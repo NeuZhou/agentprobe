@@ -14,8 +14,8 @@
 **AgentProbe makes sure it does it right.**
 
 [![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe)](https://www.npmjs.com/package/@neuzhou/agentprobe)
-[![Tests](https://img.shields.io/badge/tests-2%2C907%20passing-brightgreen)](https://github.com/NeuZhou/agentprobe/actions)
 [![CI](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NeuZhou/agentprobe/graph/badge.svg)](https://codecov.io/gh/NeuZhou/agentprobe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social)](https://github.com/NeuZhou/agentprobe/stargazers)
@@ -549,16 +549,15 @@ npm test    # 2,907 tests, all passing
 
 ---
 
-## NeuZhou Ecosystem
+## 🌐 Ecosystem
 
-AgentProbe is part of the NeuZhou open source toolkit for AI agents:
+AgentProbe is part of the NeuZhou AI agent toolkit:
 
-| Project | What it does | Link |
-|---------|-------------|------|
-| **AgentProbe** | Playwright for AI Agents — test, record, replay | *You are here* |
-| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System (285+ threat patterns) | [GitHub](https://github.com/NeuZhou/clawguard) |
-| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native quantitative finance engine | [GitHub](https://github.com/NeuZhou/finclaw) |
-| **[repo2skill](https://github.com/NeuZhou/repo2skill)** | Convert any GitHub repo into an AI agent skill | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| Project | Description |
+|---------|-------------|
+| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native quantitative finance engine |
+| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System — 285+ threat patterns, zero dependencies |
+| **[AgentProbe](https://github.com/NeuZhou/agentprobe)** | Playwright for AI Agents — test, record, replay agent behaviors |
 
 ---
 

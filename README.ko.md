@@ -10,8 +10,8 @@
 **AgentProbe는 그 결정이 올바른지 확인합니다.**
 
 [![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe)](https://www.npmjs.com/package/@neuzhou/agentprobe)
-[![Tests](https://img.shields.io/badge/tests-2%2C907%20passing-brightgreen)](https://github.com/NeuZhou/agentprobe/actions)
 [![CI](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NeuZhou/agentprobe/graph/badge.svg)](https://codecov.io/gh/NeuZhou/agentprobe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social)](https://github.com/NeuZhou/agentprobe/stargazers)
@@ -503,16 +503,15 @@ npm test    # 2,907개 테스트, 모두 통과
 
 ---
 
-## NeuZhou 에코시스템
+## 🌐 Ecosystem
 
-AgentProbe는 NeuZhou의 AI 에이전트 오픈소스 툴킷의 일부입니다:
+AgentProbe is part of the NeuZhou AI agent toolkit:
 
-| 프로젝트 | 설명 | 링크 |
-|---------|-------------|------|
-| **AgentProbe** | AI 에이전트를 위한 Playwright — 테스트, 기록, 재생 | *여기에 있습니다* |
-| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI 에이전트 면역 시스템 (285개 이상의 위협 패턴) | [GitHub](https://github.com/NeuZhou/clawguard) |
-| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native 퀀트 금융 엔진 | [GitHub](https://github.com/NeuZhou/finclaw) |
-| **[repo2skill](https://github.com/NeuZhou/repo2skill)** | 모든 GitHub 저장소를 AI 에이전트 스킬로 변환 | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| Project | Description |
+|---------|-------------|
+| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native quantitative finance engine |
+| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System — 285+ threat patterns, zero dependencies |
+| **[AgentProbe](https://github.com/NeuZhou/agentprobe)** | Playwright for AI Agents — test, record, replay agent behaviors |
 
 ---
 

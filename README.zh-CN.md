@@ -10,8 +10,8 @@
 **AgentProbe 确保它做的都是对的。**
 
 [![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe)](https://www.npmjs.com/package/@neuzhou/agentprobe)
-[![Tests](https://img.shields.io/badge/tests-2%2C907%20passing-brightgreen)](https://github.com/NeuZhou/agentprobe/actions)
 [![CI](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NeuZhou/agentprobe/graph/badge.svg)](https://codecov.io/gh/NeuZhou/agentprobe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social)](https://github.com/NeuZhou/agentprobe/stargazers)
@@ -503,16 +503,15 @@ npm test    # 2,907 个测试，全部通过
 
 ---
 
-## NeuZhou 生态系统
+## 🌐 Ecosystem
 
-AgentProbe 是 NeuZhou AI Agent 开源工具集的一部分：
+AgentProbe is part of the NeuZhou AI agent toolkit:
 
-| 项目 | 说明 | 链接 |
-|---------|-------------|------|
-| **AgentProbe** | AI Agent 的 Playwright — 测试、录制、回放 | *您在这里* |
-| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent 免疫系统（285+ 威胁模式） | [GitHub](https://github.com/NeuZhou/clawguard) |
-| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native 量化金融引擎 | [GitHub](https://github.com/NeuZhou/finclaw) |
-| **[repo2skill](https://github.com/NeuZhou/repo2skill)** | 将任意 GitHub 仓库转化为 AI Agent 技能 | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| Project | Description |
+|---------|-------------|
+| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native quantitative finance engine |
+| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System — 285+ threat patterns, zero dependencies |
+| **[AgentProbe](https://github.com/NeuZhou/agentprobe)** | Playwright for AI Agents — test, record, replay agent behaviors |
 
 ---
 

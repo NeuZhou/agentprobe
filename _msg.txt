@@ -1,7 +1,0 @@
-feat: 3 P0 features — HTML report dashboard, regression detection, GitHub Action
-
-- agentprobe run tests/ --report report.html (self-contained HTML with SVG charts)
-- agentprobe run tests/ --baseline baseline.json (regression detection, CI-friendly)
-- agentprobe run tests/ --update-baseline (save baseline)
-- .github/actions/agentprobe/action.yml (reusable GitHub Action)
-- 2907/2907 tests pass, zero regressions

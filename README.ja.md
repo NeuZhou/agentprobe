@@ -10,8 +10,8 @@
 **AgentProbeは、その判断が正しいことを保証します。**
 
 [![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe)](https://www.npmjs.com/package/@neuzhou/agentprobe)
-[![Tests](https://img.shields.io/badge/tests-2%2C907%20passing-brightgreen)](https://github.com/NeuZhou/agentprobe/actions)
 [![CI](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NeuZhou/agentprobe/graph/badge.svg)](https://codecov.io/gh/NeuZhou/agentprobe)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social)](https://github.com/NeuZhou/agentprobe/stargazers)
@@ -503,16 +503,15 @@ npm test    # 2,907テスト、すべてパス
 
 ---
 
-## NeuZhouエコシステム
+## 🌐 Ecosystem
 
-AgentProbeはNeuZhouのAIエージェント向けオープンソースツールキットの一部です：
+AgentProbe is part of the NeuZhou AI agent toolkit:
 
-| プロジェクト | 説明 | リンク |
-|---------|-------------|------|
-| **AgentProbe** | AIエージェントのためのPlaywright — テスト・記録・再生 | *ここにいます* |
-| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AIエージェント免疫システム（285以上の脅威パターン） | [GitHub](https://github.com/NeuZhou/clawguard) |
-| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native定量金融エンジン | [GitHub](https://github.com/NeuZhou/finclaw) |
-| **[repo2skill](https://github.com/NeuZhou/repo2skill)** | 任意のGitHubリポジトリをAIエージェントスキルに変換 | [GitHub](https://github.com/NeuZhou/repo2skill) |
+| Project | Description |
+|---------|-------------|
+| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native quantitative finance engine |
+| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System — 285+ threat patterns, zero dependencies |
+| **[AgentProbe](https://github.com/NeuZhou/agentprobe)** | Playwright for AI Agents — test, record, replay agent behaviors |
 
 ---
 
