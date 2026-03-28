@@ -26,9 +26,9 @@
 
 UI 测试用 Playwright，API 测试用 Postman，数据库用集成测试。
 
-**那 AI Agent 呢？** Agent 会选择工具、处理异常、操作用户数据、自主生成回复。一个坏 Prompt → PII 泄露。一次漏掉的工具调用 → 工作流静默失败。一次 Jailbreak → 品牌登上新闻头条。
+**AI Agent 呢？** 你是怎么测的——靠 `console.log` 和人肉检查？Agent 会选择工具、处理异常、操作用户数据、自主生成回复。一个坏 Prompt → PII 泄露。一次漏掉的工具调用 → 工作流静默失败。
 
-**AgentProbe 就是 AI Agent 缺失的那个测试框架。** 用 YAML 或 TypeScript 写测试，断言 Tool Call（工具调用）而不只是文本输出。注入混沌，在用户发现之前抓住回归问题。
+AgentProbe 让你用 YAML 或 TypeScript 写测试，断言 Tool Call（工具调用）而不只是文本输出。注入混沌，在用户发现之前抓住回归问题。
 
 ```yaml
 # 订票 Agent 真的调了 search_flights 吗？
@@ -251,7 +251,7 @@ tests:
 | **适配器生态** | ✅ 9 种 | ✅ 多种 | ✅ 多种 |
 | **成本追踪** | ✅ 按测试 | ⚠️ 基础 | ❌ |
 
-> **总结：** Promptfoo 测试*提示*。DeepEval 测试 *LLM 输出*。**AgentProbe 测试 *Agent 行为*** — 工具调用、多步骤工作流、混沌容错、安全，一个框架全搞定。
+> **总结：** Promptfoo 测 Prompt，DeepEval 测 LLM 输出，AgentProbe 测 Agent 行为——工具调用、多步骤工作流、混沌容错、安全。
 
 ---
 
@@ -523,7 +523,7 @@ AgentProbe is part of the NeuZhou AI agent toolkit:
 
 <div align="center">
 
-**为那些相信 AI Agent 值得与其他一切同等测试严谨度的工程师而建。**
+**Agent 上生产了就得有正经测试，不是只测 Prompt——得测行为。**
 
 如果 AgentProbe 帮助你交付了更好的 Agent，请给个 ⭐ — 让更多人看到它。
 

@@ -28,9 +28,11 @@
 
 ## Why AgentProbe?
 
-You test your UI with Playwright. You test your API with Postman. **But your AI agent?** It picks tools, handles failures, processes user data autonomously. One bad prompt → PII leak. One missed tool call → silent workflow failure.
+Your UI has Playwright. Your API has Postman. Your AI agent has... `console.log`?
 
-**AgentProbe is the missing test framework for AI agents.** Write tests in YAML. Assert on tool calls, not just text output. Inject chaos. Catch regressions before your users do.
+Agents pick tools, handle failures, process user data — all autonomously. One bad prompt → PII leak. One missed tool call → silent workflow failure. And you're testing this with vibes?
+
+AgentProbe lets you write tests in YAML, assert on tool calls (not just text output), inject chaos, and catch regressions before your users do.
 
 ```yaml
 tests:
@@ -181,7 +183,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 <div align="center">
 
-**Built for engineers who believe AI agents deserve the same testing rigor as everything else.**
+**If your agents touch production data, they need tests. Not just prompts — behavior tests.**
 
 [⭐ Star on GitHub](https://github.com/NeuZhou/agentprobe) · [📦 npm](https://www.npmjs.com/package/@neuzhou/agentprobe) · [🐛 Report Bug](https://github.com/NeuZhou/agentprobe/issues)
 
