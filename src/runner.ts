@@ -522,8 +522,17 @@ async function executeAgent(
     });
   } else if (agent.module || agent.script) {
     const modPath = agent.module || agent.script!;
-    const resolved = path.isAbsolute(modPath) ? modPath : path.join(suiteDir, modPath);
-    const mod = await import(resolved);
+    const resolved = path.isAbsolute(modPath) ? modPath : path.resolve(path.join(suiteDir, modPath));
+    // Use require for .js/.cjs files (avoids Windows ESM import issues with absolute paths)
+    // and dynamic import for .mjs/.ts files
+    const ext = path.extname(resolved).toLowerCase();
+    let mod: any;
+    if (ext === '.js' || ext === '.cjs') {
+      mod = require(resolved);
+    } else {
+      const fileUrl = require('url').pathToFileURL(resolved).href;
+      mod = await import(fileUrl);
+    }
     const entry = agent.entry ?? 'run';
     if (typeof mod[entry] === 'function') {
       const output = await mod[entry](test.input, {

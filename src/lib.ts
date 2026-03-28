@@ -261,7 +261,7 @@ export { TraceStore } from './trace-store';
 export type { TraceSearchQuery, TraceStoreStats } from './trace-store';
 export { findAffectedSuites, formatWatchEvent, formatWatchSession, startSmartWatch } from './watch';
 export type { SmartWatchOptions, WatchEvent, WatchSession } from './watch';
-export { generateConfig, generateSampleTests, generateProfiles, executeInit, formatInitResult } from './init';
+export { generateConfig, generateSampleTests, generateMockAgent, generateProfiles, executeInit, formatInitResult } from './init';
 export type { AdapterChoice, InitOptions, InitResult } from './init';
 export { runDoctor, formatDoctor, checkNodeVersion, checkTypeScript, checkApiKey, checkTestDirectory, checkConfigFile } from './doctor';
 export type { DoctorCheck, DoctorResult, CheckStatus } from './doctor';
