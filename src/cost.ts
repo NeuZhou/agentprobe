@@ -97,15 +97,20 @@ export function calculateCost(trace: AgentTrace): CostReport {
 }
 
 /**
- * Find pricing for a model, fuzzy-matching known models.
+ * Find pricing for a model, using exact match first, then longest prefix match.
+ * Sorting by key length descending ensures 'o1-mini' matches before 'o1'.
  */
 export function findPricing(model: string): { input: number; output: number } {
+  // Exact match first
   if (PRICING[model]) return PRICING[model];
-  // Fuzzy match: try prefix
+
+  // Longest prefix match: sort keys by length descending so more specific models match first
   const normalized = model.toLowerCase();
-  for (const [key, val] of Object.entries(PRICING)) {
-    if (normalized.includes(key) || key.includes(normalized)) return val;
+  const sortedKeys = Object.keys(PRICING).sort((a, b) => b.length - a.length);
+  for (const key of sortedKeys) {
+    if (normalized.startsWith(key) || normalized.includes(key)) return PRICING[key];
   }
+
   // Default: gpt-4o-mini pricing as fallback
   return { input: 0.15, output: 0.6 };
 }

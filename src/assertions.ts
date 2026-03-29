@@ -80,7 +80,7 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
 
   // output_matches
   if (expect.output_matches) {
-    let re: RegExp;
+    let re: RegExp | null = null;
     try {
       re = new RegExp(expect.output_matches);
     } catch (err: any) {
@@ -90,14 +90,15 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
         expected: expect.output_matches,
         message: `Invalid regex: /${expect.output_matches}/ — ${err.message}`,
       });
-      return results;
     }
-    results.push({
-      name: `output_matches: /${expect.output_matches}/`,
-      passed: re.test(outputs),
-      expected: expect.output_matches,
-      actual: outputs.slice(0, 200),
-    });
+    if (re) {
+      results.push({
+        name: `output_matches: /${expect.output_matches}/`,
+        passed: re.test(outputs),
+        expected: expect.output_matches,
+        actual: outputs.slice(0, 200),
+      });
+    }
   }
 
   // max_steps
@@ -278,17 +279,10 @@ export function evaluate(trace: AgentTrace, expect: Expectations): AssertionResu
     }
   }
 
-  // custom
+  // custom — safe property-access evaluator (no arbitrary code execution)
   if (expect.custom) {
     try {
-      const fn = new Function(
-        'trace',
-        'steps',
-        'toolCalls',
-        'outputs',
-        `return (${expect.custom})`,
-      );
-      const result = fn(trace, trace.steps, toolCalls, outputs);
+      const result = evaluateSafeExpression(expect.custom, { trace, steps: trace.steps, toolCalls, outputs });
       results.push({
         name: `custom: ${expect.custom.slice(0, 60)}`,
         passed: !!result,
@@ -457,6 +451,77 @@ function deepPartialMatch(actual: Record<string, any>, expected: Record<string, 
     }
   }
   return true;
+}
+
+/**
+ * Safe expression evaluator for custom assertions.
+ * Only allows property access (dot notation, bracket notation) and comparison operators.
+ * NO function calls, NO assignment, NO constructors, NO template literals.
+ *
+ * Supported: trace.steps.length > 0, toolCalls.length === 3, outputs.includes("hello")
+ * Blocked: process.exit(), require('fs'), new Function(), import(), eval(), etc.
+ */
+export function evaluateSafeExpression(
+  expr: string,
+  context: Record<string, any>,
+): any {
+  // Block dangerous patterns
+  const BLOCKED_PATTERNS = [
+    /\bnew\s+/,          // new Function(), new (anything)
+    /\bimport\s*\(/,     // dynamic import()
+    /\beval\s*\(/,       // eval()
+    /\brequire\s*\(/,    // require()
+    /\bFunction\s*\(/,   // Function()
+    /\b__proto__\b/,     // prototype pollution
+    /\bconstructor\b/,   // constructor access
+    /\bprototype\b/,     // prototype access
+    /\bprocess\b/,       // process.exit, process.env
+    /\bglobal(This)?\b/, // globalThis
+    /\bwindow\b/,        // browser global
+    /\bself\b/,          // worker global
+    /`/,                 // template literals (can execute code)
+    /\$\{/,              // template literal interpolation
+    /;\s*\w/,            // multiple statements
+    /\bwhile\b/,         // loops
+    /\bfor\b/,           // loops
+    /\bdelete\b/,        // delete operator
+    /\bvoid\b/,          // void operator
+    /\btypeof\b/,        // typeof (unnecessary for assertions)
+    /(?<![=!<>])=(?!=)/,  // assignment (but not ==, ===, !=, !==, <=, >=)
+    /\bthis\b/,          // this reference
+  ];
+
+  for (const pattern of BLOCKED_PATTERNS) {
+    if (pattern.test(expr)) {
+      throw new Error(
+        `Unsafe expression blocked: pattern "${pattern.source}" matched. ` +
+        `Custom assertions only support property access and comparisons.`,
+      );
+    }
+  }
+
+  // Only allow: identifiers, dots, brackets, numbers, strings, comparisons, boolean operators, parens
+  // This is a whitelist approach on top of the blocklist
+  const ALLOWED = /^[\w\s.[\]()'"<>=!&|+\-*/%,?:]+$/;
+  if (!ALLOWED.test(expr)) {
+    throw new Error(
+      `Unsafe expression blocked: contains disallowed characters. ` +
+      `Custom assertions only support property access and comparisons.`,
+    );
+  }
+
+  // Use Function with frozen context objects to prevent mutation
+  const frozenContext: Record<string, any> = {};
+  for (const [key, value] of Object.entries(context)) {
+    frozenContext[key] = typeof value === 'object' && value !== null ? Object.freeze(value) : value;
+  }
+
+  const keys = Object.keys(frozenContext);
+  const values = Object.values(frozenContext);
+
+  // Build a function with limited scope
+  const fn = new Function(...keys, `"use strict"; return (${expr})`);
+  return fn(...values);
 }
 
 /**

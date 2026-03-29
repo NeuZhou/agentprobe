@@ -210,6 +210,16 @@ async function runSingleTestInner(
       }
     }
 
+    // Zero-assertion warning: tests with no assertions should not silently pass
+    if (assertions.length === 0) {
+      console.warn(chalk.yellow(`⚠️  Test "${test.name}" has no assertions defined`));
+      assertions.push({
+        name: 'no_assertions',
+        passed: false,
+        message: 'No assertions defined — test cannot pass without assertions',
+      });
+    }
+
     const passed = assertions.every((a) => a.passed);
 
     // Restore env

@@ -218,7 +218,7 @@ const NL_PATTERNS: NLPattern[] = [
       name: `Costs under $${m[1]}`,
       input: 'Perform the task',
       trace: '',
-      expect: { max_cost: parseFloat(m[1]) },
+      expect: { max_cost_usd: parseFloat(m[1]) },
     }),
   },
   {
