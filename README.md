@@ -118,7 +118,7 @@ $ agentprobe run examples/quickstart/test-mock.yaml
 | **Security scanning** | ✅ PII, injection, system leak | ✅ Red teaming | ⚠️ Basic |
 | **LLM-as-Judge** | ✅ Any model | ✅ | ✅ G-Eval |
 | **YAML test definitions** | ✅ | ✅ | ❌ Python only |
-| **9 LLM adapters** | ✅ | ✅ Many | ✅ Many |
+| **12 LLM adapters** | ✅ | ✅ Many | ✅ Many |
 | **CI/CD integration** | ✅ JUnit, GH Actions | ✅ | ✅ |
 
 > **TL;DR:** Promptfoo tests *prompts*. DeepEval tests *LLM outputs*. **AgentProbe tests *agent behavior*.**
@@ -140,13 +140,13 @@ $ agentprobe run examples/quickstart/test-mock.yaml
 | 🔄 **Regression Detection** | Compare against saved baselines, CI-friendly |
 | 🤖 **GitHub Action** | Built-in reusable action for CI/CD pipelines |
 
-📖 [Full Documentation](docs/) — 17+ assertion types, 9 adapters, 80+ CLI commands, examples, architecture
+📖 [Full Documentation](docs/) — 17+ assertion types, 12 adapters, 120+ CLI commands, examples, architecture
 
 ---
 
 ## Roadmap
 
-- [x] YAML behavioral testing · 17+ assertions · 9 adapters
+- [x] YAML behavioral testing · 17+ assertions · 12 adapters
 - [x] Tool mocking · Chaos testing · Contract testing · Multi-agent
 - [x] Record & replay · Security scanning · HTML reports · CI/CD
 - [ ] AWS Bedrock / Azure OpenAI adapters

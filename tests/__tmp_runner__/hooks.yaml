@@ -1,0 +1,29 @@
+name: Hooks Suite
+hooks:
+  beforeAll:
+    command: powershell -Command "Add-Content -Path
+      'C:\Users\kazhou\.openclaw\workspace\agentprobe\tests\__tmp_runner__\hook_log.txt'
+      -Value 'BA|' -NoNewline"
+  afterAll:
+    command: powershell -Command "Add-Content -Path
+      'C:\Users\kazhou\.openclaw\workspace\agentprobe\tests\__tmp_runner__\hook_log.txt'
+      -Value 'AA|' -NoNewline"
+  beforeEach:
+    command: powershell -Command "Add-Content -Path
+      'C:\Users\kazhou\.openclaw\workspace\agentprobe\tests\__tmp_runner__\hook_log.txt'
+      -Value 'BE|' -NoNewline"
+  afterEach:
+    command: powershell -Command "Add-Content -Path
+      'C:\Users\kazhou\.openclaw\workspace\agentprobe\tests\__tmp_runner__\hook_log.txt'
+      -Value 'AE|' -NoNewline"
+tests:
+  - name: test1
+    input: a
+    trace: trace_hook.json
+    expect:
+      output_contains: ok
+  - name: test2
+    input: b
+    trace: trace_hook.json
+    expect:
+      output_contains: ok
