@@ -4,23 +4,30 @@
 
 # 🔬 AgentProbe
 
-### Playwright for AI Agents — Test, Record, and Replay Agent Behaviors
+### Playwright for AI Agents
 
 <p align="center">
-  <img src="assets/hero-agentprobe.png" alt="AgentProbe — Test Every Decision Your Agent Makes" width="800">
+  <img src="assets/hero-agentprobe.png" alt="AgentProbe — Test Every Decision Your Agent Makes" width="720">
 </p>
 
-**Your agent decides which tools to call, what data to trust, and how to respond.**<br>
-**AgentProbe makes sure it does it right.**
+Test tool calls, not just text output. YAML-based. Works with any LLM.
 
-[![npm version](https://img.shields.io/npm/v/@neuzhou/agentprobe)](https://www.npmjs.com/package/@neuzhou/agentprobe)
-[![CI](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml/badge.svg)](https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/NeuZhou/agentprobe/graph/badge.svg)](https://codecov.io/gh/NeuZhou/agentprobe)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social)](https://github.com/NeuZhou/agentprobe/stargazers)
+<p>
+  <a href="https://www.npmjs.com/package/@neuzhou/agentprobe"><img src="https://img.shields.io/npm/v/@neuzhou/agentprobe" alt="npm"></a>
+  <a href="https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml"><img src="https://github.com/NeuZhou/agentprobe/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://codecov.io/gh/NeuZhou/agentprobe"><img src="https://codecov.io/gh/NeuZhou/agentprobe/graph/badge.svg" alt="codecov"></a>
+  <img src="https://img.shields.io/badge/TypeScript-5.3+-blue?logo=typescript&logoColor=white" alt="TypeScript">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+  <a href="https://github.com/NeuZhou/agentprobe/stargazers"><img src="https://img.shields.io/github/stars/NeuZhou/agentprobe?style=social" alt="Stars"></a>
+</p>
 
-[Quick Start](#quick-start) · [Why AgentProbe?](#why-agentprobe) · [Comparison](#how-agentprobe-compares) · [Docs](docs/) · [Contributing](#contributing)
+<p>
+  <a href="#-quick-start">Quick Start</a> ·
+  <a href="#why-agentprobe">Why?</a> ·
+  <a href="#how-agentprobe-compares">Comparison</a> ·
+  <a href="docs/">Docs</a> ·
+  <a href="https://discord.gg/YOUR_INVITE">Discord</a>
+</p>
 
 </div>
 
@@ -30,9 +37,7 @@
 
 Your UI has Playwright. Your API has Postman. Your AI agent has... `console.log`?
 
-Agents pick tools, handle failures, process user data — all autonomously. One bad prompt → PII leak. One missed tool call → silent workflow failure. And you're testing this with vibes?
-
-AgentProbe lets you write tests in YAML, assert on tool calls (not just text output), inject chaos, and catch regressions before your users do.
+Agents pick tools, handle failures, and process user data autonomously. One bad decision → PII leak. One missed tool call → silent workflow failure. You need behavioral tests, not just prompt tests.
 
 ```yaml
 tests:
@@ -45,21 +50,19 @@ tests:
       max_steps: 5
 ```
 
-**4 assertions. 1 YAML file. Zero boilerplate. Works with any LLM.**
+4 assertions. 1 YAML file. Zero boilerplate.
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
 ```bash
 npm install @neuzhou/agentprobe
-
-# Scaffold a test project
-npx agentprobe init
-
-# Run your first test (no API key needed!)
-npx agentprobe run examples/quickstart/test-mock.yaml
+npx agentprobe init                                    # Scaffold test project
+npx agentprobe run examples/quickstart/test-mock.yaml  # Run first test
 ```
+
+No API key needed for the mock adapter.
 
 ### Programmatic API
 
@@ -69,21 +72,59 @@ import { AgentProbe } from '@neuzhou/agentprobe';
 const probe = new AgentProbe({ adapter: 'openai', model: 'gpt-4o' });
 const result = await probe.test({
   input: 'What is the capital of France?',
-  expect: { output_contains: 'Paris', no_hallucination: true, latency_ms: { max: 3000 } },
+  expect: {
+    output_contains: 'Paris',
+    no_hallucination: true,
+    latency_ms: { max: 3000 },
+  },
 });
 ```
 
 ---
 
+## How AgentProbe Compares
+
+| | AgentProbe | Promptfoo | DeepEval |
+|---|:---:|:---:|:---:|
+| **Tool call assertions** | ✅ 6 types | ❌ | ❌ |
+| **Chaos & fault injection** | ✅ | ❌ | ❌ |
+| **Contract testing** | ✅ | ❌ | ❌ |
+| **Multi-agent orchestration** | ✅ | ❌ | ❌ |
+| **Record & replay** | ✅ | ❌ | ❌ |
+| **Security scanning** | ✅ PII, injection, system leak | ✅ Red teaming | ⚠️ Basic |
+| **LLM-as-Judge** | ✅ Any model | ✅ | ✅ |
+| **YAML test definitions** | ✅ | ✅ | ❌ Python only |
+| **CI/CD (JUnit, GH Actions)** | ✅ | ✅ | ✅ |
+
+Promptfoo tests *prompts*. DeepEval tests *LLM outputs*. **AgentProbe tests *agent behavior*.**
+
+---
+
+## Features
+
+| | |
+|---|---|
+| 🎯 **Tool Call Assertions** | `tool_called`, `tool_called_with`, `no_tool_called`, `tool_call_order` + 2 more |
+| 💥 **Chaos Testing** | Inject tool timeouts, malformed responses, rate limits |
+| 📜 **Contract Testing** | Enforce behavioral invariants across agent versions |
+| 🤝 **Multi-Agent Testing** | Test handoff sequences in orchestrated pipelines |
+| 🔴 **Record & Replay** | Record live sessions → generate tests → replay deterministically |
+| 🛡️ **Security Scanning** | PII leak, prompt injection, system prompt exposure |
+| 🧑‍⚖️ **LLM-as-Judge** | Use a stronger model to evaluate nuanced quality |
+| 📊 **HTML Reports** | Self-contained dashboards with SVG charts |
+| 🔄 **Regression Detection** | Compare against saved baselines |
+| 🤖 **12 Adapters** | OpenAI, Anthropic, Google, Ollama, and 8 more |
+
+<!-- architecture diagram -->
+
+📖 [Full Docs](docs/) — 17+ assertion types, 12 adapters, 120+ CLI commands
+
+---
+
 <details>
-<summary>📺 See it in action (click to expand)</summary>
+<summary>📺 See it in action</summary>
 
 ```
-$ agentprobe init
-✨ Example test file created: tests/example.test.yaml
-   Edit it to match your agent, then run:
-   agentprobe run tests/example.test.yaml
-
 $ agentprobe run examples/quickstart/test-mock.yaml
 
   🔬 Mock Agent Test
@@ -95,72 +136,50 @@ $ agentprobe run examples/quickstart/test-mock.yaml
   ✅ Agent rejects prompt injection (0ms)
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   1/3 passed (33%) in 2ms
-
-  📋 Total assertions: 4
-  🏆 Most assertions: Agent answers factual question (2)
 ```
 
-*The mock adapter returns empty output (no LLM), so text assertions fail as expected — `no_prompt_injection` passes because the mock doesn't leak. Connect a real adapter to see full green.*
+*Mock adapter returns empty output — text assertions fail as expected. `no_prompt_injection` passes because mock doesn't leak. Connect a real adapter for full green.*
 
 </details>
 
 ---
 
-## How AgentProbe Compares
+## 🚀 GitHub Action
 
-| Feature | AgentProbe | Promptfoo | DeepEval |
-|---------|:----------:|:---------:|:--------:|
-| **Tool call assertions** | ✅ 6 types | ❌ | ❌ |
-| **Chaos & fault injection** | ✅ | ❌ | ❌ |
-| **Contract testing** | ✅ | ❌ | ❌ |
-| **Multi-agent orchestration** | ✅ | ❌ | ❌ |
-| **Trace record & replay** | ✅ | ❌ | ❌ |
-| **Security scanning** | ✅ PII, injection, system leak | ✅ Red teaming | ⚠️ Basic |
-| **LLM-as-Judge** | ✅ Any model | ✅ | ✅ G-Eval |
-| **YAML test definitions** | ✅ | ✅ | ❌ Python only |
-| **12 LLM adapters** | ✅ | ✅ Many | ✅ Many |
-| **CI/CD integration** | ✅ JUnit, GH Actions | ✅ | ✅ |
-
-> **TL;DR:** Promptfoo tests *prompts*. DeepEval tests *LLM outputs*. **AgentProbe tests *agent behavior*.**
-
----
-
-## Key Features
-
-| Feature | Description |
-|---------|-------------|
-| 🎯 **Tool Call Assertions** | 6 types — `tool_called`, `tool_called_with`, `no_tool_called`, `tool_call_order` |
-| 💥 **Chaos Testing** | Tool timeouts, malformed responses, rate limits, fault injection |
-| 📜 **Contract Testing** | Enforce behavioral invariants across agent versions |
-| 🤝 **Multi-Agent Testing** | Test handoff sequences in multi-agent orchestration |
-| 🔴 **Record & Replay** | Record live sessions, generate tests, replay deterministically |
-| 🛡️ **Security Scanning** | PII leak, prompt injection, system prompt exposure detection |
-| 🧑‍⚖️ **LLM-as-Judge** | Use a stronger model to evaluate nuanced quality |
-| 📊 **HTML Reports** | Self-contained dashboards with SVG charts |
-| 🔄 **Regression Detection** | Compare against saved baselines, CI-friendly |
-| 🤖 **GitHub Action** | Built-in reusable action for CI/CD pipelines |
-
-📖 [Full Documentation](docs/) — 17+ assertion types, 12 adapters, 120+ CLI commands, examples, architecture
+```yaml
+# .github/workflows/agent-tests.yml
+name: Agent Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: NeuZhou/agentprobe@master
+        with:
+          test_dir: './tests'
+```
 
 ---
 
 ## Roadmap
 
 - [x] YAML behavioral testing · 17+ assertions · 12 adapters
-- [x] Tool mocking · Chaos testing · Contract testing · Multi-agent
-- [x] Record & replay · Security scanning · HTML reports · CI/CD
+- [x] Tool mocking · Chaos testing · Contract testing
+- [x] Multi-agent · Record & replay · Security scanning
+- [x] HTML reports · JUnit output · GitHub Actions
 - [ ] AWS Bedrock / Azure OpenAI adapters
-- [ ] VS Code extension · Web report portal
+- [ ] VS Code extension
+- [ ] Web report portal
 
 ---
 
-## 🌐 Ecosystem
+## 🌐 Also Check Out
 
-| Project | Description |
+| Project | What it does |
 |---------|-------------|
-| **[FinClaw](https://github.com/NeuZhou/finclaw)** | AI-native quantitative finance engine |
-| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System — 285+ threat patterns, zero dependencies |
-| **[AgentProbe](https://github.com/NeuZhou/agentprobe)** | Playwright for AI Agents — test, record, replay agent behaviors |
+| **[FinClaw](https://github.com/NeuZhou/finclaw)** | Self-evolving trading engine — 484 factors, genetic algorithm, walk-forward validated |
+| **[ClawGuard](https://github.com/NeuZhou/clawguard)** | AI Agent Immune System — 480+ threat patterns, zero dependencies |
 
 ---
 
@@ -171,7 +190,7 @@ git clone https://github.com/NeuZhou/agentprobe.git
 cd agentprobe && npm install && npm test
 ```
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+[CONTRIBUTING.md](./CONTRIBUTING.md) · [Report Bug](https://github.com/NeuZhou/agentprobe/issues) · [Request Feature](https://github.com/NeuZhou/agentprobe/issues)
 
 ---
 
@@ -181,10 +200,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
 
 ---
 
-<div align="center">
+## Star History
 
-**If your agents touch production data, they need tests. Not just prompts — behavior tests.**
-
-[⭐ Star on GitHub](https://github.com/NeuZhou/agentprobe) · [📦 npm](https://www.npmjs.com/package/@neuzhou/agentprobe) · [🐛 Report Bug](https://github.com/NeuZhou/agentprobe/issues)
-
-</div>
+<a href="https://www.star-history.com/#NeuZhou/agentprobe&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=NeuZhou/agentprobe&type=Date&theme=dark" />
+    <img alt="Star History" src="https://api.star-history.com/svg?repos=NeuZhou/agentprobe&type=Date" />
+  </picture>
+</a>
