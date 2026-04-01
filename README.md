@@ -26,7 +26,7 @@ Test tool calls, not just text output. YAML-based. Works with any LLM.
   <a href="#why-agentprobe">Why?</a> ·
   <a href="#how-agentprobe-compares">Comparison</a> ·
   <a href="docs/">Docs</a> ·
-  <a href="https://discord.gg/YOUR_INVITE">Discord</a>
+  <a href="https://discord.gg/kAQD7Cj8">Discord</a>
 </p>
 
 </div>
