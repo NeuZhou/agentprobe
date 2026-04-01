@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    background: #0d1117; 
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 40px;
+  }
+  .diagram {
+    width: 1100px;
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-radius: 24px; padding: 48px; border: 1px solid #30363d;
+    box-shadow: 0 0 80px rgba(188,140,255,0.08);
+  }
+  .title { text-align: center; margin-bottom: 36px; }
+  .title h1 { font-size: 32px; color: #f0f6fc; font-weight: 700; }
+  .title h1 span { color: #bc8cff; }
+  .title p { color: #8b949e; font-size: 16px; margin-top: 8px; }
+  
+  .concept-row { display: flex; gap: 16px; margin-bottom: 24px; }
+  .concept {
+    flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 20px;
+    text-align: center;
+  }
+  .concept-icon { font-size: 32px; margin-bottom: 8px; }
+  .concept-title { font-size: 15px; font-weight: 600; color: #f0f6fc; margin-bottom: 4px; }
+  .concept-desc { font-size: 13px; color: #8b949e; }
+
+  .flow-section {
+    background: rgba(188,140,255,0.05); border: 1px solid rgba(188,140,255,0.2);
+    border-radius: 16px; padding: 24px; margin-bottom: 24px;
+  }
+  .flow-title {
+    font-size: 14px; font-weight: 600; color: #bc8cff; margin-bottom: 16px;
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+  .flow-steps { display: flex; align-items: center; gap: 12px; }
+  .step {
+    flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+    padding: 14px; text-align: center;
+  }
+  .step-emoji { font-size: 20px; }
+  .step-text { font-size: 13px; color: #f0f6fc; margin-top: 6px; font-weight: 500; }
+  .step-sub { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .arrow { color: #bc8cff; font-size: 20px; font-weight: bold; }
+
+  .code-block {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 12px;
+    padding: 20px; margin-bottom: 24px; font-family: 'Cascadia Code', monospace;
+    font-size: 14px; color: #c9d1d9; overflow-x: auto;
+  }
+  .code-comment { color: #8b949e; }
+  .code-keyword { color: #ff7b72; }
+  .code-string { color: #a5d6ff; }
+  .code-func { color: #d2a8ff; }
+
+  .bottom-row { display: flex; gap: 16px; }
+  .use-case {
+    flex: 1; background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 16px;
+  }
+  .use-case-title { font-size: 14px; font-weight: 600; color: #f0f6fc; margin-bottom: 8px; }
+  .use-case-text { font-size: 12px; color: #8b949e; line-height: 1.5; }
+
+  .stats {
+    display: flex; justify-content: center; gap: 48px; margin-top: 28px;
+    padding-top: 24px; border-top: 1px solid #21262d;
+  }
+  .stat { text-align: center; }
+  .stat-value { font-size: 28px; font-weight: 700; color: #bc8cff; }
+  .stat-label { font-size: 12px; color: #8b949e; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+</style>
+</head>
+<body>
+<div class="diagram">
+  <div class="title">
+    <h1>🔬 Agent<span>Probe</span></h1>
+    <p>Playwright for AI Agents — Test, Record, Replay agent behaviors</p>
+  </div>
+
+  <div class="concept-row">
+    <div class="concept">
+      <div class="concept-icon">🎬</div>
+      <div class="concept-title">Record</div>
+      <div class="concept-desc">Capture agent tool calls, LLM requests, and decisions in real-time</div>
+    </div>
+    <div class="concept">
+      <div class="concept-icon">🔄</div>
+      <div class="concept-title">Replay</div>
+      <div class="concept-desc">Deterministic replay of recorded sessions for debugging & regression testing</div>
+    </div>
+    <div class="concept">
+      <div class="concept-icon">✅</div>
+      <div class="concept-title">Assert</div>
+      <div class="concept-desc">Write expectations against agent behavior — like E2E tests for LLM agents</div>
+    </div>
+    <div class="concept">
+      <div class="concept-icon">📊</div>
+      <div class="concept-title">Report</div>
+      <div class="concept-desc">Cost tracking, latency metrics, token usage, and behavioral analytics</div>
+    </div>
+  </div>
+
+  <div class="flow-section">
+    <div class="flow-title">Test Pipeline</div>
+    <div class="flow-steps">
+      <div class="step">
+        <div class="step-emoji">📝</div>
+        <div class="step-text">Define Scenario</div>
+        <div class="step-sub">Natural language spec</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="step-emoji">🤖</div>
+        <div class="step-text">Run Agent</div>
+        <div class="step-sub">Any framework</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="step-emoji">🎥</div>
+        <div class="step-text">Record Trace</div>
+        <div class="step-sub">Every tool call & LLM request</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="step-emoji">🔍</div>
+        <div class="step-text">Assert Behavior</div>
+        <div class="step-sub">Snapshot + custom matchers</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step" style="border-color: #bc8cff;">
+        <div class="step-emoji">📋</div>
+        <div class="step-text">CI Report</div>
+        <div class="step-sub">Pass/fail + cost analysis</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="use-case">
+      <div class="use-case-title">🧪 Regression Testing</div>
+      <div class="use-case-text">Catch behavior changes when you update prompts, models, or tool configs</div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-title">💰 Cost Monitoring</div>
+      <div class="use-case-text">Track token usage per test, detect cost regressions before they hit production</div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-title">🔒 Security Audits</div>
+      <div class="use-case-text">Verify agents don't leak PII, call unauthorized tools, or deviate from policy</div>
+    </div>
+    <div class="use-case">
+      <div class="use-case-title">🏗️ Framework-Agnostic</div>
+      <div class="use-case-text">Works with LangChain, CrewAI, AutoGen, OpenAI Agents — any agent platform</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-value">3,218</div><div class="stat-label">Tests</div></div>
+    <div class="stat"><div class="stat-value">109</div><div class="stat-label">Test Files</div></div>
+    <div class="stat"><div class="stat-value">0</div><div class="stat-label">Failures</div></div>
+    <div class="stat"><div class="stat-value">Any</div><div class="stat-label">Framework</div></div>
+  </div>
+</div>
+</body>
+</html>
