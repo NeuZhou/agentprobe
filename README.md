@@ -35,9 +35,9 @@ Test tool calls, not just text output. YAML-based. Works with any LLM.
 
 ## Why AgentProbe?
 
-Your UI has Playwright. Your API has Postman. Your AI agent has... `console.log`?
+LLM test tools validate text output. But agents don't just generate text — they pick tools, handle failures, and process user data autonomously. One bad tool call → PII leak. One missed step → silent workflow failure.
 
-Agents pick tools, handle failures, and process user data autonomously. One bad decision → PII leak. One missed tool call → silent workflow failure. You need behavioral tests, not just prompt tests.
+AgentProbe tests **what agents do**, not just what they say.
 
 ```yaml
 tests:
@@ -125,20 +125,19 @@ Promptfoo tests *prompts*. DeepEval tests *LLM outputs*. **AgentProbe tests *age
 <summary>📺 See it in action</summary>
 
 ```
-$ agentprobe run examples/quickstart/test-mock.yaml
+$ agentprobe run tests/booking.yaml
 
-  🔬 Mock Agent Test
+  🔬 Agent Booking Test
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  ❌ Agent greets user (2ms)
-     ↳ output_contains: "Hello": Output does not contain "Hello"
-  ❌ Agent answers factual question (0ms)
-     ↳ output_contains: "Paris": Output does not contain "Paris"
-  ✅ Agent rejects prompt injection (0ms)
+  ✅ Agent calls search_flights tool (12ms)
+  ✅ Tool called with correct parameters (8ms)
+  ✅ No PII leaked in response (3ms)
+  ✅ Agent handles booking confirmation (15ms)
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  1/3 passed (33%) in 2ms
+  4/4 passed (100%) in 38ms
 ```
 
-*Mock adapter returns empty output — text assertions fail as expected. `no_prompt_injection` passes because mock doesn't leak. Connect a real adapter for full green.*
+*4 assertions, 1 YAML file, zero boilerplate.*
 
 </details>
 
@@ -169,8 +168,12 @@ jobs:
 - [x] Multi-agent · Record & replay · Security scanning
 - [x] HTML reports · JUnit output · GitHub Actions
 - [ ] AWS Bedrock / Azure OpenAI adapters
-- [ ] VS Code extension
-- [ ] Web report portal
+- [ ] VS Code extension with test explorer
+- [ ] Web dashboard for test results
+- [ ] A/B testing for agent configurations
+- [ ] Automated regression detection in CI
+- [ ] Plugin marketplace for custom assertions
+- [ ] OpenTelemetry trace integration
 
 ---
 
@@ -185,12 +188,17 @@ jobs:
 
 ## Contributing
 
-```bash
-git clone https://github.com/NeuZhou/agentprobe.git
-cd agentprobe && npm install && npm test
-```
+We welcome contributions! Here's how to get started:
 
-[CONTRIBUTING.md](./CONTRIBUTING.md) · [Report Bug](https://github.com/NeuZhou/agentprobe/issues) · [Request Feature](https://github.com/NeuZhou/agentprobe/issues)
+1. **Pick an issue** — look for [`good first issue`](https://github.com/NeuZhou/agentprobe/labels/good%20first%20issue) labels
+2. **Fork & clone**
+   ```bash
+   git clone https://github.com/NeuZhou/agentprobe.git
+   cd agentprobe && npm install && npm test
+   ```
+3. **Submit a PR** — we review within 48 hours
+
+[CONTRIBUTING.md](./CONTRIBUTING.md) · [Discord](https://discord.gg/kAQD7Cj8) · [Report Bug](https://github.com/NeuZhou/agentprobe/issues) · [Request Feature](https://github.com/NeuZhou/agentprobe/issues)
 
 ---
 

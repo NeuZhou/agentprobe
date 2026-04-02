@@ -13,7 +13,7 @@ npm test
 
 ## Development Workflow
 
-1. **Fork** the repo and create a branch from `main`
+1. **Fork** the repo and create a branch from `master`
 2. **Make changes** — add tests for new features
 3. **Run tests** — `npm test`
 4. **Lint** — `npm run lint`

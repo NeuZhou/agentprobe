@@ -112,7 +112,12 @@
     "tool-calls",
     "prompt-injection",
     "security-testing",
-    "fault-injection"
+    "fault-injection",
+    "ai-agent-testing",
+    "llm-testing",
+    "agent-testing",
+    "tool-call-testing",
+    "yaml-testing"
   ],
   "author": "NeuZhou <neuzhou@users.noreply.github.com>",
   "license": "MIT",
