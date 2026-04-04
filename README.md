@@ -34,6 +34,10 @@ Test tool calls, not just text output. YAML-based. Works with any LLM.
 
 ---
 
+<p align="center">
+  <img src="assets/agentprobe_flow.png" alt="AgentProbe Testing Flow" width="720">
+</p>
+
 ## Why AgentProbe?
 
 LLM test tools validate text output. But agents don't just generate text — they pick tools, handle failures, and process user data autonomously. One bad tool call → PII leak. One missed step → silent workflow failure.
