@@ -1,0 +1,42 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "elements": [
+    {"type":"text","id":"title","x":80,"y":10,"width":540,"height":30,"text":"How AgentProbe Tests Your Agent","fontSize":24,"fontFamily":1,"strokeColor":"#1e1e1e","textAlign":"center"},
+
+    {"type":"rectangle","id":"yaml","x":20,"y":65,"width":140,"height":80,"strokeColor":"#1971c2","backgroundColor":"#a5d8ff","fillStyle":"hachure","strokeWidth":2,"roughness":1},
+    {"type":"text","id":"t_yaml","x":40,"y":78,"width":100,"height":50,"text":"Test Suite\n(YAML-based\nassertions)","fontSize":13,"fontFamily":1,"strokeColor":"#1e1e1e","textAlign":"center"},
+
+    {"type":"arrow","id":"a1","x":160,"y":105,"width":55,"height":0,"strokeColor":"#1971c2","strokeWidth":2,"roughness":1,"points":[[0,0],[55,0]]},
+    {"type":"text","id":"t_run","x":168,"y":87,"width":35,"height":18,"text":"run","fontSize":13,"fontFamily":1,"strokeColor":"#1971c2"},
+
+    {"type":"rectangle","id":"probe","x":215,"y":55,"width":190,"height":100,"strokeColor":"#862e9c","backgroundColor":"#d0bfff","fillStyle":"hachure","strokeWidth":2,"roughness":1},
+    {"type":"text","id":"t_probe","x":240,"y":68,"width":140,"height":70,"text":"AgentProbe\nExecute agent\nRecord tool calls\nCheck assertions","fontSize":13,"fontFamily":1,"strokeColor":"#1e1e1e","textAlign":"center"},
+
+    {"type":"arrow","id":"a2","x":405,"y":105,"width":55,"height":0,"strokeColor":"#1971c2","strokeWidth":2,"roughness":1,"points":[[0,0],[55,0]]},
+    {"type":"text","id":"t_call","x":413,"y":87,"width":35,"height":18,"text":"call","fontSize":13,"fontFamily":1,"strokeColor":"#1971c2"},
+
+    {"type":"rectangle","id":"agent","x":460,"y":65,"width":140,"height":80,"strokeColor":"#2f9e44","backgroundColor":"#b2f2bb","fillStyle":"hachure","strokeWidth":2,"roughness":1},
+    {"type":"text","id":"t_agent","x":480,"y":78,"width":100,"height":50,"text":"AI Agent\nTool calls\nLLM responses","fontSize":13,"fontFamily":1,"strokeColor":"#1e1e1e","textAlign":"center"},
+
+    {"type":"arrow","id":"a_pass","x":295,"y":155,"width":-60,"height":55,"strokeColor":"#2f9e44","strokeWidth":2,"roughness":1,"points":[[0,0],[-60,55]]},
+    {"type":"text","id":"t_pass","x":220,"y":178,"width":50,"height":18,"text":"pass \u2713","fontSize":13,"fontFamily":1,"strokeColor":"#2f9e44"},
+
+    {"type":"arrow","id":"a_fail","x":325,"y":155,"width":60,"height":55,"strokeColor":"#e03131","strokeWidth":2,"roughness":1,"points":[[0,0],[60,55]]},
+    {"type":"text","id":"t_fail","x":355,"y":178,"width":50,"height":18,"text":"fail \u2717","fontSize":13,"fontFamily":1,"strokeColor":"#e03131"},
+
+    {"type":"rectangle","id":"passed","x":170,"y":215,"width":120,"height":45,"strokeColor":"#2f9e44","backgroundColor":"#b2f2bb","fillStyle":"solid","strokeWidth":2,"roughness":1},
+    {"type":"text","id":"t_passed","x":190,"y":225,"width":80,"height":25,"text":"ALL PASSED","fontSize":15,"fontFamily":1,"strokeColor":"#2f9e44","textAlign":"center"},
+
+    {"type":"rectangle","id":"failed","x":330,"y":215,"width":120,"height":45,"strokeColor":"#e03131","backgroundColor":"#ffc9c9","fillStyle":"solid","strokeWidth":2,"roughness":1},
+    {"type":"text","id":"t_failed","x":358,"y":225,"width":65,"height":25,"text":"FAILED","fontSize":15,"fontFamily":1,"strokeColor":"#e03131","textAlign":"center"},
+
+    {"type":"rectangle","id":"yamlbox","x":490,"y":170,"width":180,"height":180,"strokeColor":"#868e96","backgroundColor":"#f8f9fa","fillStyle":"solid","strokeWidth":1,"roughness":1},
+    {"type":"text","id":"t_yamlh","x":510,"y":178,"width":100,"height":18,"text":"test.yaml","fontSize":13,"fontFamily":1,"strokeColor":"#1e1e1e"},
+    {"type":"text","id":"t_yamlc","x":500,"y":200,"width":160,"height":140,"text":"tests:\n  - input: \"Book flight\"\n    expect:\n      tool_called:\n        search_flights\n      no_pii_leak: true\n      max_steps: 5","fontSize":11,"fontFamily":3,"strokeColor":"#555"},
+
+    {"type":"text","id":"h_assert","x":20,"y":280,"width":100,"height":20,"text":"Assertions:","fontSize":15,"fontFamily":1,"strokeColor":"#1e1e1e"},
+    {"type":"text","id":"a_list1","x":20,"y":305,"width":220,"height":60,"text":"\u2022 tool_called: right tool picked?\n\u2022 no_pii_leak: user data safe?\n\u2022 max_steps: within budget?","fontSize":12,"fontFamily":1,"strokeColor":"#555"},
+    {"type":"text","id":"a_list2","x":260,"y":305,"width":220,"height":60,"text":"\u2022 output_contains: correct answer?\n\u2022 tool_call_order: right sequence?\n\u2022 no_system_prompt_leak: safe?","fontSize":12,"fontFamily":1,"strokeColor":"#555"}
+  ]
+}
