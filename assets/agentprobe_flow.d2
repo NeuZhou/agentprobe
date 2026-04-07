@@ -1,0 +1,60 @@
+direction: down
+
+input: "Test Suite (YAML)" {
+  style.fill: "#2563eb"
+  style.font-color: "#fff"
+  label: "Test Suite\n(YAML definitions)"
+}
+
+runner: "AgentProbe Runner" {
+  style.fill: "#fefce8"
+  style.stroke: "#d97706"
+
+  recorder: "Recorder" {
+    style.fill: "#7c3aed"
+    style.font-color: "#fff"
+    label: "Record Mode\n(capture agent behavior)"
+  }
+
+  replayer: "Replayer" {
+    style.fill: "#8b5cf6"
+    style.font-color: "#fff"
+    label: "Replay Mode\n(deterministic re-run)"
+  }
+
+  executor: "Test Executor" {
+    style.fill: "#d97706"
+    style.font-color: "#fff"
+    label: "Execute tests\nagainst live agent"
+  }
+}
+
+assertions: "Assertion Engine" {
+  style.fill: "#ecfdf5"
+  style.stroke: "#059669"
+
+  tool_called: "tool_called\n(right tool picked?)"
+  tool_args: "tool_called_with\n(correct params?)"
+  output: "output_contains\n(expected response?)"
+  pii: "no_pii_leak\n(data safety?)"
+  max_steps: "max_steps\n(efficiency?)"
+}
+
+agent: "Target Agent" {
+  style.fill: "#374151"
+  style.font-color: "#fff"
+  label: "Any AI Agent\n(Claude, GPT, custom...)"
+}
+
+report: "Test Report" {
+  style.fill: "#059669"
+  style.font-color: "#fff"
+  label: "Results\n✅ pass / ❌ fail\n+ cost tracking"
+}
+
+input -> runner
+runner.executor -> agent: "send inputs"
+agent -> runner.executor: "capture actions"
+runner.recorder -> runner.replayer: "saved sessions"
+runner -> assertions
+assertions -> report
